@@ -6,7 +6,7 @@ import { AppHeader } from "@/components/legacy/Nav";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { addVault, formatCAD, type Vault, type VaultCondition } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
-import { getAdvisorLinks, type AdvisorLink } from "@/lib/legacy-advisors";
+
 
 export const Route = createFileRoute("/create")({
   head: () => ({ meta: [{ title: "Create a Vault — LegacyLink" }] }),
@@ -68,8 +68,6 @@ function Create() {
     { name: "", email: "", pct: 100 },
   ]);
   const [trustee, setTrustee] = useState<{ name: string; email: string }>({ name: "", email: "" });
-  const [advisorLinks, setAdvisorLinks] = useState<AdvisorLink[]>([]);
-  const [grantedAdvisors, setGrantedAdvisors] = useState<string[]>([]);
 
   // step 4
   const [agree, setAgree] = useState(false);
@@ -116,11 +114,9 @@ function Create() {
         condition: getCondition(),
         beneficiaries: bens,
         created_at: new Date().toISOString().slice(0, 10),
-        advisor_emails: grantedAdvisors,
       };
       addVault(v);
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
-      if (grantedAdvisors.length) toast.success(`${grantedAdvisors.length} advisor${grantedAdvisors.length > 1 ? "s" : ""} notified — they now have read-only access to this trust.`);
       setSuccess(id);
       setSubmitting(false);
     }, 3000);
