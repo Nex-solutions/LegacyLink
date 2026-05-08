@@ -165,7 +165,7 @@ function Landing() {
           </div>
         </div>
         <div className="max-w-6xl mx-auto mt-8 pt-8 border-t text-xs" style={{ borderColor: "rgba(250,250,247,0.12)", color: "rgba(250,250,247,0.5)" }}>
-          Powered by Solana · Secured by cryptography · Built for Canadian families
+          Bank-grade security · Regulated in Canada · Built for Canadian families
         </div>
       </footer>
     </PageShell>
