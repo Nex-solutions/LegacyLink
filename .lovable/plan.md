@@ -1,91 +1,168 @@
 ## Goal
 
-Ship a hackathon-ready demo of LegacyLink by closing the biggest gaps: real backend persistence, end-to-end release → claim flow, demo seed data, landing polish, and a downloadable "legacy letter" PDF per vault. **Skip Solana / on-chain wallet wiring for now** — leave the existing UI mentions in place but don't build wallet connect.
+Make LegacyLink truly backend + on-chain for the hackathon, while keeping the UX completely "Web2" — users never see a wallet, seed phrase, or signature prompt. Funds move via a custodial USDC vault on Solana devnet, with on/off-ramp stubbed behind a single provider-agnostic interface so we can swap in MoonPay / Transak / Stripe later.
 
-## Scope (in order of demo impact)
+## Architecture (one-screen view)
 
-### 1. Wire vaults + auth to Lovable Cloud (replace localStorage)
+```text
+ Family user                      Lovable Cloud (Supabase)              Solana devnet
+ ───────────                      ──────────────────────────             ────────────────
+ Sign up (email/Google)  ──►  auth.users + profiles                            │
+                              + custodial_wallets (encrypted)  ───┐            │
+ Add money (CAD)         ──►  /api/onramp  (server route) ────────┼──► On-ramp provider
+                                  │                                │     (stub: Transak)
+                                  └──► funds USDC ATA of user wallet ──► transfer to vault PDA
+ Create vault            ──►  vaults row + Anchor `init_vault` ix ─────► Vault PDA (USDC ATA)
+ Check-in / release      ──►  vault_events + Anchor `checkin`/`release` ix
+ Beneficiary claim       ──►  /claim → server fn → Anchor `claim` ix ──► transfers USDC to
+                                                                          beneficiary off-ramp ATA
+                              then /api/offramp  ────────────────────► Off-ramp provider
+                                                                          (stub: pays CAD to email)
+```
 
-Backend tables already exist (`vaults`, `beneficiaries`, `vault_events`, `profiles`, `user_roles`, `advisor_clients`) with RLS. The app currently stores everything in `localStorage` via `legacy-data.ts` and a fake `legacy-auth.ts`.
+Key principle: **all signing happens server-side** with the custodial keypair stored encrypted in Supabase. The browser never touches a wallet adapter.
 
-- Replace `legacy-auth.ts` with real Supabase auth (email + password, plus Google). Keep the same exported function names (`getUser`, `setUser`, `clearUser`) so call sites don't churn — they become thin wrappers around `supabase.auth`.
-- Rewrite `legacy-data.ts` helpers (`getVaults`, `getVault`, `updateVault`, `addVault`) to read/write the `vaults` + `beneficiaries` tables. Map the Postgres row shape (`condition_kind` + `unlock_date` + `inactivity_days` + `last_checkin`) into the existing `VaultCondition` discriminated union so UI components don't change.
-- Convert activity timeline to real `vault_events` inserts (`fund`, `checkin`, `release`, `condition_update`, etc.).
-- Update `signup.tsx`, `login.tsx`, `advisor.signup.tsx`, `advisor.login.tsx` to call Supabase. Advisor role is set via `user_roles` (the `handle_new_user` trigger defaults to `family`, so advisor signup will need a follow-up insert into `user_roles`).
-- Add `_authenticated` layout route guard (TanStack pattern) so `/dashboard`, `/vault/$id`, `/messages`, `/advisor/dashboard`, etc. redirect to login when signed out.
+## Scope
 
-### 2. End-to-end release → claim flow
+### 1. Supabase migration (no more localStorage)
 
-- **Release trigger**: on dashboard load and vault detail load, evaluate each active vault's condition client-side. If `time` and `unlock_date <= today`, OR `inactivity` and `now - last_checkin >= inactivity_days`, flip status to `Released` (writes `vault_events` row of kind `release`). Manual vaults get a "Release now" button on the detail page.
-- **Inactivity check-in button** on vault detail (visible only for inactivity vaults): resets `last_checkin = now()`, logs `checkin` event, toast confirmation.
-- **Claim flow**: rebuild `/claim` so a beneficiary can enter their email + a vault ID (or follow a link `/claim?vault=...`). If they're listed in `beneficiaries` and the vault is `Released`, show their share, a "claimed" confirmation step, and write a `payout_tx_signature` placeholder (`demo-{uuid}`) on the beneficiary row. After claim: small celebratory screen.
+- Real auth: email + password + Google via `lovable.auth.signInWithOAuth("google")`. Add `_authenticated` layout guard + `/reset-password` page.
+- Rewrite `src/lib/legacy-auth.ts` as a thin Supabase wrapper (same exports).
+- Rewrite `src/lib/legacy-data.ts` to read/write `vaults`, `beneficiaries`, `vault_events` via `createServerFn` + `requireSupabaseAuth` (RLS already in place).
+- Update `signup.tsx`, `login.tsx`, `advisor.signup.tsx`, `advisor.login.tsx`, `dashboard.tsx`, `vault.$id.tsx`, `advisor.dashboard.tsx`, `claim.tsx`.
+- Advisor signup inserts a row into `user_roles` with role `advisor` (via SECURITY DEFINER RPC, since `user_roles` has no INSERT policy).
 
-### 3. Demo seed + reset
+### 2. Custodial wallets (invisible to user)
 
-- A "Reset demo data" button (dev-only, behind a tiny gear icon on the dashboard footer) that: signs in a demo family account, wipes their vaults, and inserts a curated scenario:
-  - Vault A: time-locked, unlocks in 12 days (shows urgency banner)
-  - Vault B: inactivity, last check-in 175 days ago, 180-day window (shows warning)
-  - Vault C: manual, ready to release
-  - Vault D: already `Released`, awaiting beneficiary claim (drives the demo's claim story)
-- Optional second seed for the advisor account so `/advisor/dashboard` has live clients.
+DB migration:
+- `custodial_wallets`: `user_id uuid PK`, `pubkey text`, `encrypted_secret bytea`, `created_at`. RLS: owner read-only of `pubkey` only; service-role writes.
+- Encryption: AES-GCM with `WALLET_ENCRYPTION_KEY` (32-byte secret).
+- Trigger on new auth user: enqueue wallet creation; or generate lazily on first funding via server fn `ensureWallet()`.
 
-### 4. Legacy letter PDF (per vault)
+Add columns:
+- `vaults.vault_pda text`, `vaults.usdc_ata text`, `vaults.init_tx text`
+- `beneficiaries.wallet_pubkey text` (auto-resolved from email if beneficiary already has a LegacyLink account; else generated at claim time), `beneficiaries.payout_tx_signature` (already exists), `beneficiaries.claimed_at timestamptz`
 
-- New "Download legacy letter" button on the vault detail page.
-- Generated client-side with `pdf-lib` (Worker-safe). Contains: vault name, owner name, condition summary in plain English, beneficiary list with percentages, created date, and a heartfelt template message the owner can edit before download.
-- Add an inline textarea above the button so the owner can customize the message; current text is saved to a new `letter_message` column on `vaults` (migration).
+### 3. Anchor program (`programs/legacy_vault`)
 
-### 5. Landing page polish (`/`)
+Written in Rust, deployed to devnet by the user. Folder: `anchor/` at repo root.
 
-- Real hero with one strong sentence + sub, single screenshot of the dashboard, "How it works" 3-step strip (Create → Fund → Release to family), and a clearer CTA pair (Get started / Advisor portal).
-- Update meta tags (title/description/og) on `/`, `/dashboard`, `/vault/$id`, `/advisor/dashboard`.
+Instructions:
+- `init_vault(vault_id: [u8;16], condition: VaultCondition, beneficiaries: Vec<Beneficiary>)` — creates vault PDA seeded by `["vault", owner, vault_id]`, creates the vault's USDC ATA owned by the PDA.
+- `fund(amount: u64)` — transfers USDC from owner ATA to vault ATA via SPL Token CPI.
+- `checkin()` — writes `last_checkin = clock.unix_timestamp` (inactivity vaults only).
+- `release()` — owner-only or auto-eligible (time/inactivity met); flips status to `Released`.
+- `claim(beneficiary_index: u8)` — anyone can call; checks `Released` + not yet claimed + signer is the beneficiary's recorded pubkey; transfers `pct * vault_balance` to beneficiary ATA.
+- Accounts: `Vault { owner, condition_kind, unlock_ts, inactivity_secs, last_checkin, status, beneficiaries: Vec<{pubkey, pct, claimed}> }`.
 
-### 6. Hold for later (explicitly out of scope)
+Tests: Anchor mocha tests covering happy paths + error cases. Devnet USDC mint: `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`.
 
-- Solana wallet connect, on-chain vault PDA, payout tx signing, Anchor program calls. Existing `solana_pubkey` / `tx_signature` columns stay nullable and untouched. UI keeps the existing mentions but no wiring.
+We commit a `Cargo.toml`, `Anchor.toml`, the program source, and an `idl/legacy_vault.json` (generated). The app reads the IDL via `@coral-xyz/anchor`.
 
-## Files touched
+### 4. Server-side on-chain wiring
+
+New `src/lib/solana.server.ts` (server-only):
+- Loads custodial keypair from `custodial_wallets` (decrypts).
+- Builds + signs + sends Anchor txs via `@coral-xyz/anchor` + `@solana/web3.js` against `SOLANA_RPC_URL` (devnet default, configurable).
+
+Server functions (all `requireSupabaseAuth`, all in `*.functions.ts` files in `src/lib/`):
+- `createVaultOnChain` — mirrors `vaults` insert + `init_vault` ix; stores `vault_pda`, `init_tx`.
+- `fundVaultOnChain(vaultId, amountUsdc)` — calls on-ramp first (step 5), then `fund` ix.
+- `checkInOnChain(vaultId)`
+- `releaseVaultOnChain(vaultId)` (manual + auto-evaluated)
+- `claimOnChain(vaultId, beneficiaryEmail)` — verifies email matches an authed user OR a magic-link claim token; calls `claim` ix; triggers off-ramp.
+
+All write a `vault_events` row with the real `tx_signature`.
+
+### 5. On/off-ramp abstraction
+
+`src/lib/ramps.server.ts` defines:
+
+```ts
+interface RampProvider {
+  onramp(input: { userId, amountCad, destinationPubkey }): Promise<{ usdcAmount, providerRef }>;
+  offramp(input: { recipientEmail, usdcAmount, sourcePubkey }): Promise<{ providerRef }>;
+}
+```
+
+- Default impl `MockRampProvider` → instantly mints devnet USDC to the destination ATA (using a faucet keypair) for on-ramp; logs off-ramp + emails recipient with a "funds sent" placeholder. Lets the demo run end-to-end **today**.
+- Provider selection via env `RAMP_PROVIDER=mock|transak|moonpay|stripe`. Adapters are empty stubs with TODOs + the auth headers each one expects.
+- Server route `src/routes/api/public/ramp-webhook.ts` with HMAC verification for future real provider callbacks.
+
+Secrets we'll request when you're ready to go live: `TRANSAK_API_KEY` / `MOONPAY_SECRET_KEY` / `STRIPE_SECRET_KEY` (only one needed). Not requested now.
+
+### 6. Claim UX (still invisible)
+
+`/claim?vault=...&token=...`:
+- Magic link emailed to beneficiary on release.
+- Beneficiary signs in (or signs up) with the email on the beneficiary record.
+- Server fn validates token + email, runs `claimOnChain`, calls off-ramp, shows "$X CAD on its way to you" with the on-chain explorer link.
+
+### 7. Demo seed (updated)
+
+`seed_demo_for_user(uuid)` RPC + a "Reset demo" button: wipes user's vaults, creates 4 scenarios on devnet (uses the mock ramp to fund them with test USDC). Vault D is pre-released and has a beneficiary token ready to demo the claim flow.
+
+### 8. Out of scope this round
+
+- Real KYC; real fiat settlement; production ramp integration.
+- Wallet adapter / non-custodial mode (user said invisible; we stay custodial).
+- Mainnet deployment.
+
+## Files
 
 **New**
-- `src/routes/_authenticated.tsx` (auth guard layout)
-- `src/routes/reset-password.tsx` (required for password reset flow)
-- `src/lib/vault-release.ts` (condition evaluation + auto-release)
-- `src/lib/legacy-letter.ts` (pdf-lib generation)
-- `src/lib/demo-seed.ts` (reset demo button logic)
+- `anchor/Anchor.toml`, `anchor/Cargo.toml`, `anchor/programs/legacy_vault/src/lib.rs`, `anchor/tests/legacy_vault.ts`
+- `src/idl/legacy_vault.json` + `src/idl/legacy_vault.ts` (types)
+- `src/lib/solana.server.ts`
+- `src/lib/wallet.server.ts` (encrypt/decrypt keypair)
+- `src/lib/ramps.server.ts` + `src/lib/ramps/{mock,transak,moonpay,stripe}.ts`
+- `src/lib/vault.functions.ts`, `src/lib/claim.functions.ts`, `src/lib/wallet.functions.ts`
+- `src/routes/_authenticated.tsx`, `src/routes/reset-password.tsx`
+- `src/routes/api/public/ramp-webhook.ts`
 
 **Rewritten**
-- `src/lib/legacy-auth.ts` → Supabase wrapper
-- `src/lib/legacy-data.ts` → Supabase queries
-- `src/routes/login.tsx`, `signup.tsx`, `advisor.login.tsx`, `advisor.signup.tsx` → real auth
-- `src/routes/claim.tsx` → real claim flow
-- `src/routes/index.tsx` → polished landing
+- `src/lib/legacy-auth.ts`, `src/lib/legacy-data.ts`
+- `src/routes/login.tsx`, `signup.tsx`, `advisor.login.tsx`, `advisor.signup.tsx`, `claim.tsx`
 
 **Edited**
-- `src/routes/vault.$id.tsx` → check-in button, manual release button, PDF letter section, message editor
-- `src/routes/dashboard.tsx` → release evaluation on load, demo reset button
-- `src/routes/advisor.dashboard.tsx` → real client list from `advisor_clients`
+- `src/routes/dashboard.tsx`, `vault.$id.tsx`, `advisor.dashboard.tsx`, `__root.tsx`, `router.tsx`
 
 **DB migration**
-- Add `letter_message text` to `vaults`
-- Add `claimed_at timestamptz` to `beneficiaries`
-- Add a SQL function `seed_demo_for_user(uuid)` that wipes + inserts the demo scenario (called from the reset button via RPC)
+- `custodial_wallets` table + RLS
+- columns: `vaults.vault_pda`, `vaults.usdc_ata`, `vaults.init_tx`, `vaults.letter_message`; `beneficiaries.wallet_pubkey`, `beneficiaries.claimed_at`, `beneficiaries.claim_token`
+- `seed_demo_for_user(uuid)` RPC
+- `assign_advisor_role(uuid)` SECURITY DEFINER RPC
+
+**Secrets requested**
+- `WALLET_ENCRYPTION_KEY` (32-byte base64) — required
+- `SOLANA_RPC_URL` (defaults to `https://api.devnet.solana.com`) — optional
+- `FAUCET_KEYPAIR_JSON` (devnet keypair holding test USDC for the mock ramp) — required for demo
+
+## Heads-up on the Rust piece
+
+The Lovable sandbox **cannot compile or deploy the Anchor program**. I'll commit the full Rust source, `Anchor.toml`, tests, and the generated IDL placeholder. You (or I, with copy-paste instructions) will run locally:
+
+```text
+solana-keygen new -o ~/.config/solana/legacylink.json
+solana config set --url devnet --keypair ~/.config/solana/legacylink.json
+solana airdrop 2
+anchor build
+anchor deploy
+anchor idl init <PROGRAM_ID> -f target/idl/legacy_vault.json
+```
+
+Then paste the deployed program ID into `SOLANA_PROGRAM_ID` secret. Until that's done, the app runs in **simulated mode**: the server functions return fake-but-deterministic tx signatures so the UI is unblocked.
 
 ## Order of execution
 
-1. DB migration (letter_message, claimed_at, seed RPC)
-2. Real auth + `_authenticated` guard + Google sign-in
-3. `legacy-data.ts` rewrite against Supabase, keeping the public API stable
-4. Release evaluator + check-in + manual release UI
-5. Claim flow rebuild
-6. Demo seed button
-7. Legacy letter PDF
-8. Landing polish + meta tags
+1. DB migration (wallets, vault columns, RPCs) + secrets prompt for `WALLET_ENCRYPTION_KEY`, `FAUCET_KEYPAIR_JSON`.
+2. Real auth + `_authenticated` guard + Google.
+3. `legacy-data.ts` rewrite against Supabase (simulated tx signatures).
+4. Anchor program source + IDL committed.
+5. `solana.server.ts` + `wallet.server.ts` + server fns (live mode toggled by `SOLANA_PROGRAM_ID` presence).
+6. Ramps abstraction + mock provider; webhook stub.
+7. Claim flow rebuild with magic-link tokens.
+8. Demo seed + Reset button.
+9. Landing polish + meta tags.
 
-Each step ends in a working app — we can stop early if time runs out and still have a stronger demo than today.
-
-## Notes on auth
-
-- Default to email/password + Google per Lovable Cloud guidance.
-- Do **not** enable auto-confirm email; users verify email before login (standard).
-- Advisor signup writes an extra row to `user_roles` with role `advisor` after the signup callback.
-- Password reset gets `/reset-password` page (required to avoid the silent auto-login bug).
+Each step lands a working build. If we run out of time after step 3, the demo still has real auth + DB. After step 5 it's on-chain. After step 7 the full story works end-to-end.
