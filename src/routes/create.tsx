@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/legacy/Nav";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
-import { addVault, formatCAD, type Vault, type VaultCondition } from "@/lib/legacy-data";
+import { formatCAD, type VaultCondition } from "@/lib/legacy-data";
+import { serverCreateVault } from "@/lib/vault-client";
 import { getUser } from "@/lib/legacy-auth";
 
 
