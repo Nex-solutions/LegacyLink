@@ -28,13 +28,13 @@ async function getEncKey(): Promise<CryptoKey> {
   if (!raw) throw new Error("WALLET_ENCRYPTION_KEY not set");
   const bytes = b64decode(raw);
   if (bytes.length !== 32) throw new Error("WALLET_ENCRYPTION_KEY must decode to 32 bytes");
-  return subtle.importKey("raw", bytes, "AES-GCM", false, ["encrypt", "decrypt"]);
+  return subtle.importKey("raw", bytes as BufferSource, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 
 export async function encryptSecret(secretKey: Uint8Array): Promise<string> {
   const key = await getEncKey();
   const iv = webcrypto.getRandomValues(new Uint8Array(12));
-  const ct = new Uint8Array(await subtle.encrypt({ name: "AES-GCM", iv }, key, secretKey));
+  const ct = new Uint8Array(await subtle.encrypt({ name: "AES-GCM", iv }, key, secretKey as BufferSource));
   // Pack as base64(iv|ciphertext)
   const packed = new Uint8Array(iv.length + ct.length);
   packed.set(iv, 0);
