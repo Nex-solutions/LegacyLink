@@ -1,90 +1,96 @@
-## Goal
+# Wire vault program to devnet for real
 
-Make the advisor side a "wow, this is what I actually need" tool: deepen client visibility, add the workflow features advisors keep asking for, and ship a real read-only client + vault detail page (today the "View Full Detail →" just toasts "coming soon").
+**Program ID:** `4ivAJT437HRojo79Q8aRoi21vFrhDDaCzdLQ6C9uUe3p`
+**Devnet USDC mint:** `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`
+**IDL:** real one you uploaded (5 instructions: initializeVault, fundVault, checkIn, releaseVault, claim).
 
-## What advisors actually wish they had
+Goal: flip `src/lib/solana.server.ts` from simulated to real Anchor calls. Same exported function signatures, no call-site changes anywhere else.
 
-Talking to estate planners / wealth advisors, the recurring asks are:
+---
 
-1. **A real read-only client view** — full vault details, beneficiaries, condition timeline, audit trail, all without being able to mutate anything.
-2. **Risk + compliance signals at a glance** — who's at risk of inactivity release, who hasn't checked in, who has unfunded vaults, who has beneficiary issues (no email, 100% concentration, missing wallet).
-3. **Tasks / follow-ups** — "Remind me to call the Okafors next Tuesday", with a small task list per client.
-4. **Document & note vault** — private advisor-only notes per client (KYC summary, meeting notes, planning rationale). Read-only as far as the client is concerned, never shown to them.
-5. **Beneficiary roster across the book** — one place to see every beneficiary across all clients, with search and concentration warnings.
-6. **Pipeline of upcoming releases** — chronological list of "what fires in the next 90 days" across the whole book.
-7. **Export & reporting** — per-client PDF summary they can email a lawyer/accountant, plus a CSV book export.
-8. **Client check-in nudges** — one-click "send check-in reminder" for inactivity-triggered vaults that are >70% to threshold.
-9. **AI assist (optional)** — "Summarize this client's estate plan in 4 bullets I can paste into my CRM."
+## What changes
 
-## Plan
+1. **Replace `src/lib/idl/vault.json`** with the real IDL you uploaded, plus inject the program address at top so Anchor's client picks it up.
 
-### 1. Read-only client + vault detail page (the missing primary flow)
+2. **Add npm deps** (server-side only): `@coral-xyz/anchor`, `@solana/web3.js`, `@solana/spl-token`.
 
-New route: `/advisor/client/$clientId` — built from the existing mock `advisorClients` data, no schema changes.
+3. **Add server secrets** (no `.env`, no `VITE_*` — secrets tool only):
+   - `SOLANA_PROGRAM_ID` = `4ivAJT437HRojo79Q8aRoi21vFrhDDaCzdLQ6C9uUe3p`
+   - `SOLANA_RPC` = `https://api.devnet.solana.com`
+   - `SOLANA_USDC_MINT` = `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`
 
-Layout:
-- Header: client avatar, name, email, status pill, "Since {date}", advisor-only badge "Read-only access"
-- Summary strip: total protected, vaults, beneficiaries, last activity, next release
-- Tabs: **Vaults** · **Beneficiaries** · **Activity** · **Notes** · **Tasks**
-- All buttons are inert except advisor-private ones (notes, tasks). No check-in, no funding, no edits — every potentially-mutating control is replaced with a "Read-only · ask client" tooltip.
+4. **Rewrite `src/lib/solana.server.ts`** — keep wallet generation / encryption helpers exactly as they are. Replace the simulated section with real Anchor calls:
+   - `loadCustodialKeypair(userId)` → decrypts secret, returns `Keypair`.
+   - `getProgram(keypair)` → builds `AnchorProvider` + `Program` from the IDL using the env program ID.
+   - `deriveVaultPda(ownerPubkey, vaultId)` → real `PublicKey.findProgramAddressSync([b"vault", owner, uuid16], programId)`.
+   - `initVaultOnChain({ ownerPubkey, vaultId })` →
+     - load owner keypair (custodial)
+     - auto-airdrop 0.05 SOL if balance < 0.02 SOL (devnet only, swallow rate-limit errors)
+     - convert vault UUID → 16 raw bytes
+     - call `program.methods.initializeVault(vaultIdBytes, new BN(amountCadCents)).accounts({...}).rpc()`
+     - return `{ vaultPda, usdcAta, signature }` (real values)
+   - `fundVaultOnChain` / `releaseVaultOnChain` / `checkInOnChain` / `claimOnChain` — same shape, real RPC calls.
+   - `isSimulatedMode()` → returns `false` when `SOLANA_PROGRAM_ID` is set.
 
-New route: `/advisor/client/$clientId/vault/$vaultId` — full vault read-only view:
-- Vault name, amount, status, condition (with countdown), letter preview (if any), beneficiaries with %, claim status, on-chain refs (PDA, init tx) shown as muted mono text with copy buttons, full event timeline.
-- Top-right: "Download vault summary (PDF)" + "Message client about this vault".
+5. **`src/lib/wallet.server.ts`** — extend `ensureCustodialWallet` to also store the **vault USDC ATA** when a vault is created. Actually no — ATAs are per-vault, not per-user. Leave wallet.server.ts alone; ATAs derived inside `solana.server.ts`.
 
-Wire the existing "View Portfolio →" expansion's "View Full Detail →" button (currently just toasts) to link into this page.
+6. **`src/lib/ramps.server.ts`** — `MockRampProvider.onramp` should accept a destination ATA (not just pubkey) so when we wire a real provider later, USDC lands in the vault ATA, not the owner wallet. Add an optional `destinationAta?: string` to `OnRampInput`. Mock just logs it.
 
-### 2. Advisor dashboard upgrades
+7. **Audit trail UI** — wherever `vaults.init_tx` / `vaults.tx_signature` are rendered, link out to `https://solscan.io/tx/<sig>?cluster=devnet`. (Quick pass; non-blocking.)
 
-In `src/routes/advisor.dashboard.tsx`:
+8. **Smoke test** (manual after deploy):
+   - sign up new user → wallet row created
+   - `/create` a vault → check `vaults.init_tx` is a real signature → open Solscan devnet → confirm `initializeVault` ran
+   - if it fails, edge function logs will show the Anchor error code
 
-- **Risk panel** (new card in right column, above Recent Activity): "Needs your attention" — auto-derived list:
-  - Inactivity vaults >70% to threshold → "Nudge {client} to check in" button
-  - Vaults with 0 beneficiaries or 100% to one beneficiary → "Concentration risk"
-  - Unfunded / pending vaults older than 7 days
-  - Released vaults with unclaimed beneficiaries >30 days
-- **Upcoming releases timeline** (new section, full width below client list): horizontal 90-day strip with markers per release, click → opens that vault's read-only detail.
-- **Book-wide beneficiaries** (new tab toggle on the client list: `Clients | Beneficiaries`): table of every beneficiary across the book, with their client, %, and a flag column.
-- **Quick-action additions**: "Send check-in reminder", "Open beneficiary roster", "Export book (CSV)".
-- **Per-client inline actions** on the client card: "Open detail" (links to new route), "Add note", "Add task", "Message".
+---
 
-### 3. Advisor-private notes & tasks
+## Technical details
 
-New module `src/lib/advisor-workspace.ts` (localStorage-backed, mirrors the existing legacy-data pattern):
-- `getNotes(clientId)`, `addNote(clientId, body)`, `deleteNote(noteId)`
-- `getTasks(clientId?)`, `addTask({clientId, title, due})`, `toggleTask(id)`, `deleteTask(id)`
+### `src/lib/idl/vault.json` shape
 
-These are advisor-local — never shown on the family dashboard. Surfaced in the client detail page (Notes & Tasks tabs) and a global "My Tasks" widget on the advisor dashboard.
+The IDL you uploaded is the legacy Anchor 0.29 format (no top-level `address` / `metadata`). Anchor's JS client needs the program ID separately, but we'll also inject it for safety:
 
-### 4. Per-client PDF summary
+```json
+{
+  "address": "4ivAJT437HRojo79Q8aRoi21vFrhDDaCzdLQ6C9uUe3p",
+  "metadata": { "name": "vault", "version": "0.1.0", "spec": "0.1.0" },
+  "version": "0.1.0",
+  "name": "vault",
+  "instructions": [ /* ...your 5 ins... */ ],
+  "accounts":     [ /* ...Vault... */ ],
+  "errors":       [ /* ...NotFunded, NotReleased... */ ]
+}
+```
 
-Reuse `src/lib/beneficiary-pdf.ts` patterns to add `src/lib/client-summary-pdf.ts`:
-- Client name, advisor name, date, total protected, vault table (name, amount, condition, beneficiaries), open risks. One-pager. Triggered from client detail header and from the existing "Download Client Report" modal (which currently just calls `window.print()`).
+We construct the `Program` with `new Program(idl as Idl, provider)` — Anchor reads `idl.address` for the program ID.
 
-### 5. Optional AI summary (Lovable AI)
+### Vault ID encoding
 
-Add a "Summarize plan" button on the client detail page that calls a `createServerFn` using Lovable AI Gateway (`google/gemini-2.5-flash`) with the client's vaults/beneficiaries as input and returns 4 bullets. Pure read-only, advisor-only output, copyable. No DB writes.
+`vaults.id` is a Postgres `uuid` (36-char string). On-chain seed is `[u8; 16]`. Conversion: strip dashes, `Buffer.from(hex, "hex")` → length 16. PDA seed must use the same bytes both in the program and the client, otherwise PDAs won't match.
 
-### Files
+### Auto-airdrop
 
-New:
-- `src/routes/advisor.client.$clientId.tsx`
-- `src/routes/advisor.client.$clientId.vault.$vaultId.tsx`
-- `src/lib/advisor-workspace.ts`
-- `src/lib/client-summary-pdf.ts`
-- `src/lib/advisor-ai.functions.ts` (only if AI summary is included)
+Devnet faucet is rate-limited and sometimes flakes. Wrap `connection.requestAirdrop(...)` in try/catch and just continue — if balance is genuinely 0 the next instruction will fail with a clear "insufficient funds" error in logs.
 
-Edited:
-- `src/routes/advisor.dashboard.tsx` — risk panel, upcoming-releases strip, beneficiaries tab, new quick actions, link "View Full Detail →" to the new route
-- `src/lib/legacy-data.ts` — add a couple of derived helpers (risk computation, upcoming-90-day list, all-beneficiaries roll-up) on top of existing mock data
+### Server runtime constraint
 
-### Out of scope (intentionally)
+`@coral-xyz/anchor` and `@solana/spl-token` are pure JS / WASM-free, safe in the Cloudflare Worker SSR. No native deps. `@solana/web3.js` works on edge runtimes.
 
-- No DB schema changes — everything rides on existing `advisorClients` mock + localStorage for advisor-private workspace.
-- No write access to client vaults from the advisor side, ever. Read-only is enforced by simply not rendering mutating controls.
+---
 
-## Questions before I build
+## Out of scope
 
-1. Should I include the **Lovable AI "Summarize plan"** button, or skip AI for now?
-2. For **Notes & Tasks**, localStorage-only is fine for the demo — confirm, or do you want them persisted in the database (new tables + RLS)?
-3. Anything in the "wishlist" above you want me to **drop** to keep it tight, or is "ship them all" the right call?
+- No Phantom / wallet-adapter UI. End users never sign anything.
+- No real fiat ramp (mock stays).
+- No advisor-side signing (custodial only).
+- No mainnet — devnet hardcoded for now.
+
+---
+
+## What you need to do before "Implement"
+
+Approve this plan. After approval I'll:
+1. Prompt you to add the 3 secrets via Lovable Cloud (one click each).
+2. Replace `vault.json`, install deps, rewrite `solana.server.ts`.
+3. Hand back a smoke-test checklist.
