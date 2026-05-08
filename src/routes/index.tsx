@@ -42,7 +42,7 @@ function Landing() {
             className="mx-auto mt-8 max-w-2xl text-lg"
             style={{ color: "var(--warm-gray)" }}
           >
-            Money where it's needed. When it's needed. Without the eight-month wait.
+            Money where it's needed. When it's needed.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
