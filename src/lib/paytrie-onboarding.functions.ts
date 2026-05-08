@@ -32,7 +32,7 @@ export const submitKyc = createServerFn({ method: "POST" })
       first_name: data.first_name,
       last_name: data.last_name,
       email: u.user.email,
-      phone: data.phone,
+      phone: data.phone || "0000000",
       dob: data.dob,
       address1: data.address1,
       address2: data.address2 || undefined,
