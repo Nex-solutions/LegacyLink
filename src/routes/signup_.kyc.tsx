@@ -25,6 +25,7 @@ function SignupKyc() {
   const { reason } = Route.useSearch();
   const submit = useServerFn(submitKyc);
   const status = useServerFn(getMyKycStatus);
+  const approve = useServerFn(simulateKycApproval);
   useEffect(() => {
     if (reason === "funds") {
       toast.message("Let's finish your profile first ✨", {
