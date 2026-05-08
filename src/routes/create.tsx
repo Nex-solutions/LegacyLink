@@ -6,7 +6,7 @@ import { AppHeader } from "@/components/legacy/Nav";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { addVault, formatCAD, type Vault, type VaultCondition } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
-import { getAdvisorLinks, type AdvisorLink } from "@/lib/legacy-advisors";
+
 
 export const Route = createFileRoute("/create")({
   head: () => ({ meta: [{ title: "Create a Vault — LegacyLink" }] }),
@@ -68,15 +68,13 @@ function Create() {
     { name: "", email: "", pct: 100 },
   ]);
   const [trustee, setTrustee] = useState<{ name: string; email: string }>({ name: "", email: "" });
-  const [advisorLinks, setAdvisorLinks] = useState<AdvisorLink[]>([]);
-  const [grantedAdvisors, setGrantedAdvisors] = useState<string[]>([]);
 
   // step 4
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => { if (!getUser()) navigate({ to: "/login" }); setAdvisorLinks(getAdvisorLinks()); }, [navigate]);
+  useEffect(() => { if (!getUser()) navigate({ to: "/login" }); }, [navigate]);
 
   const amountNum = parseFloat(amount.replace(/[^0-9.]/g, "")) || 0;
   const totalPct = useMemo(() => bens.reduce((s, b) => s + (Number(b.pct) || 0), 0), [bens]);
@@ -116,11 +114,9 @@ function Create() {
         condition: getCondition(),
         beneficiaries: bens,
         created_at: new Date().toISOString().slice(0, 10),
-        advisor_emails: grantedAdvisors,
       };
       addVault(v);
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
-      if (grantedAdvisors.length) toast.success(`${grantedAdvisors.length} advisor${grantedAdvisors.length > 1 ? "s" : ""} notified — they now have read-only access to this trust.`);
       setSuccess(id);
       setSubmitting(false);
     }, 3000);
@@ -388,39 +384,7 @@ function Create() {
                   </div>
                 </div>
 
-                {/* Advisor access — per-vault grants */}
-                <div className="mt-6 p-5 rounded-2xl" style={{ background: "rgba(127,168,130,0.08)", border: "1px dashed rgba(26,46,26,0.15)" }}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">👤</span>
-                    <p style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600, color: "var(--forest)" }}>Give an advisor access to this trust <span className="text-xs font-normal" style={{ color: "var(--warm-gray)" }}>(optional)</span></p>
-                  </div>
-                  <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Advisors only see the specific trusts you grant — never your full portfolio. They get a notification and can review beneficiaries, conditions and the audit trail in real time.</p>
-
-                  {advisorLinks.length === 0 ? (
-                    <p className="mt-4 text-sm" style={{ color: "var(--warm-gray)" }}>You don't have any advisors linked yet. <a href="/dashboard" className="underline" style={{ color: "var(--forest)" }}>Add one from your dashboard</a> to grant access here.</p>
-                  ) : (
-                    <div className="mt-4 space-y-2">
-                      {advisorLinks.map((a) => {
-                        const checked = grantedAdvisors.includes(a.email);
-                        return (
-                          <label key={a.id} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style={{ background: checked ? "rgba(232,160,32,0.12)" : "var(--card-white)", border: `1px solid ${checked ? "var(--honey)" : "rgba(26,46,26,0.08)"}` }}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(e) => setGrantedAdvisors(e.target.checked ? [...grantedAdvisors, a.email] : grantedAdvisors.filter(x => x !== a.email))}
-                              style={{ accentColor: "var(--honey)" }}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p style={{ color: "var(--forest)", fontWeight: 500 }}>{a.name}</p>
-                              <p className="text-xs truncate" style={{ color: "var(--warm-gray)" }}>{a.firm || a.email} · {a.status === "connected" ? "Linked" : "Pending invite"}</p>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
+                {/* Advisors are linked at the account level — they see all your trusts read-only. Manage from the dashboard. */}
 
 
                 <label className="flex items-start gap-3 mt-6 cursor-pointer">
