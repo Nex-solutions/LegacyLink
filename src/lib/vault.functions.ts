@@ -459,11 +459,14 @@ export const beneficiaryClaimByEmail = createServerFn({ method: "POST" })
     z.object({ vault_id: z.string().uuid(), email: z.string().email() }).parse(d)
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    // Service-role-bypass not needed: owner/advisor RLS lets us read; for
-    // anonymous claim flow this would need an edge function. For demo we
-    // require the user to be signed in.
-    const { data: ben, error } = await supabase
+    // Verify the user is signed in (auth middleware), then use admin to
+    // bypass column revoke on beneficiaries.claim_token. The owner check
+    // still happens via RLS on the vault read.
+    const { data: vaultRow } = await context.supabase
+      .from("vaults").select("id").eq("id", data.vault_id).maybeSingle();
+    if (!vaultRow) throw new Error("Vault not found or not visible");
+
+    const { data: ben, error } = await supabaseAdmin
       .from("beneficiaries")
       .select("claim_token")
       .eq("vault_id", data.vault_id)
