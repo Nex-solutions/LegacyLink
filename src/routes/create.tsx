@@ -404,14 +404,30 @@ function Create() {
                   </div>
                 </div>
 
-                <div className="flex justify-between mt-8">
-                  <button onClick={() => setStep(1)} className="ll-pill ll-pill-ghost">← Back</button>
-                  <button
-                    disabled={totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim()))}
-                    onClick={submit}
-                    style={{ opacity: totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim())) ? 0.5 : 1 }}
-                  >Continue →</button>
-                </div>
+                {(() => {
+                  const missingName = bens.some(b => !b.name.trim());
+                  const badEmail = bens.some(b => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim()));
+                  const badPct = totalPct !== 100;
+                  const disabled = missingName || badEmail || badPct;
+                  const hint = missingName ? "Add a name for each beneficiary"
+                    : badEmail ? "Check that every email looks valid"
+                    : badPct ? `Allocations must add to 100% (currently ${totalPct}%)`
+                    : "";
+                  return (
+                    <div className="mt-8">
+                      {hint && <p className="text-sm mb-3 text-right" style={{ color: "var(--warm-gray)" }}>{hint}</p>}
+                      <div className="flex justify-between">
+                        <button onClick={() => setStep(1)} className="ll-pill ll-pill-ghost">← Back</button>
+                        <button
+                          disabled={disabled}
+                          onClick={() => setStep(3)}
+                          className="ll-pill ll-pill-primary"
+                          style={{ opacity: disabled ? 0.5 : 1 }}
+                        >Continue →</button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </motion.div>
             )}
 
