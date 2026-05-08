@@ -21,7 +21,7 @@ import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdvisorIndexRouteImport } from './routes/advisor.index'
 import { Route as VaultIdRouteImport } from './routes/vault.$id'
-import { Route as SignupKycRouteImport } from './routes/signup.kyc'
+import { Route as SignupKycRouteImport } from './routes/signup_.kyc'
 import { Route as FundsHistoryRouteImport } from './routes/funds.history'
 import { Route as FundsAddRouteImport } from './routes/funds.add'
 import { Route as AdvisorSignupRouteImport } from './routes/advisor.signup'
@@ -96,9 +96,9 @@ const VaultIdRoute = VaultIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupKycRoute = SignupKycRouteImport.update({
-  id: '/kyc',
-  path: '/kyc',
-  getParentRoute: () => SignupRoute,
+  id: '/signup_/kyc',
+  path: '/signup/kyc',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const FundsHistoryRoute = FundsHistoryRouteImport.update({
   id: '/funds/history',
@@ -172,7 +172,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRouteWithChildren
+  '/signup': typeof SignupRoute
   '/admin/ledger': typeof AdminLedgerRoute
   '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
@@ -199,7 +199,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRouteWithChildren
+  '/signup': typeof SignupRoute
   '/admin/ledger': typeof AdminLedgerRoute
   '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
@@ -227,7 +227,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRouteWithChildren
+  '/signup': typeof SignupRoute
   '/admin/ledger': typeof AdminLedgerRoute
   '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
@@ -237,7 +237,7 @@ export interface FileRoutesById {
   '/advisor/signup': typeof AdvisorSignupRoute
   '/funds/add': typeof FundsAddRoute
   '/funds/history': typeof FundsHistoryRoute
-  '/signup/kyc': typeof SignupKycRoute
+  '/signup_/kyc': typeof SignupKycRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
@@ -320,7 +320,7 @@ export interface FileRouteTypes {
     | '/advisor/signup'
     | '/funds/add'
     | '/funds/history'
-    | '/signup/kyc'
+    | '/signup_/kyc'
     | '/vault/$id'
     | '/advisor/'
     | '/advisor/clients/$clientId'
@@ -338,7 +338,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MessagesRoute: typeof MessagesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  SignupRoute: typeof SignupRouteWithChildren
+  SignupRoute: typeof SignupRoute
   AdminLedgerRoute: typeof AdminLedgerRoute
   AdminRampsRoute: typeof AdminRampsRoute
   AdvisorDashboardRoute: typeof AdvisorDashboardRoute
@@ -348,6 +348,7 @@ export interface RootRouteChildren {
   AdvisorSignupRoute: typeof AdvisorSignupRoute
   FundsAddRoute: typeof FundsAddRoute
   FundsHistoryRoute: typeof FundsHistoryRoute
+  SignupKycRoute: typeof SignupKycRoute
   VaultIdRoute: typeof VaultIdRoute
   AdvisorIndexRoute: typeof AdvisorIndexRoute
   AdvisorClientsClientIdRoute: typeof AdvisorClientsClientIdRouteWithChildren
@@ -440,12 +441,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VaultIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/signup/kyc': {
-      id: '/signup/kyc'
-      path: '/kyc'
+    '/signup_/kyc': {
+      id: '/signup_/kyc'
+      path: '/signup/kyc'
       fullPath: '/signup/kyc'
       preLoaderRoute: typeof SignupKycRouteImport
-      parentRoute: typeof SignupRoute
+      parentRoute: typeof rootRouteImport
     }
     '/funds/history': {
       id: '/funds/history'
@@ -534,17 +535,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface SignupRouteChildren {
-  SignupKycRoute: typeof SignupKycRoute
-}
-
-const SignupRouteChildren: SignupRouteChildren = {
-  SignupKycRoute: SignupKycRoute,
-}
-
-const SignupRouteWithChildren =
-  SignupRoute._addFileChildren(SignupRouteChildren)
-
 interface AdvisorClientsClientIdRouteChildren {
   AdvisorClientsClientIdVaultVaultIdRoute: typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
@@ -570,7 +560,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MessagesRoute: MessagesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  SignupRoute: SignupRouteWithChildren,
+  SignupRoute: SignupRoute,
   AdminLedgerRoute: AdminLedgerRoute,
   AdminRampsRoute: AdminRampsRoute,
   AdvisorDashboardRoute: AdvisorDashboardRoute,
@@ -580,6 +570,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdvisorSignupRoute: AdvisorSignupRoute,
   FundsAddRoute: FundsAddRoute,
   FundsHistoryRoute: FundsHistoryRoute,
+  SignupKycRoute: SignupKycRoute,
   VaultIdRoute: VaultIdRoute,
   AdvisorIndexRoute: AdvisorIndexRoute,
   AdvisorClientsClientIdRoute: AdvisorClientsClientIdRouteWithChildren,
@@ -588,3 +579,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
