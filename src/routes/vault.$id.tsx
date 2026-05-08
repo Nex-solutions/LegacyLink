@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/legacy/Nav";
 import { PageShell } from "@/components/legacy/PageShell";
-import { formatCAD, getVault, updateVault, type Vault } from "@/lib/legacy-data";
+import { formatCAD, getVault, updateVault, type Vault, type Beneficiary } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
 
 
