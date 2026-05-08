@@ -8,13 +8,18 @@ import {
   Scripts,
   ClientOnly,
 } from "@tanstack/react-router";
-import { SolanaProvider } from "@/lib/solana/provider";
-
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { hydrateUserFromSession, clearUser, setUser } from "@/lib/legacy-auth";
+
+// Lazy-load Solana so its Node-CJS-only deps (bs58, @solana/web3.js) never
+// run during Worker SSR — they reference __filename which the Worker runtime
+// doesn't define, and crash the whole page with a 500.
+const SolanaProvider = lazy(() =>
+  import("@/lib/solana/provider").then((m) => ({ default: m.SolanaProvider }))
+);
 
 function NotFoundComponent() {
   return (
