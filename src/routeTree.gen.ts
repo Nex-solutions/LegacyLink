@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreateRouteImport } from './routes/create'
@@ -25,6 +26,11 @@ import { Route as AdvisorDashboardRouteImport } from './routes/advisor.dashboard
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/login'
+    | '/messages'
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/login'
+    | '/messages'
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/login'
+    | '/messages'
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  MessagesRoute: typeof MessagesRoute
   SignupRoute: typeof SignupRoute
   AdvisorDashboardRoute: typeof AdvisorDashboardRoute
   AdvisorLoginRoute: typeof AdvisorLoginRoute
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  MessagesRoute: MessagesRoute,
   SignupRoute: SignupRoute,
   AdvisorDashboardRoute: AdvisorDashboardRoute,
   AdvisorLoginRoute: AdvisorLoginRoute,
