@@ -74,7 +74,7 @@ function Create() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => { if (!getUser()) navigate({ to: "/login" }); setAdvisorLinks(getAdvisorLinks()); }, [navigate]);
+  useEffect(() => { if (!getUser()) navigate({ to: "/login" }); }, [navigate]);
 
   const amountNum = parseFloat(amount.replace(/[^0-9.]/g, "")) || 0;
   const totalPct = useMemo(() => bens.reduce((s, b) => s + (Number(b.pct) || 0), 0), [bens]);
