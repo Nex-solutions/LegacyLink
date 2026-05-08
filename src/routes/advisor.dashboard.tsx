@@ -360,7 +360,7 @@ function AdvisorDashboard() {
               <QuickActionButton onClick={() => setView("beneficiaries")} icon="👥" label="Open Beneficiary Roster" />
               <QuickActionButton
                 onClick={() => {
-                  const blob = new Blob([exportBookCSV()], { type: "text/csv" });
+                  const blob = new window.Blob([exportBookCSV()], { type: "text/csv" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url; a.download = `legacylink-book-${new Date().toISOString().slice(0, 10)}.csv`;
