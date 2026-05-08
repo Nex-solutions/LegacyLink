@@ -169,16 +169,13 @@ function Create() {
                     style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 64, fontWeight: 600 }}
                   />
                   <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Canadian Dollars</p>
-                  {amountNum > 0 && (
-                    <p className="mt-2 text-[10px]" style={{ color: "var(--sage)" }}>≈ {(amountNum / 145).toFixed(4)} SOL on Solana devnet</p>
-                  )}
                 </div>
 
                 <p className="ll-label">Funding method</p>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {[
-                    { k: "card" as const, icon: "💳", t: "Credit or Debit Card", s: "Via MoonPay · Instant" },
-                    { k: "bank" as const, icon: "🏦", t: "Bank Transfer", s: "Via e-Transfer · 1–2 days" },
+                    { k: "card" as const, icon: "💳", t: "Credit or Debit Card", s: "Instant" },
+                    { k: "bank" as const, icon: "🏦", t: "Interac e-Transfer", s: "Instant" },
                   ].map((m) => (
                     <button
                       key={m.k}
