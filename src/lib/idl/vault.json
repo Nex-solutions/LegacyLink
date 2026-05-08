@@ -65,10 +65,16 @@
   "accounts": [
     {
       "name": "Vault",
+      "discriminator": [211, 8, 232, 43, 2, 152, 117, 119]
+    }
+  ],
+  "types": [
+    {
+      "name": "Vault",
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "owner", "type": "publicKey" },
+          { "name": "owner", "type": "pubkey" },
           { "name": "vaultId", "type": { "array": ["u8", 16] } },
           { "name": "amountCadCents", "type": "u64" },
           { "name": "status", "type": "u8" },
