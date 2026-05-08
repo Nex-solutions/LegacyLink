@@ -472,7 +472,14 @@ function Create() {
                     <motion.span initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }}>
                       🔒 Securing your vault on-chain…
                     </motion.span>
-                  ) : "Protect My Family"}
+                  ) : (() => {
+                    const names = bens.map(b => b.name.trim().split(/\s+/)[0]).filter(Boolean);
+                    if (names.length === 0) return "Protect My Family";
+                    if (names.length === 1) return `Protect ${names[0]}`;
+                    if (names.length === 2) return `Protect ${names[0]} and ${names[1]}`;
+                    if (names.length === 3) return `Protect ${names[0]}, ${names[1]} and ${names[2]}`;
+                    return `Protect ${names[0]}, ${names[1]} and ${names.length - 2} others`;
+                  })()}
                 </button>
 
                 <div className="flex justify-between mt-4">
