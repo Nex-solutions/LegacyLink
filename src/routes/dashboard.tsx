@@ -9,7 +9,8 @@ import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
 import { formatCAD, getVaults, type Vault } from "@/lib/legacy-data";
 import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
-import { evaluateAndHydrate, serverCheckIn, serverResetDemo } from "@/lib/vault-client";
+import { evaluateAndHydrate, serverCheckIn, serverResetDemo, serverEnsureClaimTokens } from "@/lib/vault-client";
+import { generateBeneficiaryPdf, downloadPdf } from "@/lib/beneficiary-pdf";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
