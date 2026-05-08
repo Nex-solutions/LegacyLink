@@ -159,7 +159,7 @@ function Landing() {
           </div>
           <div className="flex flex-wrap gap-6 md:justify-end" style={{ color: "rgba(250,250,247,0.85)" }}>
             <a href="#how" className="text-sm">How it works</a>
-            <a href="#" className="text-sm">Pricing</a>
+            <Link to="/claim" className="text-sm">Claim a vault</Link>
             <Link to="/advisor" className="text-sm">For Advisors</Link>
             <a href="#" className="text-sm">Privacy</a>
           </div>

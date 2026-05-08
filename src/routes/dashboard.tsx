@@ -9,6 +9,8 @@ import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
 import { formatCAD, getVaults, updateVault, type Vault } from "@/lib/legacy-data";
 import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
+import { evaluateReleases } from "@/lib/vault-release";
+import { resetDemo } from "@/lib/demo-seed";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
@@ -27,9 +29,23 @@ function Dashboard() {
     const u = getUser();
     if (!u) { navigate({ to: "/login" }); return; }
     setUserState(u);
+    const released = evaluateReleases();
     setVaults(getVaults());
     setLinks(getAdvisorLinks());
+    if (released.length) {
+      toast.success(
+        released.length === 1
+          ? "A vault just met its release condition and was released to its beneficiaries."
+          : `${released.length} vaults just met their release conditions.`
+      );
+    }
   }, [navigate]);
+
+  function handleResetDemo() {
+    resetDemo();
+    setVaults(getVaults());
+    toast.success("Demo data reset. Four vaults loaded for the live walkthrough.");
+  }
 
   function handleInviteExternal(e: React.FormEvent) {
     e.preventDefault();
@@ -350,6 +366,17 @@ function Dashboard() {
             New Vault
           </span>
         </Link>
+
+        {/* Demo controls — for hackathon walkthrough */}
+        <button
+          onClick={handleResetDemo}
+          aria-label="Reset demo data"
+          title="Reset demo data — loads a curated scenario for live walkthroughs"
+          className="fixed bottom-8 left-8 z-30 px-3 py-2 rounded-full text-xs flex items-center gap-2"
+          style={{ background: "rgba(26,46,26,0.08)", color: "var(--forest)", border: "1px solid rgba(26,46,26,0.15)", backdropFilter: "blur(6px)" }}
+        >
+          <span aria-hidden>↻</span> Reset demo
+        </button>
       </div>
     </PageShell>
   );
