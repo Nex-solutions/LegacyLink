@@ -143,7 +143,7 @@ function SignupKyc() {
           {loading ? "Preparing verification…" : "Continue to identity check"}
         </button>
         <Link to="/dashboard" className="block text-center text-xs mt-2" style={{ color: "var(--warm-gray)" }}>
-          Skip for now — I'll verify before adding funds
+          Skip for now — I'll verify before creating a trust
         </Link>
       </form>
     </AuthSplit>
