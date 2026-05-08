@@ -83,6 +83,13 @@ function AdvisorDashboard() {
           </div>
 
           <div className="relative flex items-center gap-4">
+            <Link
+              to="/advisor/messages"
+              className="hidden sm:inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-full"
+              style={{ color: "var(--cream)", background: "rgba(250,250,247,0.08)" }}
+            >
+              ✉ Messages
+            </Link>
             <div className="hidden sm:block text-right leading-tight">
               <div className="text-[13px]" style={{ color: "var(--cream)" }}>{advisorDisplayName(advisor)}</div>
               <div className="text-[11px]" style={{ color: "rgba(250,250,247,0.55)" }}>{advisor.firm}</div>
