@@ -170,6 +170,12 @@ function AdvisorSignup() {
           Sign in →
         </Link>
       </p>
+      <p className="mt-3 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
+        Are you an individual?{" "}
+        <Link to="/signup" style={{ color: "var(--honey)", fontWeight: 500 }}>
+          Create an individual account →
+        </Link>
+      </p>
       <p className="mt-6 text-xs text-center" style={{ color: "rgba(74,74,74,0.6)" }}>
         🔒 Advisor accounts are for licensed financial professionals only.
       </p>

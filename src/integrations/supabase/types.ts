@@ -258,27 +258,72 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address1: string | null
+          address2: string | null
+          city: string | null
           created_at: string
           display_name: string | null
+          dob: string | null
+          first_name: string | null
           id: string
+          kyc_status: string
+          kyc_submitted_at: string | null
+          last_name: string | null
+          occupation: string | null
+          paytrie_user_id: string | null
+          paytrie_verification_link: string | null
+          pep: boolean
           phone: string | null
+          postal: string | null
+          province: string | null
           solana_wallet: string | null
+          tpd: boolean
           updated_at: string
         }
         Insert: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
           created_at?: string
           display_name?: string | null
+          dob?: string | null
+          first_name?: string | null
           id: string
+          kyc_status?: string
+          kyc_submitted_at?: string | null
+          last_name?: string | null
+          occupation?: string | null
+          paytrie_user_id?: string | null
+          paytrie_verification_link?: string | null
+          pep?: boolean
           phone?: string | null
+          postal?: string | null
+          province?: string | null
           solana_wallet?: string | null
+          tpd?: boolean
           updated_at?: string
         }
         Update: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
           created_at?: string
           display_name?: string | null
+          dob?: string | null
+          first_name?: string | null
           id?: string
+          kyc_status?: string
+          kyc_submitted_at?: string | null
+          last_name?: string | null
+          occupation?: string | null
+          paytrie_user_id?: string | null
+          paytrie_verification_link?: string | null
+          pep?: boolean
           phone?: string | null
+          postal?: string | null
+          province?: string | null
           solana_wallet?: string | null
+          tpd?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -517,7 +562,7 @@ export type Database = {
       seed_demo_for_user: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "advisor" | "family"
+      app_role: "admin" | "advisor" | "family" | "individual"
       condition_kind: "time" | "inactivity" | "manual"
       event_kind:
         | "fund"
@@ -668,7 +713,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "advisor", "family"],
+      app_role: ["admin", "advisor", "family", "individual"],
       condition_kind: ["time", "inactivity", "manual"],
       event_kind: [
         "fund",

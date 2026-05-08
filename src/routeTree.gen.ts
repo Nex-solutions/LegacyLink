@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DevnetTestRouteImport } from './routes/devnet-test'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreateRouteImport } from './routes/create'
@@ -19,6 +21,7 @@ import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdvisorIndexRouteImport } from './routes/advisor.index'
 import { Route as VaultIdRouteImport } from './routes/vault.$id'
+import { Route as SignupKycRouteImport } from './routes/signup.kyc'
 import { Route as FundsHistoryRouteImport } from './routes/funds.history'
 import { Route as FundsAddRouteImport } from './routes/funds.add'
 import { Route as AdvisorSignupRouteImport } from './routes/advisor.signup'
@@ -37,6 +40,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MessagesRoute = MessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -45,6 +53,11 @@ const MessagesRoute = MessagesRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevnetTestRoute = DevnetTestRouteImport.update({
@@ -81,6 +94,11 @@ const VaultIdRoute = VaultIdRouteImport.update({
   id: '/vault/$id',
   path: '/vault/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SignupKycRoute = SignupKycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => SignupRoute,
 } as any)
 const FundsHistoryRoute = FundsHistoryRouteImport.update({
   id: '/funds/history',
@@ -150,9 +168,11 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/devnet-test': typeof DevnetTestRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
-  '/signup': typeof SignupRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRouteWithChildren
   '/admin/ledger': typeof AdminLedgerRoute
   '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
@@ -162,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/advisor/signup': typeof AdvisorSignupRoute
   '/funds/add': typeof FundsAddRoute
   '/funds/history': typeof FundsHistoryRoute
+  '/signup/kyc': typeof SignupKycRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
@@ -174,9 +195,11 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/devnet-test': typeof DevnetTestRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
-  '/signup': typeof SignupRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRouteWithChildren
   '/admin/ledger': typeof AdminLedgerRoute
   '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
@@ -186,6 +209,7 @@ export interface FileRoutesByTo {
   '/advisor/signup': typeof AdvisorSignupRoute
   '/funds/add': typeof FundsAddRoute
   '/funds/history': typeof FundsHistoryRoute
+  '/signup/kyc': typeof SignupKycRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
@@ -199,9 +223,11 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/devnet-test': typeof DevnetTestRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
-  '/signup': typeof SignupRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRouteWithChildren
   '/admin/ledger': typeof AdminLedgerRoute
   '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
@@ -211,6 +237,7 @@ export interface FileRoutesById {
   '/advisor/signup': typeof AdvisorSignupRoute
   '/funds/add': typeof FundsAddRoute
   '/funds/history': typeof FundsHistoryRoute
+  '/signup/kyc': typeof SignupKycRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
@@ -225,8 +252,10 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/devnet-test'
+    | '/forgot-password'
     | '/login'
     | '/messages'
+    | '/reset-password'
     | '/signup'
     | '/admin/ledger'
     | '/admin/ramps'
@@ -237,6 +266,7 @@ export interface FileRouteTypes {
     | '/advisor/signup'
     | '/funds/add'
     | '/funds/history'
+    | '/signup/kyc'
     | '/vault/$id'
     | '/advisor/'
     | '/advisor/clients/$clientId'
@@ -249,8 +279,10 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/devnet-test'
+    | '/forgot-password'
     | '/login'
     | '/messages'
+    | '/reset-password'
     | '/signup'
     | '/admin/ledger'
     | '/admin/ramps'
@@ -261,6 +293,7 @@ export interface FileRouteTypes {
     | '/advisor/signup'
     | '/funds/add'
     | '/funds/history'
+    | '/signup/kyc'
     | '/vault/$id'
     | '/advisor'
     | '/advisor/clients/$clientId'
@@ -273,8 +306,10 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/devnet-test'
+    | '/forgot-password'
     | '/login'
     | '/messages'
+    | '/reset-password'
     | '/signup'
     | '/admin/ledger'
     | '/admin/ramps'
@@ -285,6 +320,7 @@ export interface FileRouteTypes {
     | '/advisor/signup'
     | '/funds/add'
     | '/funds/history'
+    | '/signup/kyc'
     | '/vault/$id'
     | '/advisor/'
     | '/advisor/clients/$clientId'
@@ -298,9 +334,11 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
   DevnetTestRoute: typeof DevnetTestRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MessagesRoute: typeof MessagesRoute
-  SignupRoute: typeof SignupRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SignupRoute: typeof SignupRouteWithChildren
   AdminLedgerRoute: typeof AdminLedgerRoute
   AdminRampsRoute: typeof AdminRampsRoute
   AdvisorDashboardRoute: typeof AdvisorDashboardRoute
@@ -325,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/messages': {
       id: '/messages'
       path: '/messages'
@@ -337,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devnet-test': {
@@ -387,6 +439,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/vault/$id'
       preLoaderRoute: typeof VaultIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/signup/kyc': {
+      id: '/signup/kyc'
+      path: '/kyc'
+      fullPath: '/signup/kyc'
+      preLoaderRoute: typeof SignupKycRouteImport
+      parentRoute: typeof SignupRoute
     }
     '/funds/history': {
       id: '/funds/history'
@@ -475,6 +534,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SignupRouteChildren {
+  SignupKycRoute: typeof SignupKycRoute
+}
+
+const SignupRouteChildren: SignupRouteChildren = {
+  SignupKycRoute: SignupKycRoute,
+}
+
+const SignupRouteWithChildren =
+  SignupRoute._addFileChildren(SignupRouteChildren)
+
 interface AdvisorClientsClientIdRouteChildren {
   AdvisorClientsClientIdVaultVaultIdRoute: typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
@@ -496,9 +566,11 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
   DevnetTestRoute: DevnetTestRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MessagesRoute: MessagesRoute,
-  SignupRoute: SignupRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SignupRoute: SignupRouteWithChildren,
   AdminLedgerRoute: AdminLedgerRoute,
   AdminRampsRoute: AdminRampsRoute,
   AdvisorDashboardRoute: AdvisorDashboardRoute,

@@ -33,8 +33,8 @@ function Signup() {
         return;
       }
       try { await provision({ data: undefined } as never); } catch (e) { console.warn("wallet provisioning", e); }
-      toast.success("Welcome to LegacyLink.");
-      navigate({ to: "/dashboard" });
+      toast.success("Account created. Let's verify your identity.");
+      navigate({ to: "/signup/kyc" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sign up failed";
       toast.error(msg);
@@ -70,6 +70,9 @@ function Signup() {
       </form>
       <p className="mt-6 text-sm text-center" style={{ color: "var(--warm-gray)" }}>
         Already have an account? <Link to="/login" style={{ color: "var(--honey)" }} className="font-medium">Sign in</Link>
+      </p>
+      <p className="mt-3 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
+        Are you an advisor? <Link to="/advisor/signup" style={{ color: "var(--honey)" }} className="font-medium">Create an advisor account →</Link>
       </p>
       <p className="mt-8 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
         Your vault is created the moment you sign up — protected, private, and yours alone.
