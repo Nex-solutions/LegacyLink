@@ -61,9 +61,12 @@ function VaultDetail() {
 
   useEffect(() => {
     if (!getUser()) { navigate({ to: "/login" }); return; }
+    // Paint immediately from cache if available.
+    const cached = getVault(id);
+    if (cached) setVault(cached);
     (async () => {
       try {
-        await evaluateAndHydrate();
+        await hydrateVaults();
       } catch (e) { console.error(e); }
       const v = getVault(id);
       if (!v) { navigate({ to: "/dashboard" }); return; }
@@ -71,6 +74,12 @@ function VaultDetail() {
       if (shouldRelease(v) && v.status !== "Released") {
         toast.success("This vault just met its release condition. Beneficiaries are being notified.");
       }
+      // Evaluate releases in the background; refresh if anything changed.
+      try {
+        await evaluateAndHydrate();
+        const after = getVault(id);
+        if (after) setVault(after);
+      } catch (e) { console.error(e); }
     })();
   }, [id, navigate]);
 
