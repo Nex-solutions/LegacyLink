@@ -83,15 +83,27 @@ export function VaultCard({ vault, onCheckIn, onSendPdfs, sendingPdfs }: { vault
           View Details →
         </Link>
       </div>
-      {cond.kind === "inactivity" && onCheckIn && (
-        <button
-          onClick={() => onCheckIn(vault.id)}
-          className="ll-pill ll-pill-sage text-sm self-start"
-          style={{ padding: "0.5rem 1.1rem" }}
-        >
-          ✓ Check In
-        </button>
-      )}
+      <div className="flex flex-wrap items-center gap-2 mt-1">
+        {cond.kind === "inactivity" && onCheckIn && (
+          <button
+            onClick={() => onCheckIn(vault.id)}
+            className="ll-pill ll-pill-sage text-sm"
+            style={{ padding: "0.5rem 1.1rem" }}
+          >
+            ✓ Check In
+          </button>
+        )}
+        {onSendPdfs && (
+          <button
+            onClick={() => onSendPdfs(vault.id)}
+            disabled={sendingPdfs}
+            className="ll-pill ll-pill-ghost text-sm"
+            style={{ padding: "0.5rem 1.1rem", opacity: sendingPdfs ? 0.6 : 1 }}
+          >
+            {sendingPdfs ? "Preparing…" : "📄 Send PDFs"}
+          </button>
+        )}
+      </div>
     </motion.div>
   );
 }
