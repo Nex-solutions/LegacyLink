@@ -462,10 +462,12 @@ export type Database = {
           chain: string | null
           condition_kind: Database["public"]["Enums"]["condition_kind"]
           created_at: string
+          failure_count: number
           id: string
           inactivity_days: number | null
           init_tx: string | null
           last_checkin: string | null
+          last_step: string | null
           letter_message: string | null
           name: string
           owner_id: string
@@ -482,10 +484,12 @@ export type Database = {
           chain?: string | null
           condition_kind?: Database["public"]["Enums"]["condition_kind"]
           created_at?: string
+          failure_count?: number
           id?: string
           inactivity_days?: number | null
           init_tx?: string | null
           last_checkin?: string | null
+          last_step?: string | null
           letter_message?: string | null
           name: string
           owner_id: string
@@ -502,10 +506,12 @@ export type Database = {
           chain?: string | null
           condition_kind?: Database["public"]["Enums"]["condition_kind"]
           created_at?: string
+          failure_count?: number
           id?: string
           inactivity_days?: number | null
           init_tx?: string | null
           last_checkin?: string | null
+          last_step?: string | null
           letter_message?: string | null
           name?: string
           owner_id?: string
@@ -585,7 +591,13 @@ export type Database = {
         | "fee"
         | "adjustment"
       ramp_kind: "onramp" | "offramp"
-      vault_status: "pending" | "active" | "released" | "cancelled"
+      vault_status:
+        | "pending"
+        | "active"
+        | "released"
+        | "cancelled"
+        | "draft"
+        | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -739,7 +751,14 @@ export const Constants = {
         "adjustment",
       ],
       ramp_kind: ["onramp", "offramp"],
-      vault_status: ["pending", "active", "released", "cancelled"],
+      vault_status: [
+        "pending",
+        "active",
+        "released",
+        "cancelled",
+        "draft",
+        "failed",
+      ],
     },
   },
 } as const
