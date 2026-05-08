@@ -9,6 +9,7 @@ import { formatCAD, getVault, updateVault, type Vault, type Beneficiary, type Va
 import { getUser } from "@/lib/legacy-auth";
 import { evaluateReleases, shouldRelease } from "@/lib/vault-release";
 import { buildLegacyLetterPdf, downloadPdf } from "@/lib/legacy-letter";
+import { getAdvisorLinks } from "@/lib/legacy-advisors";
 
 
 export const Route = createFileRoute("/vault/$id")({
