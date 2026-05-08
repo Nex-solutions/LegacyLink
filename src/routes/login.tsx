@@ -32,7 +32,7 @@ function Login() {
       // Provision custodial Solana wallet if it doesn't exist yet.
       try { await provision({ data: undefined } as never); } catch (e) { console.warn("wallet provisioning", e); }
       toast.success("Welcome back.");
-      navigate({ to: "/dashboard" });
+      navigate({ to: redirectTo });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sign in failed";
       toast.error(msg);
