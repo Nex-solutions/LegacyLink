@@ -8,6 +8,7 @@ import { submitKyc, getMyKycStatus } from "@/lib/paytrie-onboarding.functions";
 
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({ reason: typeof s.reason === "string" ? s.reason : undefined }),
   component: SignupKyc,
 });
 
@@ -21,8 +22,16 @@ const PROVINCES = [
 
 function SignupKyc() {
   const navigate = useNavigate();
+  const { reason } = Route.useSearch();
   const submit = useServerFn(submitKyc);
   const status = useServerFn(getMyKycStatus);
+  useEffect(() => {
+    if (reason === "funds") {
+      toast.message("Let's finish your profile first ✨", {
+        description: "We just need a few details before you can fund your trust — takes under 2 minutes.",
+      });
+    }
+  }, [reason]);
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
@@ -36,11 +45,21 @@ function SignupKyc() {
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
       if (!sess.session) { navigate({ to: "/login" }); return; }
+      const meta = sess.session.user.user_metadata as { display_name?: string } | undefined;
+      const fallback = (meta?.display_name ?? "").trim();
+      const [fbFirst, ...fbRest] = fallback.split(/\s+/);
+      const fbLast = fbRest.join(" ");
       try {
         const s = await status({ data: undefined } as never);
-        if (s.firstName) setForm((f) => ({ ...f, first_name: s.firstName!, last_name: s.lastName ?? "" }));
+        setForm((f) => ({
+          ...f,
+          first_name: s.firstName || fbFirst || f.first_name,
+          last_name: s.lastName || fbLast || f.last_name,
+        }));
         if (s.verificationLink) setVerificationLink(s.verificationLink);
-      } catch { /* noop */ }
+      } catch {
+        if (fbFirst) setForm((f) => ({ ...f, first_name: fbFirst, last_name: fbLast }));
+      }
     })();
   }, [navigate, status]);
 
@@ -140,7 +159,7 @@ function SignupKyc() {
         </label>
 
         <button disabled={loading} type="submit" className="ll-pill ll-pill-primary w-full mt-2" style={{ height: 52, opacity: loading ? 0.7 : 1 }}>
-          {loading ? "Preparing verification…" : "Continue to identity check"}
+          {loading ? "Preparing verification…" : "Continue"}
         </button>
         <Link to="/dashboard" className="block text-center text-xs mt-2" style={{ color: "var(--warm-gray)" }}>
           Skip for now — I'll verify before creating a trust
