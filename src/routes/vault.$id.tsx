@@ -5,9 +5,10 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/legacy/Nav";
 import { PageShell } from "@/components/legacy/PageShell";
-import { formatCAD, getVault, updateVault, type Vault, type Beneficiary, type VaultCondition } from "@/lib/legacy-data";
+import { formatCAD, getVault, type Vault, type Beneficiary, type VaultCondition } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
-import { evaluateReleases, shouldRelease } from "@/lib/vault-release";
+import { conditionSummary, shouldRelease } from "@/lib/vault-release";
+import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverRelease, serverReplaceBeneficiaries, serverUpdateCondition, serverUpdateLetter, serverAddFunds } from "@/lib/vault-client";
 import { buildLegacyLetterPdf, downloadPdf } from "@/lib/legacy-letter";
 import { getAdvisorLinks } from "@/lib/legacy-advisors";
 
