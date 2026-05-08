@@ -102,14 +102,14 @@ function Dashboard() {
   }
 
 
-  function checkIn(id: string) {
-    const today = new Date().toISOString().slice(0, 10);
-    const v = vaults.find(x => x.id === id);
-    if (v && v.condition.kind === "inactivity") {
-      const updated: Vault = { ...v, condition: { ...v.condition, last_checkin: today } };
-      updateVault(id, updated);
+  async function checkIn(id: string) {
+    try {
+      await serverCheckIn(id);
       setVaults(getVaults());
       toast.success("Checked in. Countdown reset.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't check in");
     }
   }
 
