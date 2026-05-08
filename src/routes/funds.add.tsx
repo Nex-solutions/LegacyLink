@@ -130,7 +130,9 @@ function AddFundsPage() {
             </p>
 
             {!acknowledged ? (
-              <Button className="w-full" onClick={() => setAcknowledged(true)}>I've sent the e-Transfer</Button>
+              <Button className="w-full" onClick={() => { setDemoMethod("interac"); setDemoOpen(true); }}>
+                Make Payment
+              </Button>
             ) : (
               <div className="rounded-lg bg-primary/5 border border-primary/30 p-4 text-center">
                 <p className="font-medium">Your trust is making its way to us 🛡️</p>
@@ -145,6 +147,77 @@ function AddFundsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Demo payment — CA${amount.toFixed(2)}</DialogTitle>
+            <DialogDescription>
+              Sandbox flow. No real money moves. Pick a method and complete the form to simulate payment.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={demoMethod === "interac" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDemoMethod("interac")}
+            >
+              Interac e-Transfer
+            </Button>
+            <Button
+              type="button"
+              variant={demoMethod === "card" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDemoMethod("card")}
+            >
+              Debit / Credit card
+            </Button>
+          </div>
+
+          {demoMethod === "interac" ? (
+            <div className="rounded-lg border p-4 space-y-2 text-sm bg-muted/30">
+              <Field label="Send to" value={intent?.depositEmail ?? ""} />
+              {intent?.rmt && <Field label="Reference" value={intent.rmt} highlight />}
+              <Field label="Amount" value={`CA$${amount.toFixed(2)}`} />
+              <p className="text-xs text-muted-foreground pt-2">
+                In your bank app, send the e-Transfer above. Then tap "I've made payment".
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="cardNumber">Card number</Label>
+                <Input id="cardNumber" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="cardExp">Expiry</Label>
+                  <Input id="cardExp" value={cardExp} onChange={(e) => setCardExp(e.target.value)} placeholder="MM/YY" />
+                </div>
+                <div>
+                  <Label htmlFor="cardCvc">CVC</Label>
+                  <Input id="cardCvc" value={cardCvc} onChange={(e) => setCardCvc(e.target.value)} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sandbox card — no charge will be made.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDemoOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => { setAcknowledged(true); setDemoOpen(false); }}
+              disabled={demoMethod === "card" && (!cardNumber.trim() || !cardExp.trim() || !cardCvc.trim())}
+            >
+              I've made payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
