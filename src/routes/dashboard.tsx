@@ -383,6 +383,12 @@ function Dashboard() {
           className="ll-fab-pulse fixed bottom-8 right-8 w-16 h-16 rounded-full flex items-center justify-center z-30 group"
           style={{ background: "var(--forest)", color: "var(--honey)", fontSize: 32, boxShadow: "0 12px 32px rgba(26,46,26,0.25)" }}
         >
+          <span
+            className="absolute -top-9 whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full"
+            style={{ background: "var(--honey)", color: "var(--forest)", boxShadow: "0 6px 16px rgba(0,0,0,0.15)" }}
+          >
+            + New Vault
+          </span>
           <span style={{ lineHeight: 1, marginTop: -3 }}>+</span>
           <span className="absolute right-20 whitespace-nowrap text-sm px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition" style={{ background: "var(--forest)", color: "var(--cream)" }}>
             New Vault
