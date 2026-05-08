@@ -110,7 +110,7 @@ function Create() {
         name: name || "Untitled Vault",
         amount_cad: amountNum,
         condition: getCondition(),
-        beneficiaries: bens.map((b) => ({ name: b.name, email: b.email, pct: Number(b.pct) })),
+        beneficiaries: bens.map((b) => ({ name: b.name.trim(), email: b.email.trim().toLowerCase(), pct: Number(b.pct) })),
       });
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
       setSuccess(id);
@@ -354,10 +354,9 @@ function Create() {
                 <div className="flex justify-between mt-8">
                   <button onClick={() => setStep(1)} className="ll-pill ll-pill-ghost">← Back</button>
                   <button
-                    onClick={() => setStep(3)}
-                    disabled={totalPct !== 100 || bens.some(b => !b.name || !b.email)}
-                    className="ll-pill ll-pill-secondary"
-                    style={{ opacity: totalPct !== 100 || bens.some(b => !b.name || !b.email) ? 0.5 : 1 }}
+                    disabled={totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim()))}
+                    onClick={submit}
+                    style={{ opacity: totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim())) ? 0.5 : 1 }}
                   >Continue →</button>
                 </div>
               </motion.div>
