@@ -14,12 +14,16 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import anchorPkg from "@coral-xyz/anchor";
+import * as anchorPkg from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
-const { AnchorProvider, Program, BN, Wallet: NodeWallet } = anchorPkg;
 import vaultIdl from "./idl/vault.json";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const anchorDefault = (anchorPkg as unknown as { default?: typeof anchorPkg }).default;
+const AnchorProvider = anchorPkg.AnchorProvider ?? anchorDefault?.AnchorProvider;
+const Program = anchorPkg.Program ?? anchorDefault?.Program;
+const BN = anchorPkg.BN ?? anchorDefault?.BN;
+const NodeWallet = anchorPkg.Wallet ?? anchorDefault?.Wallet;
 const {
   Connection,
   Keypair,
