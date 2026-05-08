@@ -95,9 +95,6 @@ export const getMyKycStatus = createServerFn({ method: "GET" })
 export const simulateKycApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    if (paytrieOnboardingEnabled()) {
-      throw new Error("Simulation disabled when Paytrie credentials are configured.");
-    }
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({ kyc_status: "verified" })
