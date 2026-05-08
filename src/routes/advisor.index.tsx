@@ -39,11 +39,23 @@ function AdvisorLanding() {
   return (
     <PageShell>
       {/* Header */}
-      <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between">
-        <Logo />
-        <nav className="flex items-center gap-3 lg:gap-5">
-          <Link to="/" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>For Families</Link>
-          <Link to="/advisor/login" className="text-sm" style={{ color: "var(--forest)" }}>Sign in</Link>
+      <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 lg:gap-5 min-w-0">
+          <Logo />
+          <span className="hidden md:inline-block h-4 w-px" style={{ background: "rgba(26,46,26,0.14)" }} />
+          <span className="hidden md:inline text-xs uppercase tracking-[0.18em]" style={{ color: "var(--warm-gray)" }}>
+            Advisor Portal
+          </span>
+        </div>
+        <nav className="flex items-center gap-2 sm:gap-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm rounded-full px-3 py-1.5 transition-colors"
+            style={{ color: "var(--forest)", background: "rgba(127,168,130,0.16)" }}
+          >
+            <span aria-hidden>←</span> For Families
+          </Link>
+          <Link to="/advisor/login" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Sign in</Link>
           <Link to="/advisor/signup" className="ll-pill ll-pill-primary text-sm" style={{ padding: "0.55rem 1.2rem" }}>
             Create Advisor Account
           </Link>
