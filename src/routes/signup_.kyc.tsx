@@ -59,7 +59,7 @@ function SignupKyc() {
         }));
         if (s.verificationLink) {
           setVerificationLink(s.verificationLink);
-          setSimulated(!s.paytrieLive);
+          setSimulated(true);
         }
       } catch {
         if (fbFirst) setForm((f) => ({ ...f, first_name: fbFirst, last_name: fbLast }));
@@ -125,11 +125,22 @@ function SignupKyc() {
         <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
           Click below to complete identity verification with our compliance partner. It usually takes under 3 minutes.
         </p>
-        <a href={verificationLink} target="_blank" rel="noreferrer"
-           className="ll-pill ll-pill-primary w-full mt-6 inline-flex items-center justify-center"
-           style={{ height: 52 }}>
-          Verify my identity →
-        </a>
+        <button
+          disabled={loading}
+          onClick={async () => {
+            setLoading(true);
+            try {
+              await approve({ data: undefined } as never);
+              toast.success("You're verified — welcome in ✨");
+              navigate({ to: "/dashboard" });
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Could not finalize.");
+            } finally { setLoading(false); }
+          }}
+          className="ll-pill ll-pill-primary w-full mt-6 inline-flex items-center justify-center"
+          style={{ height: 52, opacity: loading ? 0.7 : 1 }}>
+          {loading ? "Finalizing…" : "Continue →"}
+        </button>
         <button onClick={() => navigate({ to: "/dashboard" })}
                 className="mt-4 w-full text-sm" style={{ color: "var(--warm-gray)" }}>
           Skip for now — I'll verify before creating a trust
