@@ -226,3 +226,78 @@ function InactivityCondition({ cond, onCheckIn }: { cond: { kind: "inactivity"; 
   );
 }
 
+
+function TrusteesPanel({ vault, onChange }: { vault: Vault; onChange: (b: Beneficiary[]) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [list, setList] = useState<Beneficiary[]>(vault.beneficiaries);
+  const total = list.reduce((a, b) => a + (Number(b.pct) || 0), 0);
+
+  function save() {
+    if (total !== 100) { toast.error(`Allocations must total 100% (currently ${total}%)`); return; }
+    if (list.some(b => !b.name.trim() || !b.email.trim())) { toast.error("Every trustee needs a name and email"); return; }
+    onChange(list);
+    setEditing(false);
+    toast.success("Trustees updated");
+  }
+
+  function update(i: number, patch: Partial<Beneficiary>) {
+    setList(list.map((b, idx) => idx === i ? { ...b, ...patch } : b));
+  }
+  function remove(i: number) { setList(list.filter((_, idx) => idx !== i)); }
+  function add() { setList([...list, { name: "", email: "", pct: 0 }]); }
+
+  if (!editing) {
+    return (
+      <div className="ll-card p-8">
+        <div className="flex items-center justify-between gap-3">
+          <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Trustees</h3>
+          <button onClick={() => { setList(vault.beneficiaries); setEditing(true); }} className="ll-pill ll-pill-ghost text-sm">Manage</button>
+        </div>
+        <div className="mt-6 space-y-4">
+          {vault.beneficiaries.map((b) => (
+            <div key={b.email} className="flex items-center gap-4">
+              <Initials name={b.name} />
+              <div className="flex-1 min-w-0">
+                <p style={{ color: "var(--forest)", fontWeight: 500 }}>{b.name}</p>
+                <p className="text-xs truncate" style={{ color: "var(--warm-gray)" }}>{b.email}</p>
+              </div>
+              <div className="text-right">
+                <p style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 22, fontWeight: 600, lineHeight: 1 }}>{b.pct}%</p>
+                <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>{formatCAD(vault.amount_cad * b.pct / 100)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ll-card p-8">
+      <div className="flex items-center justify-between gap-3">
+        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Edit trustees</h3>
+        <span className="text-xs" style={{ color: total === 100 ? "var(--forest)" : "var(--warm-gray)" }}>Total: {total}%</span>
+      </div>
+      <div className="mt-6 space-y-4">
+        {list.map((b, i) => (
+          <div key={i} className="space-y-2 pb-4" style={{ borderBottom: "1px solid rgba(26,46,26,0.08)" }}>
+            <div className="grid grid-cols-2 gap-2">
+              <input value={b.name} onChange={(e) => update(i, { name: e.target.value })} placeholder="Name" className="px-3 py-2 rounded border text-sm" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+              <input value={b.email} onChange={(e) => update(i, { email: e.target.value })} placeholder="Email" className="px-3 py-2 rounded border text-sm" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="number" min={0} max={100} value={b.pct} onChange={(e) => update(i, { pct: Number(e.target.value) })} className="px-3 py-2 rounded border text-sm w-24" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+              <span className="text-xs" style={{ color: "var(--warm-gray)" }}>% allocation</span>
+              <button onClick={() => remove(i)} className="ml-auto text-xs" style={{ color: "var(--warm-gray)" }}>Remove</button>
+            </div>
+          </div>
+        ))}
+        <button onClick={add} className="ll-pill ll-pill-ghost w-full text-sm">+ Add trustee</button>
+      </div>
+      <div className="flex gap-2 mt-6">
+        <button onClick={() => setEditing(false)} className="ll-pill ll-pill-ghost flex-1">Cancel</button>
+        <button onClick={save} className="ll-pill ll-pill-secondary flex-1">Save</button>
+      </div>
+    </div>
+  );
+}
