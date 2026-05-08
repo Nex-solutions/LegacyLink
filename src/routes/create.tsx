@@ -68,6 +68,8 @@ function Create() {
     { name: "", email: "", pct: 100 },
   ]);
   const [trustee, setTrustee] = useState<{ name: string; email: string }>({ name: "", email: "" });
+  const [advisorLinks, setAdvisorLinks] = useState<AdvisorLink[]>([]);
+  const [grantedAdvisors, setGrantedAdvisors] = useState<string[]>([]);
 
   // step 4
   const [agree, setAgree] = useState(false);
