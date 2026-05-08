@@ -7,12 +7,16 @@ import { signIn } from "@/lib/legacy-auth";
 import { provisionWallet } from "@/lib/wallet.functions";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : "/dashboard",
+  }),
   head: () => ({ meta: [{ title: "Sign in — LegacyLink" }] }),
   component: Login,
 });
 
 function Login() {
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
   const provision = useServerFn(provisionWallet);
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -28,7 +32,7 @@ function Login() {
       // Provision custodial Solana wallet if it doesn't exist yet.
       try { await provision({ data: undefined } as never); } catch (e) { console.warn("wallet provisioning", e); }
       toast.success("Welcome back.");
-      navigate({ to: "/dashboard" });
+      navigate({ to: redirectTo });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sign in failed";
       toast.error(msg);

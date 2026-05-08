@@ -15,9 +15,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/admin/ledger")({
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/login" });
+    if (error || !data.user) {
+      throw redirect({ to: "/login", search: { redirect: location.href } });
+    }
   },
   component: AdminLedgerPage,
 });
