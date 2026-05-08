@@ -158,7 +158,7 @@ function Dashboard() {
             <div className="flex items-end justify-between flex-wrap gap-3">
               <div>
                 <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your Advisor</h2>
-                <p className="mt-1" style={{ color: "var(--warm-gray)" }}>Bring your own planner — or pick one of ours. Either way, they're strongly linked to your vaults with read-only access.</p>
+                <p className="mt-1" style={{ color: "var(--warm-gray)" }}>Bring your own planner — or pick one of ours. Linked advisors get read-only access to all your vaults and trustees, and a private chat with you.</p>
               </div>
               <button
                 onClick={() => setAdvisorModal({ mode: "choose" })}
@@ -193,12 +193,23 @@ function Dashboard() {
                     </div>
                     <p className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>
                       {l.status === "connected"
-                        ? "Read-only access to your vaults, beneficiaries and audit trail."
+                        ? "Read-only access to all your vaults, beneficiaries and audit trail."
                         : l.source === "external"
                           ? `We emailed ${l.email} an onboarding link. They'll appear connected once they finish signup.`
                           : "Awaiting their acceptance."}
                     </p>
-                    <div className="mt-4 flex items-center justify-end">
+                    <div className="mt-4 flex items-center justify-between gap-2">
+                      <Link
+                        to="/messages"
+                        className="ll-pill ll-pill-sage text-sm inline-flex items-center gap-1.5"
+                        style={{ padding: "0.45rem 0.95rem" }}
+                        aria-label={`Message ${l.name}`}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                        </svg>
+                        Message
+                      </Link>
                       <button onClick={() => unlink(l.id, l.name)} className="text-xs" style={{ color: "var(--warm-gray)", textDecoration: "underline" }}>Disconnect</button>
                     </div>
                   </div>
