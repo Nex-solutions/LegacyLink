@@ -43,7 +43,7 @@ async function handleEvent(payload: Record<string, unknown>) {
   // Always reflect remote status + payload
   await supabaseAdmin
     .from("ramp_intents")
-    .update({ status, last_webhook: payload })
+    .update({ status, last_webhook: payload as never })
     .eq("id", intent.id);
 
   const isComplete = status === "complete" || status.startsWith("sending USDC-SOL");

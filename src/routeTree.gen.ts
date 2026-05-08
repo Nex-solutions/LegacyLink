@@ -25,6 +25,7 @@ import { Route as AdvisorMessagesRouteImport } from './routes/advisor.messages'
 import { Route as AdvisorLoginRouteImport } from './routes/advisor.login'
 import { Route as AdvisorDashboardRouteImport } from './routes/advisor.dashboard'
 import { Route as AdminLedgerRouteImport } from './routes/admin.ledger'
+import { Route as ApiPublicPaytrieWebhookRouteImport } from './routes/api/public/paytrie-webhook'
 import { Route as AdvisorClientsClientIdRouteImport } from './routes/advisor.clients.$clientId'
 import { Route as AdvisorClientsClientIdVaultVaultIdRouteImport } from './routes/advisor.clients.$clientId.vault.$vaultId'
 
@@ -108,6 +109,11 @@ const AdminLedgerRoute = AdminLedgerRouteImport.update({
   path: '/admin/ledger',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaytrieWebhookRoute = ApiPublicPaytrieWebhookRouteImport.update({
+  id: '/api/public/paytrie-webhook',
+  path: '/api/public/paytrie-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdvisorClientsClientIdRoute = AdvisorClientsClientIdRouteImport.update({
   id: '/advisor/clients/$clientId',
   path: '/advisor/clients/$clientId',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/api/public/paytrie-webhook': typeof ApiPublicPaytrieWebhookRoute
   '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRoutesByTo {
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/vault/$id': typeof VaultIdRoute
   '/advisor': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/api/public/paytrie-webhook': typeof ApiPublicPaytrieWebhookRoute
   '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRoutesById {
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/api/public/paytrie-webhook': typeof ApiPublicPaytrieWebhookRoute
   '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRouteTypes {
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/vault/$id'
     | '/advisor/'
     | '/advisor/clients/$clientId'
+    | '/api/public/paytrie-webhook'
     | '/advisor/clients/$clientId/vault/$vaultId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/vault/$id'
     | '/advisor'
     | '/advisor/clients/$clientId'
+    | '/api/public/paytrie-webhook'
     | '/advisor/clients/$clientId/vault/$vaultId'
   id:
     | '__root__'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/vault/$id'
     | '/advisor/'
     | '/advisor/clients/$clientId'
+    | '/api/public/paytrie-webhook'
     | '/advisor/clients/$clientId/vault/$vaultId'
   fileRoutesById: FileRoutesById
 }
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   VaultIdRoute: typeof VaultIdRoute
   AdvisorIndexRoute: typeof AdvisorIndexRoute
   AdvisorClientsClientIdRoute: typeof AdvisorClientsClientIdRouteWithChildren
+  ApiPublicPaytrieWebhookRoute: typeof ApiPublicPaytrieWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLedgerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/paytrie-webhook': {
+      id: '/api/public/paytrie-webhook'
+      path: '/api/public/paytrie-webhook'
+      fullPath: '/api/public/paytrie-webhook'
+      preLoaderRoute: typeof ApiPublicPaytrieWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/advisor/clients/$clientId': {
       id: '/advisor/clients/$clientId'
       path: '/advisor/clients/$clientId'
@@ -428,6 +448,7 @@ const rootRouteChildren: RootRouteChildren = {
   VaultIdRoute: VaultIdRoute,
   AdvisorIndexRoute: AdvisorIndexRoute,
   AdvisorClientsClientIdRoute: AdvisorClientsClientIdRouteWithChildren,
+  ApiPublicPaytrieWebhookRoute: ApiPublicPaytrieWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

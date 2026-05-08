@@ -217,7 +217,7 @@ export const refreshRampIntent = createServerFn({ method: "POST" })
       const remote = await getTransaction({ txId: row.paytrie_tx_id });
       await supabaseAdmin
         .from("ramp_intents")
-        .update({ status: remote.status, last_webhook: remote as unknown as object })
+        .update({ status: remote.status, last_webhook: remote as never })
         .eq("id", row.id);
       return { intent: { ...row, status: remote.status } };
     } catch (e) {
