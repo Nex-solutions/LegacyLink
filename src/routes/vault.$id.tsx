@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/legacy/Nav";
 import { PageShell } from "@/components/legacy/PageShell";
-import { formatCAD, getVault, updateVault, type Vault, type Beneficiary } from "@/lib/legacy-data";
+import { formatCAD, getVault, updateVault, type Vault, type Beneficiary, type VaultCondition } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
 
 
@@ -146,6 +146,13 @@ function VaultDetail() {
 
         <div className="space-y-6">
           <TrusteesPanel vault={vault} onChange={(b) => { updateVault(vault.id, { beneficiaries: b }); setVault({ ...vault, beneficiaries: b }); }} />
+
+          {vault.status === "Active" && (
+            <ConditionPanel
+              vault={vault}
+              onChange={(c) => { updateVault(vault.id, { condition: c }); setVault({ ...vault, condition: c }); }}
+            />
+          )}
 
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
@@ -498,6 +505,147 @@ function AddFundsButton({ vault, onAdded }: { vault: Vault; onAdded: (amt: numbe
         </div>
       )}
     </>
+  );
+}
+
+function ConditionPanel({ vault, onChange }: { vault: Vault; onChange: (c: VaultCondition) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [kind, setKind] = useState<VaultCondition["kind"]>(vault.condition.kind);
+  const [unlockDate, setUnlockDate] = useState<string>(
+    vault.condition.kind === "time" ? vault.condition.unlock_date : new Date(Date.now() + 86400000 * 30).toISOString().slice(0, 10)
+  );
+  const [days, setDays] = useState<number>(
+    vault.condition.kind === "inactivity" ? vault.condition.inactivity_days : 180
+  );
+
+  function open() {
+    setKind(vault.condition.kind);
+    if (vault.condition.kind === "time") setUnlockDate(vault.condition.unlock_date);
+    if (vault.condition.kind === "inactivity") setDays(vault.condition.inactivity_days);
+    setEditing(true);
+  }
+
+  function save() {
+    let next: VaultCondition;
+    if (kind === "time") {
+      const target = parseISO(unlockDate);
+      if (differenceInDays(target, new Date()) < 1) {
+        toast.error("Unlock date must be at least 1 day in the future");
+        return;
+      }
+      next = { kind: "time", unlock_date: unlockDate };
+    } else if (kind === "inactivity") {
+      if (!days || days < 7 || days > 3650) {
+        toast.error("Inactivity window must be between 7 and 3650 days");
+        return;
+      }
+      const lastCheckin = vault.condition.kind === "inactivity" ? vault.condition.last_checkin : new Date().toISOString().slice(0, 10);
+      const elapsed = Math.max(0, differenceInDays(new Date(), parseISO(lastCheckin)));
+      if (days <= elapsed) {
+        toast.error(`That window is shorter than the ${elapsed} days since your last check-in`);
+        return;
+      }
+      next = { kind: "inactivity", inactivity_days: days, last_checkin: lastCheckin };
+    } else {
+      next = { kind: "manual" };
+    }
+    onChange(next);
+    setEditing(false);
+    toast.success("Release conditions updated");
+  }
+
+  const cond = vault.condition;
+
+  if (!editing) {
+    return (
+      <div className="ll-card p-8">
+        <div className="flex items-center justify-between gap-3">
+          <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Release conditions</h3>
+          <button onClick={open} className="ll-pill ll-pill-ghost text-sm">Change</button>
+        </div>
+        <div className="mt-6 space-y-2 text-sm">
+          <p style={{ color: "var(--forest)", fontWeight: 500 }}>
+            {cond.kind === "time" && "Time-locked"}
+            {cond.kind === "inactivity" && "Inactivity check-in"}
+            {cond.kind === "manual" && "Manual release"}
+          </p>
+          <p style={{ color: "var(--warm-gray)" }}>
+            {cond.kind === "time" && `Unlocks ${format(parseISO(cond.unlock_date), "MMMM d, yyyy")}`}
+            {cond.kind === "inactivity" && `Releases after ${cond.inactivity_days} days of silence`}
+            {cond.kind === "manual" && "Released only when you say so"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const tabs: Array<{ k: VaultCondition["kind"]; label: string }> = [
+    { k: "time", label: "Time" },
+    { k: "inactivity", label: "Inactivity" },
+    { k: "manual", label: "Manual" },
+  ];
+
+  return (
+    <div className="ll-card p-8">
+      <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Edit release</h3>
+      <div className="mt-5 flex gap-2">
+        {tabs.map(t => (
+          <button
+            key={t.k}
+            onClick={() => setKind(t.k)}
+            className="px-3 py-1.5 rounded-full text-xs font-medium flex-1"
+            style={{
+              background: kind === t.k ? "var(--forest)" : "transparent",
+              color: kind === t.k ? "var(--cream)" : "var(--forest)",
+              border: "1px solid var(--forest)",
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {kind === "time" && (
+          <div>
+            <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Unlock date</label>
+            <input
+              type="date"
+              value={unlockDate}
+              min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+              onChange={(e) => setUnlockDate(e.target.value)}
+              className="mt-1 w-full px-3 py-2 rounded border text-sm"
+              style={{ borderColor: "rgba(26,46,26,0.2)" }}
+            />
+          </div>
+        )}
+        {kind === "inactivity" && (
+          <div>
+            <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Days of silence before release</label>
+            <input
+              type="number" min={7} max={3650}
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="mt-1 w-full px-3 py-2 rounded border text-sm"
+              style={{ borderColor: "rgba(26,46,26,0.2)" }}
+            />
+            {vault.condition.kind === "inactivity" && (
+              <p className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>
+                Last check-in: {format(parseISO(vault.condition.last_checkin), "MMMM d, yyyy")}
+              </p>
+            )}
+          </div>
+        )}
+        {kind === "manual" && (
+          <p className="text-sm" style={{ color: "var(--warm-gray)" }}>The vault waits until you release it manually. No timer, no auto-trigger.</p>
+        )}
+      </div>
+
+      <div className="flex gap-2 mt-6">
+        <button onClick={() => setEditing(false)} className="ll-pill ll-pill-ghost flex-1">Cancel</button>
+        <button onClick={save} className="ll-pill ll-pill-secondary flex-1">Save</button>
+      </div>
+    </div>
   );
 }
 
