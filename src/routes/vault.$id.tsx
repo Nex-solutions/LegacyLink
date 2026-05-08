@@ -714,3 +714,67 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
     </div>
   );
 }
+
+const LETTER_KEY = "legacylink:letter:";
+
+function LegacyLetterPanel({ vault }: { vault: Vault }) {
+  const [message, setMessage] = useState<string>(() => {
+    if (typeof window === "undefined") return defaultLetter(vault);
+    return localStorage.getItem(LETTER_KEY + vault.id) ?? defaultLetter(vault);
+  });
+  const [generating, setGenerating] = useState(false);
+
+  function saveDraft(next: string) {
+    setMessage(next);
+    if (typeof window !== "undefined") localStorage.setItem(LETTER_KEY + vault.id, next);
+  }
+
+  async function download() {
+    setGenerating(true);
+    try {
+      const u = getUser();
+      const bytes = await buildLegacyLetterPdf({
+        vault,
+        ownerName: u?.name ?? "The vault owner",
+        ownerEmail: u?.email ?? "",
+        message: message.trim() || defaultLetter(vault),
+      });
+      downloadPdf(bytes, `${vault.name.replace(/\s+/g, "-").toLowerCase()}-legacy-letter.pdf`);
+      toast.success("Legacy letter downloaded.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't generate the letter. Try again.");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="ll-card p-8">
+      <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Legacy letter</h3>
+      <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+        A printable letter for your beneficiaries — your own words, alongside the vault's terms.
+      </p>
+      <textarea
+        value={message}
+        onChange={(e) => saveDraft(e.target.value)}
+        rows={6}
+        className="mt-4 w-full px-3 py-2 rounded border text-sm"
+        style={{ borderColor: "rgba(26,46,26,0.2)", fontFamily: "var(--font-serif)", lineHeight: 1.55 }}
+      />
+      <button
+        onClick={download}
+        disabled={generating}
+        className="ll-pill ll-pill-secondary w-full mt-4"
+        style={{ opacity: generating ? 0.6 : 1 }}
+      >
+        {generating ? "Preparing PDF…" : "Download legacy letter (PDF)"}
+      </button>
+    </div>
+  );
+}
+
+function defaultLetter(v: Vault): string {
+  const names = v.beneficiaries.map(b => b.name.split(" ")[0]).join(", ");
+  return `To ${names || "my loved ones"},\n\nIf you are reading this, the conditions on this vault have been met. The funds set aside here are yours, with my love. Use them well, and look after each other.\n\nThis was never just about the money — it was about making sure you would be okay.\n\nWith all my love,`;
+}
