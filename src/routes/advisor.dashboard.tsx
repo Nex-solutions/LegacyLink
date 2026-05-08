@@ -245,7 +245,7 @@ function AdvisorDashboard() {
                     <tr key={i} className="border-t" style={{ borderColor: "rgba(26,46,26,0.06)" }}>
                       <td className="px-4 py-3" style={{ color: "var(--forest)", fontWeight: 500 }}>{b.name}</td>
                       <td className="px-4 py-3">
-                        <Link to="/advisor/client/$clientId" params={{ clientId: b.clientId }} style={{ color: "var(--honey)" }}>{b.clientName}</Link>
+                        <Link to="/advisor/clients/$clientId" params={{ clientId: b.clientId }} style={{ color: "var(--honey)" }}>{b.clientName}</Link>
                       </td>
                       <td className="px-4 py-3" style={{ color: "var(--warm-gray)" }}>{b.vaultName}</td>
                       <td className="px-4 py-3" style={{ color: "var(--honey)", fontWeight: 600 }}>{formatCAD(b.amount_cad)}</td>
@@ -268,7 +268,7 @@ function AdvisorDashboard() {
                   {upcoming.map((u) => (
                     <Link
                       key={`${u.clientId}-${u.vaultId}`}
-                      to="/advisor/client/$clientId/vault/$vaultId"
+                      to="/advisor/clients/$clientId/vault/$vaultId"
                       params={{ clientId: u.clientId, vaultId: u.vaultId }}
                       className="flex items-center gap-4 p-3 rounded-xl transition hover:bg-[rgba(232,160,32,0.08)]"
                     >
@@ -303,7 +303,7 @@ function AdvisorDashboard() {
                 {risks.slice(0, 5).map((r) => (
                   <Link
                     key={r.id}
-                    to="/advisor/client/$clientId/vault/$vaultId"
+                    to="/advisor/clients/$clientId/vault/$vaultId"
                     params={{ clientId: r.clientId, vaultId: r.vaultId }}
                     className="block p-3 rounded-xl transition hover:bg-[rgba(26,46,26,0.04)]"
                   >
@@ -499,7 +499,7 @@ function ClientCard({ client, expanded, onToggle }: {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              to="/advisor/client/$clientId"
+              to="/advisor/clients/$clientId"
               params={{ clientId: client.id }}
               className="text-sm font-medium"
               style={{ color: "var(--forest)" }}
@@ -574,7 +574,7 @@ function ReadOnlyVault({ clientId, vault }: { clientId: string; vault: ClientVau
           </span>
         ))}
         <Link
-          to="/advisor/client/$clientId/vault/$vaultId"
+          to="/advisor/clients/$clientId/vault/$vaultId"
           params={{ clientId, vaultId: vault.id }}
           className="ml-auto text-[12px]" style={{ color: "var(--honey)" }}>
           View Full Detail →

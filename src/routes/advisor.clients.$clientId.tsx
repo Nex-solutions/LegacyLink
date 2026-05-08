@@ -10,7 +10,7 @@ import {
   subscribeWorkspace, toggleTask,
 } from "@/lib/advisor-workspace";
 
-export const Route = createFileRoute("/advisor/client/$clientId")({
+export const Route = createFileRoute("/advisor/clients/$clientId")({
   head: () => ({ meta: [{ title: "Client — LegacyLink Advisor" }] }),
   component: ClientDetail,
 });
@@ -205,7 +205,7 @@ function VaultMini({ clientId, vault }: { clientId: string; vault: ClientVault }
     : "Manual release";
   return (
     <Link
-      to="/advisor/client/$clientId/vault/$vaultId"
+      to="/advisor/clients/$clientId/vault/$vaultId"
       params={{ clientId, vaultId: vault.id }}
       className="ll-card p-5 block transition hover:-translate-y-0.5"
     >
