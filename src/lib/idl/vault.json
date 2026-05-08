@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "name": "vault",
+  "instructions": [],
+  "accounts": [],
+  "metadata": {
+    "address": "Hgoj8QY12vd8iVZJczjuNw2Z6z4XHhFRYWP7ikHeBava",
+    "note": "PLACEHOLDER — Replace this file with the IDL exported from Solana Playground (left sidebar -> Program -> IDL -> Download)."
+  }
+}
