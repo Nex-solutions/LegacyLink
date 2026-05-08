@@ -29,7 +29,7 @@ function Initials({ name, i }: { name: string; i: number }) {
   );
 }
 
-export function VaultCard({ vault, onCheckIn, onSendPdfs, sendingPdfs }: { vault: Vault; onCheckIn?: (id: string) => void; onSendPdfs?: (id: string) => void; sendingPdfs?: boolean }) {
+export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id: string) => void }) {
   const cond = vault.condition;
   let conditionText = "";
   let progress = 0;
