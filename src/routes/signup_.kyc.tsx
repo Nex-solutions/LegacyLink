@@ -86,7 +86,7 @@ function SignupKyc() {
         </a>
         <button onClick={() => navigate({ to: "/dashboard" })}
                 className="mt-4 w-full text-sm" style={{ color: "var(--warm-gray)" }}>
-          I'll do this later
+          Skip for now — I'll verify before creating a trust
         </button>
       </AuthSplit>
     );
