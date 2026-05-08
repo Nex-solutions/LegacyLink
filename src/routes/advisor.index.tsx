@@ -22,16 +22,16 @@ const FIRMS = [
 
 const VALUES = [
   {
-    icon: "🔍", title: "Full Visibility",
-    body: "See every vault, condition, and upcoming release across your entire client book.",
+    n: "01", title: "Full Visibility",
+    body: "See every vault, condition, and upcoming release across your entire client book — in real time.",
   },
   {
-    icon: "⚡", title: "Proactive Alerts",
-    body: "Get notified when clients go quiet, vaults are about to release, or anything needs attention.",
+    n: "02", title: "Proactive Alerts",
+    body: "Get notified the moment a client goes quiet, a vault nears release, or a condition needs review.",
   },
   {
-    icon: "🤝", title: "Easy Onboarding",
-    body: "Invite clients directly from your dashboard. They're set up in minutes.",
+    n: "03", title: "Effortless Onboarding",
+    body: "Invite clients directly from your dashboard. They are protected within minutes, not weeks.",
   },
 ];
 
