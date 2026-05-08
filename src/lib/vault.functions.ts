@@ -543,3 +543,40 @@ export const resetDemoServer = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ─── Ensure claim tokens for all beneficiaries (used by "Send PDF") ───
+
+export const ensureClaimTokens = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ vault_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ beneficiaries: Array<{ id: string; name: string; email: string; pct: number; claim_token: string }> }> => {
+    const { supabase, userId } = context;
+
+    // Owner check via RLS
+    const { data: vaultRow, error: vErr } = await supabase
+      .from("vaults").select("id, owner_id").eq("id", data.vault_id).maybeSingle();
+    if (vErr) throw vErr;
+    if (!vaultRow || vaultRow.owner_id !== userId) throw new Error("Vault not found");
+
+    const { data: bens, error: bErr } = await supabaseAdmin
+      .from("beneficiaries")
+      .select("id, name, email, pct, claim_token")
+      .eq("vault_id", data.vault_id);
+    if (bErr) throw bErr;
+
+    const updates = (bens ?? [])
+      .filter((b) => !b.claim_token)
+      .map(async (b) => {
+        const token = crypto.randomUUID();
+        await supabaseAdmin.from("beneficiaries").update({ claim_token: token }).eq("id", b.id);
+        b.claim_token = token;
+      });
+    await Promise.all(updates);
+
+    return {
+      beneficiaries: (bens ?? []).map((b) => ({
+        id: b.id, name: b.name, email: b.email, pct: Number(b.pct), claim_token: b.claim_token!,
+      })),
+    };
+  });
+
