@@ -164,12 +164,18 @@ function VaultDetail() {
         </div>
 
         <div className="space-y-6">
-          <TrusteesPanel vault={vault} onChange={(b) => { updateVault(vault.id, { beneficiaries: b }); setVault({ ...vault, beneficiaries: b }); }} />
+          <TrusteesPanel vault={vault} onChange={async (b) => {
+            try { await serverReplaceBeneficiaries(vault.id, b); const v = getVault(vault.id); if (v) setVault(v); }
+            catch (e) { console.error(e); toast.error("Couldn't update trustees"); }
+          }} />
 
           {vault.status === "Active" && (
             <ConditionPanel
               vault={vault}
-              onChange={(c) => { updateVault(vault.id, { condition: c }); setVault({ ...vault, condition: c }); }}
+              onChange={async (c) => {
+                try { await serverUpdateCondition(vault.id, c); const v = getVault(vault.id); if (v) setVault(v); }
+                catch (e) { console.error(e); toast.error("Couldn't update condition"); }
+              }}
             />
           )}
 
@@ -177,7 +183,10 @@ function VaultDetail() {
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
             <div className="mt-6 space-y-3">
               {vault.status === "Active" && (
-                <AddFundsButton vault={vault} onAdded={(amt) => { const next = { ...vault, amount_cad: vault.amount_cad + amt }; updateVault(vault.id, { amount_cad: next.amount_cad }); setVault(next); }} />
+                <AddFundsButton vault={vault} onAdded={async (amt) => {
+                  try { await serverAddFunds(vault.id, amt); const v = getVault(vault.id); if (v) setVault(v); }
+                  catch (e) { console.error(e); toast.error("Couldn't add funds"); }
+                }} />
               )}
               {cond.kind === "manual" && vault.status === "Active" && (
                 <button onClick={() => setShowRelease(true)} className="ll-pill ll-pill-secondary w-full">Release Now</button>
