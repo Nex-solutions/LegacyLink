@@ -91,3 +91,17 @@ export const getMyKycStatus = createServerFn({ method: "GET" })
       paytrieLive: paytrieOnboardingEnabled(),
     };
   });
+
+export const simulateKycApproval = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (paytrieOnboardingEnabled()) {
+      throw new Error("Simulation disabled when Paytrie credentials are configured.");
+    }
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ kyc_status: "verified" })
+      .eq("id", context.userId);
+    if (error) throw error;
+    return { ok: true };
+  });

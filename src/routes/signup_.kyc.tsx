@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AuthSplit } from "@/components/legacy/AuthSplit";
 import { supabase } from "@/integrations/supabase/client";
-import { submitKyc, getMyKycStatus } from "@/lib/paytrie-onboarding.functions";
+import { submitKyc, getMyKycStatus, simulateKycApproval } from "@/lib/paytrie-onboarding.functions";
 
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
@@ -25,6 +25,7 @@ function SignupKyc() {
   const { reason } = Route.useSearch();
   const submit = useServerFn(submitKyc);
   const status = useServerFn(getMyKycStatus);
+  const approve = useServerFn(simulateKycApproval);
   useEffect(() => {
     if (reason === "funds") {
       toast.message("Let's finish your profile first ✨", {
@@ -85,6 +86,34 @@ function SignupKyc() {
   }
 
   if (verificationLink) {
+    if (simulated) {
+      return (
+        <AuthSplit quote="Welcome home — your legacy is in safe hands.">
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 36, fontWeight: 600, color: "var(--forest)" }}>
+            You're all set, {form.first_name || "friend"} 🌿
+          </h1>
+          <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
+            Your identity is verified and your vault is ready. Thank you for trusting us with what matters most — let's begin building your legacy.
+          </p>
+          <button
+            disabled={loading}
+            onClick={async () => {
+              setLoading(true);
+              try {
+                await approve({ data: undefined } as never);
+                toast.success("Identity verified ✓");
+                navigate({ to: "/dashboard" });
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Could not finalize.");
+              } finally { setLoading(false); }
+            }}
+            className="ll-pill ll-pill-primary w-full mt-6 inline-flex items-center justify-center"
+            style={{ height: 52, opacity: loading ? 0.7 : 1 }}>
+            {loading ? "Finalizing…" : "Take me to my dashboard →"}
+          </button>
+        </AuthSplit>
+      );
+    }
     return (
       <AuthSplit quote="Identity verified once. Trusted forever.">
         <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 36, fontWeight: 600, color: "var(--forest)" }}>
@@ -93,11 +122,6 @@ function SignupKyc() {
         <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
           Click below to complete identity verification with our compliance partner. It usually takes under 3 minutes.
         </p>
-        {simulated && (
-          <div className="mt-4 text-xs px-3 py-2 rounded" style={{ background: "var(--sage)", color: "var(--forest)" }}>
-            Dev mode — Paytrie credentials not configured. This link is simulated.
-          </div>
-        )}
         <a href={verificationLink} target="_blank" rel="noreferrer"
            className="ll-pill ll-pill-primary w-full mt-6 inline-flex items-center justify-center"
            style={{ height: 52 }}>
