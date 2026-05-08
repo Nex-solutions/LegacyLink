@@ -4,7 +4,14 @@
 // return. All write ops go through these helpers so swapping to a real
 // service later is a one-file change.
 
-export type Beneficiary = { name: string; email: string; pct: number };
+export type Beneficiary = {
+  name: string;
+  email: string;
+  pct: number;
+  id?: string;
+  claimed_at?: string | null;
+  claim_token?: string | null;
+};
 
 export type VaultCondition =
   | { kind: "time"; unlock_date: string }
