@@ -145,29 +145,11 @@ function VaultDetail() {
         </div>
 
         <div className="space-y-6">
-          <div className="ll-card p-8">
-            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Beneficiaries</h3>
-            <div className="mt-6 space-y-4">
-              {vault.beneficiaries.map((b) => (
-                <div key={b.email} className="flex items-center gap-4">
-                  <Initials name={b.name} />
-                  <div className="flex-1 min-w-0">
-                    <p style={{ color: "var(--forest)", fontWeight: 500 }}>{b.name}</p>
-                    <p className="text-xs truncate" style={{ color: "var(--warm-gray)" }}>{b.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <p style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 22, fontWeight: 600, lineHeight: 1 }}>{b.pct}%</p>
-                    <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>{formatCAD(vault.amount_cad * b.pct / 100)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TrusteesPanel vault={vault} onChange={(b) => { updateVault(vault.id, { beneficiaries: b }); setVault({ ...vault, beneficiaries: b }); }} />
 
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
             <div className="mt-6 space-y-3">
-              <button className="ll-pill ll-pill-ghost w-full">Edit Beneficiaries</button>
               {cond.kind === "manual" && vault.status === "Active" && (
                 <button onClick={() => setShowRelease(true)} className="ll-pill ll-pill-secondary w-full">Release Now</button>
               )}
