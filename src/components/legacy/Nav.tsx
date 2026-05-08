@@ -31,8 +31,8 @@ export function AppHeader() {
       <nav className="flex items-center gap-3 lg:gap-5">
         <Link
           to="/advisor"
-          className="hidden sm:inline-flex items-center gap-1.5 text-sm tracking-tight"
-          style={{ color: "var(--warm-gray)" }}
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm tracking-tight rounded-full px-3 py-1.5 transition-colors"
+          style={{ color: "var(--forest)", background: "rgba(232,160,32,0.14)" }}
         >
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
           For Advisors
