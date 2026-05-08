@@ -13,7 +13,6 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreateRouteImport } from './routes/create'
-import { Route as AdvisorRouteImport } from './routes/advisor'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VaultIdRouteImport } from './routes/vault.$id'
 import { Route as AdvisorLoginRouteImport } from './routes/advisor.login'
@@ -38,11 +37,6 @@ const CreateRoute = CreateRouteImport.update({
   path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdvisorRoute = AdvisorRouteImport.update({
-  id: '/advisor',
-  path: '/advisor',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -61,7 +55,6 @@ const AdvisorLoginRoute = AdvisorLoginRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/advisor': typeof AdvisorRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -71,7 +64,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/advisor': typeof AdvisorRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -82,7 +74,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/advisor': typeof AdvisorRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -94,7 +85,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/advisor'
     | '/create'
     | '/dashboard'
     | '/login'
@@ -104,7 +94,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/advisor'
     | '/create'
     | '/dashboard'
     | '/login'
@@ -114,7 +103,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/advisor'
     | '/create'
     | '/dashboard'
     | '/login'
@@ -125,7 +113,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdvisorRoute: typeof AdvisorRouteWithChildren
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
@@ -163,13 +150,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/advisor': {
-      id: '/advisor'
-      path: '/advisor'
-      fullPath: '/advisor'
-      preLoaderRoute: typeof AdvisorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -194,20 +174,8 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdvisorRouteChildren {
-  AdvisorLoginRoute: typeof AdvisorLoginRoute
-}
-
-const AdvisorRouteChildren: AdvisorRouteChildren = {
-  AdvisorLoginRoute: AdvisorLoginRoute,
-}
-
-const AdvisorRouteWithChildren =
-  AdvisorRoute._addFileChildren(AdvisorRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdvisorRoute: AdvisorRouteWithChildren,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
@@ -217,3 +185,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
