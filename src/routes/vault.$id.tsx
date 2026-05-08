@@ -723,24 +723,63 @@ function LegacyLetterPanel({ vault }: { vault: Vault }) {
     return localStorage.getItem(LETTER_KEY + vault.id) ?? defaultLetter(vault);
   });
   const [generating, setGenerating] = useState(false);
+  const [showSign, setShowSign] = useState(false);
+  const [ownerSig, setOwnerSig] = useState("");
+  const [advisorSig, setAdvisorSig] = useState("");
+  const [advisorAck, setAdvisorAck] = useState(false);
+
+  // Load linked advisors only on the client to avoid SSR localStorage access.
+  const [advisors, setAdvisors] = useState<{ name: string; email: string }[]>([]);
+  useEffect(() => {
+    setAdvisors(getAdvisorLinks().filter(l => l.status === "connected").map(l => ({ name: l.name, email: l.email })));
+  }, []);
+  const requiresAdvisor = advisors.length > 0;
+  const advisorName = advisors[0]?.name ?? "";
 
   function saveDraft(next: string) {
     setMessage(next);
     if (typeof window !== "undefined") localStorage.setItem(LETTER_KEY + vault.id, next);
   }
 
-  async function download() {
+  function openSign() {
+    const u = getUser();
+    setOwnerSig(u?.name ?? "");
+    setAdvisorSig("");
+    setAdvisorAck(false);
+    setShowSign(true);
+  }
+
+  async function downloadSigned() {
+    const u = getUser();
+    if (!ownerSig.trim() || ownerSig.trim().toLowerCase() !== (u?.name ?? "").trim().toLowerCase()) {
+      toast.error("Type your full name exactly as it appears on your account to sign.");
+      return;
+    }
+    if (requiresAdvisor) {
+      if (!advisorAck) { toast.error("Your advisor must confirm they've reviewed this letter."); return; }
+      if (!advisorSig.trim() || advisorSig.trim().toLowerCase() !== advisorName.toLowerCase()) {
+        toast.error(`Advisor signature must match: ${advisorName}`);
+        return;
+      }
+    }
+
     setGenerating(true);
     try {
-      const u = getUser();
+      const now = new Date().toISOString();
+      const sigs = [
+        { name: ownerSig.trim(), role: "Owner" as const, signedAt: now },
+        ...(requiresAdvisor ? [{ name: advisorSig.trim(), role: "Advisor" as const, signedAt: now }] : []),
+      ];
       const bytes = await buildLegacyLetterPdf({
         vault,
         ownerName: u?.name ?? "The vault owner",
         ownerEmail: u?.email ?? "",
         message: message.trim() || defaultLetter(vault),
+        signatures: sigs,
       });
       downloadPdf(bytes, `${vault.name.replace(/\s+/g, "-").toLowerCase()}-legacy-letter.pdf`);
-      toast.success("Legacy letter downloaded.");
+      toast.success(requiresAdvisor ? "Letter co-signed and downloaded." : "Letter signed and downloaded.");
+      setShowSign(false);
     } catch (e) {
       console.error(e);
       toast.error("Couldn't generate the letter. Try again.");
@@ -754,6 +793,8 @@ function LegacyLetterPanel({ vault }: { vault: Vault }) {
       <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Legacy letter</h3>
       <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
         A printable letter for your beneficiaries — your own words, alongside the vault's terms.
+        {requiresAdvisor && <> Requires <strong>your signature and {advisorName}'s</strong> before it can be issued.</>}
+        {!requiresAdvisor && <> Requires <strong>your signature</strong> before it can be issued.</>}
       </p>
       <textarea
         value={message}
@@ -763,13 +804,59 @@ function LegacyLetterPanel({ vault }: { vault: Vault }) {
         style={{ borderColor: "rgba(26,46,26,0.2)", fontFamily: "var(--font-serif)", lineHeight: 1.55 }}
       />
       <button
-        onClick={download}
-        disabled={generating}
+        onClick={openSign}
         className="ll-pill ll-pill-secondary w-full mt-4"
-        style={{ opacity: generating ? 0.6 : 1 }}
       >
-        {generating ? "Preparing PDF…" : "Download legacy letter (PDF)"}
+        Sign &amp; download letter (PDF)
       </button>
+
+      {showSign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(26,46,26,0.5)" }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="ll-card p-8 max-w-md w-full">
+            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>Sign your legacy letter</h3>
+            <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+              Type your full name to sign. {requiresAdvisor && <>Your linked advisor <strong>{advisorName}</strong> must also co-sign.</>}
+            </p>
+
+            <div className="mt-5">
+              <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Your signature (Owner)</label>
+              <input
+                value={ownerSig}
+                onChange={(e) => setOwnerSig(e.target.value)}
+                placeholder={getUser()?.name ?? "Your full name"}
+                autoFocus
+                className="mt-1 w-full px-3 py-2 rounded border"
+                style={{ borderColor: "rgba(26,46,26,0.2)", fontFamily: "var(--font-serif)", fontSize: 18 }}
+              />
+              <p className="text-[11px] mt-1" style={{ color: "var(--warm-gray)" }}>Must match the name on your account.</p>
+            </div>
+
+            {requiresAdvisor && (
+              <div className="mt-4">
+                <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Advisor signature</label>
+                <input
+                  value={advisorSig}
+                  onChange={(e) => setAdvisorSig(e.target.value)}
+                  placeholder={advisorName}
+                  className="mt-1 w-full px-3 py-2 rounded border"
+                  style={{ borderColor: "rgba(26,46,26,0.2)", fontFamily: "var(--font-serif)", fontSize: 18 }}
+                />
+                <label className="mt-3 flex items-start gap-2 text-xs" style={{ color: "var(--forest)" }}>
+                  <input type="checkbox" checked={advisorAck} onChange={(e) => setAdvisorAck(e.target.checked)} className="mt-0.5" />
+                  <span>{advisorName} has reviewed the conditions, beneficiaries and message above.</span>
+                </label>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowSign(false)} disabled={generating} className="ll-pill ll-pill-ghost">Cancel</button>
+              <button onClick={downloadSigned} disabled={generating} className="ll-pill ll-pill-secondary">
+                {generating ? "Sealing…" : requiresAdvisor ? "Co-sign & download" : "Sign & download"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
