@@ -50,11 +50,11 @@ export async function postLedgerTx(args: {
 }): Promise<string> {
   const { data, error } = await supabaseAdmin.rpc("post_ledger_transaction", {
     _kind: args.kind,
-    _reference: args.reference ?? null,
-    _external_ref: args.externalRef ?? null,
-    _memo: args.memo ?? null,
-    _tx_signature: args.txSignature ?? null,
-    _user_id: args.userId ?? null,
+    _reference: (args.reference ?? null) as unknown as string,
+    _external_ref: (args.externalRef ?? null) as unknown as string,
+    _memo: (args.memo ?? null) as unknown as string,
+    _tx_signature: (args.txSignature ?? null) as unknown as string,
+    _user_id: (args.userId ?? null) as unknown as string,
     _entries: args.entries.map((e) => ({
       account_id: e.account_id,
       side: e.side,
