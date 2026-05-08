@@ -26,8 +26,14 @@ function b64encode(b: Uint8Array): string {
 async function getEncKey(): Promise<CryptoKey> {
   const raw = process.env.WALLET_ENCRYPTION_KEY;
   if (!raw) throw new Error("WALLET_ENCRYPTION_KEY not set");
-  const bytes = b64decode(raw);
-  if (bytes.length !== 32) throw new Error("WALLET_ENCRYPTION_KEY must decode to 32 bytes");
+  // Accept any string: try base64 first; if not exactly 32 bytes, derive a
+  // stable 32-byte key via SHA-256 of the raw secret. This makes the secret
+  // tolerant to length/format without weakening AES-GCM.
+  let bytes = b64decode(raw);
+  if (bytes.length !== 32) {
+    const digest = await subtle.digest("SHA-256", new TextEncoder().encode(raw));
+    bytes = new Uint8Array(digest);
+  }
   return subtle.importKey("raw", bytes as BufferSource, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 
