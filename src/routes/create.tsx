@@ -110,7 +110,7 @@ function Create() {
         name: name || "Untitled Vault",
         amount_cad: amountNum,
         condition: getCondition(),
-        beneficiaries: bens.map((b) => ({ name: b.name, email: b.email, pct: Number(b.pct) })),
+        beneficiaries: bens.map((b) => ({ name: b.name.trim(), email: b.email.trim().toLowerCase(), pct: Number(b.pct) })),
       });
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
       setSuccess(id);
