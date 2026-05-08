@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/legacy/Nav";
 import { PageShell } from "@/components/legacy/PageShell";
 import { formatCAD, getVault, updateVault, type Vault } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
+import { getAdvisorLinks, type AdvisorLink } from "@/lib/legacy-advisors";
 
 export const Route = createFileRoute("/vault/$id")({
   head: () => ({ meta: [{ title: "Vault — LegacyLink" }] }),
