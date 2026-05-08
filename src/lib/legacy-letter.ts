@@ -7,11 +7,18 @@ import type { Vault } from "./legacy-data";
 import { conditionSummary } from "./vault-release";
 import { formatCAD } from "./legacy-data";
 
+export type Signature = {
+  name: string;
+  role: "Owner" | "Advisor";
+  signedAt: string; // ISO
+};
+
 export type LetterInput = {
   vault: Vault;
   ownerName: string;
   ownerEmail: string;
   message: string;
+  signatures: Signature[];
 };
 
 const FOREST = rgb(0.102, 0.18, 0.102);   // ~#1A2E1A
