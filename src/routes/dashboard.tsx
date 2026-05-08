@@ -103,6 +103,53 @@ function Dashboard() {
               {vaults.map((v) => <VaultCard key={v.id} vault={v} onCheckIn={checkIn} />)}
             </div>
           )}
+
+          {/* Advisor */}
+          <div className="mt-16">
+            <div className="flex items-end justify-between flex-wrap gap-3">
+              <div>
+                <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your Advisor</h2>
+                <p className="mt-1" style={{ color: "var(--warm-gray)" }}>A licensed planner who can review your vaults and recommend coverage.</p>
+              </div>
+              <button
+                onClick={() => {
+                  const code = prompt("Enter your advisor's invite code or email");
+                  if (code) toast.success(`Invite sent to ${code}. They'll appear here once they accept.`);
+                }}
+                className="ll-pill ll-pill-secondary"
+              >+ Add an Advisor</button>
+            </div>
+
+            <p className="mt-8 ll-label">Recommended for you</p>
+            <div className="grid md:grid-cols-3 gap-5">
+              {[
+                { name: "Élise Tremblay, CFP®", firm: "Boréal Wealth", city: "Montréal · QC", focus: "Estate & legacy planning", rating: "4.9" },
+                { name: "Marcus Bell, CIM", firm: "Pine Ridge Advisors", city: "Toronto · ON", focus: "Family trusts & insurance", rating: "4.8" },
+                { name: "Priya Nair, CFP®", firm: "Aster Private Wealth", city: "Vancouver · BC", focus: "Cross-border estates", rating: "5.0" },
+              ].map((a) => (
+                <div key={a.name} className="ll-card p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "var(--honey)", color: "var(--forest)", fontFamily: "var(--font-serif)", fontWeight: 600 }}>
+                      {a.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+                    </div>
+                    <div>
+                      <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>{a.name}</p>
+                      <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{a.firm} · {a.city}</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>{a.focus}</p>
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-xs" style={{ color: "var(--honey)" }}>★ {a.rating}</span>
+                    <button
+                      onClick={() => toast.success(`Connection request sent to ${a.name}.`)}
+                      className="ll-pill ll-pill-ghost text-sm"
+                      style={{ padding: "0.4rem 0.9rem" }}
+                    >Connect</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* FAB */}

@@ -66,6 +66,7 @@ function Create() {
   const [bens, setBens] = useState<{ name: string; email: string; pct: number }[]>([
     { name: "", email: "", pct: 100 },
   ]);
+  const [trustee, setTrustee] = useState<{ name: string; email: string }>({ name: "", email: "" });
 
   // step 4
   const [agree, setAgree] = useState(false);
@@ -114,6 +115,7 @@ function Create() {
         created_at: new Date().toISOString().slice(0, 10),
       };
       addVault(v);
+      if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
       setSuccess(id);
       setSubmitting(false);
     }, 3000);
@@ -139,7 +141,7 @@ function Create() {
           </motion.h1>
           <p className="mt-4" style={{ color: "var(--warm-gray)" }}>Vault ID</p>
           <p className="mt-1" style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 20, letterSpacing: "0.08em" }}>{success}</p>
-          <a href="#" className="block mt-3 text-[10px]" style={{ color: "var(--warm-gray)", opacity: 0.7 }}>View on Solana Explorer</a>
+          
           <button onClick={() => navigate({ to: "/dashboard" })} className="ll-pill ll-pill-primary mt-8">Go to Dashboard</button>
         </div>
       </PageShell>
@@ -169,16 +171,13 @@ function Create() {
                     style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 64, fontWeight: 600 }}
                   />
                   <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Canadian Dollars</p>
-                  {amountNum > 0 && (
-                    <p className="mt-2 text-[10px]" style={{ color: "var(--sage)" }}>≈ {(amountNum / 145).toFixed(4)} SOL on Solana devnet</p>
-                  )}
                 </div>
 
                 <p className="ll-label">Funding method</p>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {[
-                    { k: "card" as const, icon: "💳", t: "Credit or Debit Card", s: "Via MoonPay · Instant" },
-                    { k: "bank" as const, icon: "🏦", t: "Bank Transfer", s: "Via e-Transfer · 1–2 days" },
+                    { k: "card" as const, icon: "💳", t: "Credit or Debit Card", s: "Instant" },
+                    { k: "bank" as const, icon: "🏦", t: "Interac e-Transfer", s: "Instant" },
                   ].map((m) => (
                     <button
                       key={m.k}
@@ -339,6 +338,18 @@ function Create() {
                   </div>
                 </div>
 
+                <div className="mt-8 p-5 rounded-2xl" style={{ background: "rgba(26,46,26,0.04)", border: "1px dashed rgba(26,46,26,0.15)" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🛡️</span>
+                    <p style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600, color: "var(--forest)" }}>Trusted claim contact <span className="text-xs font-normal" style={{ color: "var(--warm-gray)" }}>(optional)</span></p>
+                  </div>
+                  <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Someone allowed to start a claim on behalf of your beneficiaries. They'll get an email at setup explaining how it works.</p>
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <input className="ll-input" placeholder="Full name" value={trustee.name} onChange={(e) => setTrustee({ ...trustee, name: e.target.value })} />
+                    <input className="ll-input" placeholder="Email" value={trustee.email} onChange={(e) => setTrustee({ ...trustee, email: e.target.value })} />
+                  </div>
+                </div>
+
                 <div className="flex justify-between mt-8">
                   <button onClick={() => setStep(1)} className="ll-pill ll-pill-ghost">← Back</button>
                   <button
@@ -372,7 +383,7 @@ function Create() {
                   </div>
                 </div>
 
-                <p className="text-sm mt-6 text-center" style={{ color: "var(--warm-gray)" }}>Estimated network fee: &lt; $0.50 CAD</p>
+                
 
                 <label className="flex items-start gap-3 mt-6 cursor-pointer">
                   <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1" style={{ accentColor: "var(--honey)" }} />
