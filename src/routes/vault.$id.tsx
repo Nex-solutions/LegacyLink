@@ -175,9 +175,10 @@ function VaultDetail() {
               {cond.kind === "manual" && vault.status === "Active" && (
                 <button onClick={() => setShowRelease(true)} className="ll-pill ll-pill-secondary w-full">Release Now</button>
               )}
-              <button onClick={() => window.print()} className="ll-pill ll-pill-ghost w-full">Download Summary</button>
             </div>
           </div>
+
+          <LegacyLetterPanel vault={vault} />
         </div>
       </div>
 
