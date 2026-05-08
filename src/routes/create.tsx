@@ -355,9 +355,9 @@ function Create() {
                   <button onClick={() => setStep(1)} className="ll-pill ll-pill-ghost">← Back</button>
                   <button
                     onClick={() => setStep(3)}
-                    disabled={totalPct !== 100 || bens.some(b => !b.name || !b.email)}
-                    className="ll-pill ll-pill-secondary"
-                    style={{ opacity: totalPct !== 100 || bens.some(b => !b.name || !b.email) ? 0.5 : 1 }}
+                    disabled={totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim()))}
+                    onClick={submit}
+                    style={{ opacity: totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim())) ? 0.5 : 1 }}
                   >Continue →</button>
                 </div>
               </motion.div>
