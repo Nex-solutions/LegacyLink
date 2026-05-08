@@ -5,7 +5,7 @@ import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { findClient, formatCAD } from "@/lib/legacy-data";
 import { getAdvisor, type Advisor } from "@/lib/legacy-auth";
 
-export const Route = createFileRoute("/advisor/client/$clientId/vault/$vaultId")({
+export const Route = createFileRoute("/advisor/clients/$clientId/vault/$vaultId")({
   head: () => ({ meta: [{ title: "Vault — LegacyLink Advisor" }] }),
   component: VaultDetail,
 });
@@ -64,7 +64,7 @@ function VaultDetail() {
       <header className="sticky top-0 z-30" style={{ background: "var(--forest)" }}>
         <div className="px-6 lg:px-12 py-4 flex items-center justify-between">
           <Link
-            to="/advisor/client/$clientId"
+            to="/advisor/clients/$clientId"
             params={{ clientId }}
             className="text-sm"
             style={{ color: "var(--cream)" }}

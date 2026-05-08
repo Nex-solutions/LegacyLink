@@ -24,8 +24,8 @@ import { Route as AdvisorProfileRouteImport } from './routes/advisor.profile'
 import { Route as AdvisorMessagesRouteImport } from './routes/advisor.messages'
 import { Route as AdvisorLoginRouteImport } from './routes/advisor.login'
 import { Route as AdvisorDashboardRouteImport } from './routes/advisor.dashboard'
-import { Route as AdvisorClientClientIdRouteImport } from './routes/advisor.client.$clientId'
-import { Route as AdvisorClientClientIdVaultVaultIdRouteImport } from './routes/advisor.client.$clientId.vault.$vaultId'
+import { Route as AdvisorClientsClientIdRouteImport } from './routes/advisor.clients.$clientId'
+import { Route as AdvisorClientsClientIdVaultVaultIdRouteImport } from './routes/advisor.clients.$clientId.vault.$vaultId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -102,16 +102,16 @@ const AdvisorDashboardRoute = AdvisorDashboardRouteImport.update({
   path: '/advisor/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdvisorClientClientIdRoute = AdvisorClientClientIdRouteImport.update({
-  id: '/advisor/client/$clientId',
-  path: '/advisor/client/$clientId',
+const AdvisorClientsClientIdRoute = AdvisorClientsClientIdRouteImport.update({
+  id: '/advisor/clients/$clientId',
+  path: '/advisor/clients/$clientId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdvisorClientClientIdVaultVaultIdRoute =
-  AdvisorClientClientIdVaultVaultIdRouteImport.update({
+const AdvisorClientsClientIdVaultVaultIdRoute =
+  AdvisorClientsClientIdVaultVaultIdRouteImport.update({
     id: '/vault/$vaultId',
     path: '/vault/$vaultId',
-    getParentRoute: () => AdvisorClientClientIdRoute,
+    getParentRoute: () => AdvisorClientsClientIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -130,8 +130,8 @@ export interface FileRoutesByFullPath {
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
-  '/advisor/client/$clientId': typeof AdvisorClientClientIdRouteWithChildren
-  '/advisor/client/$clientId/vault/$vaultId': typeof AdvisorClientClientIdVaultVaultIdRoute
+  '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,8 +149,8 @@ export interface FileRoutesByTo {
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor': typeof AdvisorIndexRoute
-  '/advisor/client/$clientId': typeof AdvisorClientClientIdRouteWithChildren
-  '/advisor/client/$clientId/vault/$vaultId': typeof AdvisorClientClientIdVaultVaultIdRoute
+  '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -169,8 +169,8 @@ export interface FileRoutesById {
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
-  '/advisor/client/$clientId': typeof AdvisorClientClientIdRouteWithChildren
-  '/advisor/client/$clientId/vault/$vaultId': typeof AdvisorClientClientIdVaultVaultIdRoute
+  '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,8 +190,8 @@ export interface FileRouteTypes {
     | '/advisor/signup'
     | '/vault/$id'
     | '/advisor/'
-    | '/advisor/client/$clientId'
-    | '/advisor/client/$clientId/vault/$vaultId'
+    | '/advisor/clients/$clientId'
+    | '/advisor/clients/$clientId/vault/$vaultId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -209,8 +209,8 @@ export interface FileRouteTypes {
     | '/advisor/signup'
     | '/vault/$id'
     | '/advisor'
-    | '/advisor/client/$clientId'
-    | '/advisor/client/$clientId/vault/$vaultId'
+    | '/advisor/clients/$clientId'
+    | '/advisor/clients/$clientId/vault/$vaultId'
   id:
     | '__root__'
     | '/'
@@ -228,8 +228,8 @@ export interface FileRouteTypes {
     | '/advisor/signup'
     | '/vault/$id'
     | '/advisor/'
-    | '/advisor/client/$clientId'
-    | '/advisor/client/$clientId/vault/$vaultId'
+    | '/advisor/clients/$clientId'
+    | '/advisor/clients/$clientId/vault/$vaultId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -248,7 +248,7 @@ export interface RootRouteChildren {
   AdvisorSignupRoute: typeof AdvisorSignupRoute
   VaultIdRoute: typeof VaultIdRoute
   AdvisorIndexRoute: typeof AdvisorIndexRoute
-  AdvisorClientClientIdRoute: typeof AdvisorClientClientIdRouteWithChildren
+  AdvisorClientsClientIdRoute: typeof AdvisorClientsClientIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -358,35 +358,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdvisorDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/advisor/client/$clientId': {
-      id: '/advisor/client/$clientId'
-      path: '/advisor/client/$clientId'
-      fullPath: '/advisor/client/$clientId'
-      preLoaderRoute: typeof AdvisorClientClientIdRouteImport
+    '/advisor/clients/$clientId': {
+      id: '/advisor/clients/$clientId'
+      path: '/advisor/clients/$clientId'
+      fullPath: '/advisor/clients/$clientId'
+      preLoaderRoute: typeof AdvisorClientsClientIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/advisor/client/$clientId/vault/$vaultId': {
-      id: '/advisor/client/$clientId/vault/$vaultId'
+    '/advisor/clients/$clientId/vault/$vaultId': {
+      id: '/advisor/clients/$clientId/vault/$vaultId'
       path: '/vault/$vaultId'
-      fullPath: '/advisor/client/$clientId/vault/$vaultId'
-      preLoaderRoute: typeof AdvisorClientClientIdVaultVaultIdRouteImport
-      parentRoute: typeof AdvisorClientClientIdRoute
+      fullPath: '/advisor/clients/$clientId/vault/$vaultId'
+      preLoaderRoute: typeof AdvisorClientsClientIdVaultVaultIdRouteImport
+      parentRoute: typeof AdvisorClientsClientIdRoute
     }
   }
 }
 
-interface AdvisorClientClientIdRouteChildren {
-  AdvisorClientClientIdVaultVaultIdRoute: typeof AdvisorClientClientIdVaultVaultIdRoute
+interface AdvisorClientsClientIdRouteChildren {
+  AdvisorClientsClientIdVaultVaultIdRoute: typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 
-const AdvisorClientClientIdRouteChildren: AdvisorClientClientIdRouteChildren = {
-  AdvisorClientClientIdVaultVaultIdRoute:
-    AdvisorClientClientIdVaultVaultIdRoute,
-}
+const AdvisorClientsClientIdRouteChildren: AdvisorClientsClientIdRouteChildren =
+  {
+    AdvisorClientsClientIdVaultVaultIdRoute:
+      AdvisorClientsClientIdVaultVaultIdRoute,
+  }
 
-const AdvisorClientClientIdRouteWithChildren =
-  AdvisorClientClientIdRoute._addFileChildren(
-    AdvisorClientClientIdRouteChildren,
+const AdvisorClientsClientIdRouteWithChildren =
+  AdvisorClientsClientIdRoute._addFileChildren(
+    AdvisorClientsClientIdRouteChildren,
   )
 
 const rootRouteChildren: RootRouteChildren = {
@@ -405,8 +406,18 @@ const rootRouteChildren: RootRouteChildren = {
   AdvisorSignupRoute: AdvisorSignupRoute,
   VaultIdRoute: VaultIdRoute,
   AdvisorIndexRoute: AdvisorIndexRoute,
-  AdvisorClientClientIdRoute: AdvisorClientClientIdRouteWithChildren,
+  AdvisorClientsClientIdRoute: AdvisorClientsClientIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
