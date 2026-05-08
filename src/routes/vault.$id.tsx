@@ -225,6 +225,14 @@ function VaultDetail() {
               {cond.kind === "manual" && vault.status === "Active" && (
                 <button onClick={() => setShowRelease(true)} className="ll-pill ll-pill-secondary w-full">Release Now</button>
               )}
+              <button
+                onClick={sendPdfs}
+                disabled={sendingPdfs || vault.beneficiaries.length === 0}
+                className="ll-pill ll-pill-ghost w-full"
+                style={{ opacity: sendingPdfs || vault.beneficiaries.length === 0 ? 0.6 : 1 }}
+              >
+                {sendingPdfs ? "Preparing PDFs…" : "📄 Send PDFs to beneficiaries"}
+              </button>
             </div>
           </div>
 
