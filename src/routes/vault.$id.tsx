@@ -7,7 +7,7 @@ import { AppHeader } from "@/components/legacy/Nav";
 import { PageShell } from "@/components/legacy/PageShell";
 import { formatCAD, getVault, type Vault, type Beneficiary, type VaultCondition } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
-import { conditionSummary, shouldRelease } from "@/lib/vault-release";
+import { shouldRelease } from "@/lib/vault-release";
 import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverRelease, serverReplaceBeneficiaries, serverUpdateCondition, serverUpdateLetter, serverAddFunds } from "@/lib/vault-client";
 import { buildLegacyLetterPdf, downloadPdf } from "@/lib/legacy-letter";
 import { getAdvisorLinks } from "@/lib/legacy-advisors";
@@ -59,42 +59,47 @@ function VaultDetail() {
 
   useEffect(() => {
     if (!getUser()) { navigate({ to: "/login" }); return; }
-    // Run release evaluation across all vaults so opening one detail keeps
-    // the dashboard view consistent.
-    evaluateReleases();
-    const v = getVault(id);
-    if (!v) { navigate({ to: "/dashboard" }); return; }
-    if (shouldRelease(v)) {
-      const released = { ...v, status: "Released" as const };
-      updateVault(id, { status: "Released" });
-      setVault(released);
-      toast.success("This vault just met its release condition. Beneficiaries are being notified.");
-      return;
-    }
-    setVault(v);
+    (async () => {
+      try {
+        await evaluateAndHydrate();
+      } catch (e) { console.error(e); }
+      const v = getVault(id);
+      if (!v) { navigate({ to: "/dashboard" }); return; }
+      setVault(v);
+      if (shouldRelease(v) && v.status !== "Released") {
+        toast.success("This vault just met its release condition. Beneficiaries are being notified.");
+      }
+    })();
   }, [id, navigate]);
 
   if (!vault) return null;
 
-  function checkIn() {
+  async function checkIn() {
     if (!vault || vault.condition.kind !== "inactivity") return;
-    const today = new Date().toISOString().slice(0, 10);
-    const updated = { ...vault, condition: { ...vault.condition, last_checkin: today } };
-    updateVault(vault.id, updated);
-    setVault(updated);
-    toast.success("Checked in. Countdown reset.");
+    try {
+      await serverCheckIn(vault.id);
+      const v = getVault(vault.id);
+      if (v) setVault(v);
+      toast.success("Checked in. Countdown reset.");
+    } catch (e) {
+      console.error(e); toast.error("Couldn't check in");
+    }
   }
 
   async function release() {
+    if (!vault) return;
     setReleasing(true);
-    setTimeout(() => {
-      if (!vault) return;
-      updateVault(vault.id, { status: "Released" });
-      setVault({ ...vault, status: "Released" });
-      setReleasing(false);
+    try {
+      await serverRelease(vault.id);
+      const v = getVault(vault.id);
+      if (v) setVault(v);
       setShowRelease(false);
       toast.success("Vault released. Beneficiaries notified via Interac e-Transfer.");
-    }, 2200);
+    } catch (e) {
+      console.error(e); toast.error("Couldn't release vault");
+    } finally {
+      setReleasing(false);
+    }
   }
 
   const cond = vault.condition;
