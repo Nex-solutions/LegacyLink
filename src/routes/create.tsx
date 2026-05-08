@@ -388,7 +388,40 @@ function Create() {
                   </div>
                 </div>
 
-                
+                {/* Advisor access — per-vault grants */}
+                <div className="mt-6 p-5 rounded-2xl" style={{ background: "rgba(127,168,130,0.08)", border: "1px dashed rgba(26,46,26,0.15)" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">👤</span>
+                    <p style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600, color: "var(--forest)" }}>Give an advisor access to this trust <span className="text-xs font-normal" style={{ color: "var(--warm-gray)" }}>(optional)</span></p>
+                  </div>
+                  <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Advisors only see the specific trusts you grant — never your full portfolio. They get a notification and can review beneficiaries, conditions and the audit trail in real time.</p>
+
+                  {advisorLinks.length === 0 ? (
+                    <p className="mt-4 text-sm" style={{ color: "var(--warm-gray)" }}>You don't have any advisors linked yet. <a href="/dashboard" className="underline" style={{ color: "var(--forest)" }}>Add one from your dashboard</a> to grant access here.</p>
+                  ) : (
+                    <div className="mt-4 space-y-2">
+                      {advisorLinks.map((a) => {
+                        const checked = grantedAdvisors.includes(a.email);
+                        return (
+                          <label key={a.id} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style={{ background: checked ? "rgba(232,160,32,0.12)" : "var(--card-white)", border: `1px solid ${checked ? "var(--honey)" : "rgba(26,46,26,0.08)"}` }}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => setGrantedAdvisors(e.target.checked ? [...grantedAdvisors, a.email] : grantedAdvisors.filter(x => x !== a.email))}
+                              style={{ accentColor: "var(--honey)" }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p style={{ color: "var(--forest)", fontWeight: 500 }}>{a.name}</p>
+                              <p className="text-xs truncate" style={{ color: "var(--warm-gray)" }}>{a.firm || a.email} · {a.status === "connected" ? "Linked" : "Pending invite"}</p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+
 
                 <label className="flex items-start gap-3 mt-6 cursor-pointer">
                   <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1" style={{ accentColor: "var(--honey)" }} />
