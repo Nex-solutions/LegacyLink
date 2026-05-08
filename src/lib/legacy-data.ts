@@ -25,74 +25,47 @@ export type Vault = {
   advisor_emails?: string[];
 };
 
-const STORAGE_KEY = "legacylink:vaults";
+// In-memory cache of vaults, hydrated from the real backend by
+// `hydrateVaultsFromServer()` (called from page loaders). All sync
+// readers (`getVaults`, `getVault`) continue to work — they just hit
+// the cache. Writes that need to persist call server functions; they
+// also patch the cache so the UI stays responsive.
 
-const defaultVaults: Vault[] = [
-  {
-    id: "vault-001",
-    name: "Family Trust Alpha",
-    amount_cad: 4200,
-    status: "Active",
-    condition: { kind: "time", unlock_date: "2026-12-01" },
-    beneficiaries: [
-      { name: "Amara Okafor", email: "amara@email.com", pct: 60 },
-      { name: "Tobias Okafor", email: "tobias@email.com", pct: 40 },
-    ],
-    created_at: "2026-02-12",
-  },
-  {
-    id: "vault-002",
-    name: "Kids Education Fund",
-    amount_cad: 2700,
-    status: "Active",
-    condition: { kind: "inactivity", inactivity_days: 180, last_checkin: "2026-04-15" },
-    beneficiaries: [{ name: "Amara Okafor", email: "amara@email.com", pct: 100 }],
-    created_at: "2026-03-02",
-  },
-  {
-    id: "vault-003",
-    name: "Emergency Reserve",
-    amount_cad: 1550,
-    status: "Active",
-    condition: { kind: "manual" },
-    beneficiaries: [
-      { name: "Ngozi Okafor", email: "ngozi@email.com", pct: 50 },
-      { name: "Emeka Oriaku", email: "emeka@email.com", pct: 30 },
-      { name: "Tobias Okafor", email: "tobias@email.com", pct: 20 },
-    ],
-    created_at: "2026-01-20",
-  },
-];
+let _cache: Vault[] = [];
+const _listeners = new Set<() => void>();
 
-export function getVaults(): Vault[] {
-  if (typeof window === "undefined") return defaultVaults;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultVaults));
-      return defaultVaults;
-    }
-    return JSON.parse(raw) as Vault[];
-  } catch { return defaultVaults; }
+function notify() { _listeners.forEach((fn) => fn()); }
+
+export function subscribeVaults(fn: () => void): () => void {
+  _listeners.add(fn);
+  return () => _listeners.delete(fn);
 }
 
-export function saveVaults(vaults: Vault[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(vaults));
+export function setVaultsCache(next: Vault[]) {
+  _cache = next;
+  notify();
+}
+
+export function getVaults(): Vault[] {
+  return _cache;
 }
 
 export function getVault(id: string): Vault | undefined {
-  return getVaults().find((v) => v.id === id);
+  return _cache.find((v) => v.id === id);
 }
 
 export function updateVault(id: string, patch: Partial<Vault>) {
-  const vaults = getVaults().map((v) => (v.id === id ? { ...v, ...patch } : v));
-  saveVaults(vaults);
+  _cache = _cache.map((v) => (v.id === id ? { ...v, ...patch } : v));
+  notify();
 }
 
 export function addVault(v: Vault) {
-  const vaults = [v, ...getVaults()];
-  saveVaults(vaults);
+  _cache = [v, ..._cache];
+  notify();
+}
+
+export function saveVaults(vaults: Vault[]) {
+  setVaultsCache(vaults);
 }
 
 // ────────────────────────────────────────────────────────────────────
