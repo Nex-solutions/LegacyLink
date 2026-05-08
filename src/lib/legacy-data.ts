@@ -213,3 +213,173 @@ export function advisorTotals() {
   const upcoming = advisorClients.filter((c) => c.alert?.includes("releasing")).length;
   return { clients, aum, vaults, upcoming };
 }
+
+// ────────────────────────────────────────────────────────────────────
+// Advisor analytics — derived from the mock client book
+// ────────────────────────────────────────────────────────────────────
+
+export type AdvisorRisk = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  vaultId: string;
+  vaultName: string;
+  severity: "high" | "medium" | "low";
+  kind: "inactivity" | "concentration" | "no-beneficiary";
+  message: string;
+};
+
+export function advisorRisks(): AdvisorRisk[] {
+  const out: AdvisorRisk[] = [];
+  for (const c of advisorClients) {
+    for (const v of c.vaultDetail) {
+      if (v.condition.kind === "inactivity") {
+        const days = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(v.condition.last_checkin).getTime()) / 86400000),
+        );
+        const pct = days / v.condition.inactivity_days;
+        if (pct >= 0.7) {
+          out.push({
+            id: `${v.id}-inact`,
+            clientId: c.id,
+            clientName: c.name,
+            vaultId: v.id,
+            vaultName: v.name,
+            severity: pct >= 0.9 ? "high" : "medium",
+            kind: "inactivity",
+            message: `${Math.round(pct * 100)}% to inactivity threshold (${days}/${v.condition.inactivity_days} days)`,
+          });
+        }
+      }
+      if (v.beneficiaries.length === 0) {
+        out.push({
+          id: `${v.id}-noben`,
+          clientId: c.id,
+          clientName: c.name,
+          vaultId: v.id,
+          vaultName: v.name,
+          severity: "high",
+          kind: "no-beneficiary",
+          message: "No beneficiaries assigned",
+        });
+      } else if (v.beneficiaries.length === 1 && v.amount_cad >= 10000) {
+        out.push({
+          id: `${v.id}-conc`,
+          clientId: c.id,
+          clientName: c.name,
+          vaultId: v.id,
+          vaultName: v.name,
+          severity: "low",
+          kind: "concentration",
+          message: "Single beneficiary on a large vault — consider diversifying",
+        });
+      }
+    }
+  }
+  return out.sort((a, b) => {
+    const order = { high: 0, medium: 1, low: 2 } as const;
+    return order[a.severity] - order[b.severity];
+  });
+}
+
+export type UpcomingRelease = {
+  clientId: string;
+  clientName: string;
+  vaultId: string;
+  vaultName: string;
+  amount_cad: number;
+  daysAway: number;
+  date: string;
+  kind: "time" | "inactivity";
+};
+
+export function upcomingReleases(windowDays = 90): UpcomingRelease[] {
+  const out: UpcomingRelease[] = [];
+  const now = Date.now();
+  for (const c of advisorClients) {
+    for (const v of c.vaultDetail) {
+      if (v.condition.kind === "time") {
+        const target = new Date(v.condition.unlock_date).getTime();
+        const days = Math.floor((target - now) / 86400000);
+        if (days >= 0 && days <= windowDays) {
+          out.push({
+            clientId: c.id, clientName: c.name, vaultId: v.id, vaultName: v.name,
+            amount_cad: v.amount_cad, daysAway: days, date: v.condition.unlock_date, kind: "time",
+          });
+        }
+      } else if (v.condition.kind === "inactivity") {
+        const last = new Date(v.condition.last_checkin).getTime();
+        const target = last + v.condition.inactivity_days * 86400000;
+        const days = Math.floor((target - now) / 86400000);
+        if (days >= 0 && days <= windowDays) {
+          out.push({
+            clientId: c.id, clientName: c.name, vaultId: v.id, vaultName: v.name,
+            amount_cad: v.amount_cad, daysAway: days,
+            date: new Date(target).toISOString().slice(0, 10), kind: "inactivity",
+          });
+        }
+      }
+    }
+  }
+  return out.sort((a, b) => a.daysAway - b.daysAway);
+}
+
+export type BookBeneficiary = {
+  name: string;
+  clientId: string;
+  clientName: string;
+  vaultId: string;
+  vaultName: string;
+  amount_cad: number;
+  flag?: string;
+};
+
+export function allBeneficiaries(): BookBeneficiary[] {
+  const out: BookBeneficiary[] = [];
+  for (const c of advisorClients) {
+    for (const v of c.vaultDetail) {
+      const split = v.beneficiaries.length || 1;
+      for (const b of v.beneficiaries) {
+        out.push({
+          name: b.name,
+          clientId: c.id,
+          clientName: c.name,
+          vaultId: v.id,
+          vaultName: v.name,
+          amount_cad: v.amount_cad / split,
+          flag:
+            v.beneficiaries.length === 1 && v.amount_cad >= 10000
+              ? "Sole beneficiary on large vault"
+              : undefined,
+        });
+      }
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function findClient(id: string): AdvisorClient | undefined {
+  return advisorClients.find((c) => c.id === id);
+}
+
+export function exportBookCSV(): string {
+  const rows: string[][] = [
+    ["Client", "Email", "Vault", "Amount CAD", "Status", "Condition", "Beneficiaries"],
+  ];
+  for (const c of advisorClients) {
+    for (const v of c.vaultDetail) {
+      const cond =
+        v.condition.kind === "time"
+          ? `Time · ${v.condition.unlock_date}`
+          : v.condition.kind === "inactivity"
+            ? `Inactivity · ${v.condition.inactivity_days}d`
+            : "Manual";
+      rows.push([
+        c.name, c.email, v.name, String(v.amount_cad), v.status, cond,
+        v.beneficiaries.map((b) => b.name).join("; "),
+      ]);
+    }
+  }
+  return rows.map((r) => r.map((x) => `"${x.replace(/"/g, '""')}"`).join(",")).join("\n");
+}
