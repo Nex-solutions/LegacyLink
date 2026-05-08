@@ -1,29 +1,46 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AuthSplit } from "@/components/legacy/AuthSplit";
-import { setUser } from "@/lib/legacy-auth";
+import { signUp } from "@/lib/legacy-auth";
+import { provisionWallet } from "@/lib/wallet.functions";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create your account — LegacyLink" }, { name: "description", content: "Create your secure LegacyLink vault in minutes." }] }),
+  head: () => ({ meta: [
+    { title: "Create your account — LegacyLink" },
+    { name: "description", content: "Create your secure LegacyLink vault in minutes." },
+  ] }),
   component: Signup,
 });
 
 function Signup() {
   const navigate = useNavigate();
+  const provision = useServerFn(provisionWallet);
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.email.includes("@") || form.password.length < 6) return toast.error("Please enter a valid email and a password of 6+ characters.");
     if (form.password !== form.confirm) return toast.error("Passwords do not match.");
     setLoading(true);
-    setTimeout(() => {
-      setUser({ name: form.name || form.email.split("@")[0], email: form.email });
+    try {
+      const { session } = await signUp(form.name || form.email.split("@")[0], form.email, form.password);
+      if (!session) {
+        toast.success("Check your email to confirm your account, then sign in.");
+        navigate({ to: "/login" });
+        return;
+      }
+      try { await provision({ data: undefined } as never); } catch (e) { console.warn("wallet provisioning", e); }
       toast.success("Welcome to LegacyLink.");
       navigate({ to: "/dashboard" });
-    }, 2000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Sign up failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AuthSplit } from "@/components/legacy/AuthSplit";
-import { setUser } from "@/lib/legacy-auth";
+import { signIn } from "@/lib/legacy-auth";
+import { provisionWallet } from "@/lib/wallet.functions";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — LegacyLink" }] }),
@@ -11,18 +13,28 @@ export const Route = createFileRoute("/login")({
 
 function Login() {
   const navigate = useNavigate();
+  const provision = useServerFn(provisionWallet);
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.email.includes("@") || form.password.length < 6) return toast.error("Enter a valid email and 6+ char password.");
+    if (!form.email.includes("@") || form.password.length < 6) {
+      return toast.error("Enter a valid email and 6+ char password.");
+    }
     setLoading(true);
-    setTimeout(() => {
-      setUser({ name: "James Okafor", email: form.email });
-      toast.success("Welcome back, James.");
+    try {
+      await signIn(form.email, form.password);
+      // Provision custodial Solana wallet if it doesn't exist yet.
+      try { await provision({ data: undefined } as never); } catch (e) { console.warn("wallet provisioning", e); }
+      toast.success("Welcome back.");
       navigate({ to: "/dashboard" });
-    }, 2000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Sign in failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
