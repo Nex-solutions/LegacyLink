@@ -7,18 +7,25 @@ import type { Vault } from "./legacy-data";
 import { conditionSummary } from "./vault-release";
 import { formatCAD } from "./legacy-data";
 
+export type Signature = {
+  name: string;
+  role: "Owner" | "Advisor";
+  signedAt: string; // ISO
+};
+
 export type LetterInput = {
   vault: Vault;
   ownerName: string;
   ownerEmail: string;
   message: string;
+  signatures: Signature[];
 };
 
 const FOREST = rgb(0.102, 0.18, 0.102);   // ~#1A2E1A
 const HONEY = rgb(0.855, 0.647, 0.125);   // ~#DAA520
 const GRAY = rgb(0.36, 0.36, 0.36);
 
-export async function buildLegacyLetterPdf({ vault, ownerName, ownerEmail, message }: LetterInput): Promise<Uint8Array> {
+export async function buildLegacyLetterPdf({ vault, ownerName, ownerEmail, message, signatures }: LetterInput): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([595, 842]); // A4
   const serif = await pdf.embedFont(StandardFonts.TimesRoman);
@@ -64,7 +71,25 @@ export async function buildLegacyLetterPdf({ vault, ownerName, ownerEmail, messa
     y -= 18;
   }
 
-  y -= 24;
+  y -= 28;
+
+  // Signatures block
+  page.drawText("Signatures", { x: margin, y, size: 13, font: serifBold, color: FOREST });
+  y -= 8;
+  page.drawLine({ start: { x: margin, y }, end: { x: 595 - margin, y }, color: HONEY, thickness: 1 });
+  y -= 22;
+  const colWidth = (595 - margin * 2 - 24) / Math.max(signatures.length, 1);
+  signatures.forEach((sig, i) => {
+    const x = margin + i * (colWidth + 24);
+    // signature line
+    page.drawLine({ start: { x, y: y + 4 }, end: { x: x + colWidth, y: y + 4 }, color: rgb(0.5, 0.5, 0.5), thickness: 0.7 });
+    // cursive-style name (Times italic-ish via Times — close enough at this size)
+    page.drawText(sig.name, { x: x + 4, y: y + 8, size: 18, font: serifBold, color: FOREST });
+    page.drawText(`${sig.role}`, { x, y: y - 8, size: 9, font: serifBold, color: FOREST });
+    page.drawText(format(new Date(sig.signedAt), "MMM d, yyyy 'at' h:mm a"), { x, y: y - 20, size: 8, font: sans, color: GRAY });
+  });
+  y -= 40;
+
   // Footer
   page.drawLine({ start: { x: margin, y }, end: { x: 595 - margin, y }, color: rgb(0.85, 0.83, 0.78), thickness: 0.5 });
   y -= 16;
