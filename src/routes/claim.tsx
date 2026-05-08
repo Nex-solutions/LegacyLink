@@ -4,8 +4,9 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/legacy/Nav";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
-import { formatCAD, getVault, updateVault, type Vault } from "@/lib/legacy-data";
-import { evaluateReleases, conditionSummary } from "@/lib/vault-release";
+import { formatCAD, getVault, type Vault } from "@/lib/legacy-data";
+import { evaluateAndHydrate, serverClaimByEmail } from "@/lib/vault-client";
+import { conditionSummary } from "@/lib/vault-release";
 
 type Search = { vault?: string };
 
