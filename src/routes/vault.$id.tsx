@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/legacy/Nav";
 import { PageShell } from "@/components/legacy/PageShell";
 import { formatCAD, getVault, updateVault, type Vault } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
+import { getAdvisorLinks, type AdvisorLink } from "@/lib/legacy-advisors";
 
 export const Route = createFileRoute("/vault/$id")({
   head: () => ({ meta: [{ title: "Vault — LegacyLink" }] }),
@@ -163,6 +164,12 @@ function VaultDetail() {
             </div>
           </div>
 
+          {/* Advisor access */}
+          <AdvisorAccess vault={vault} onChange={(emails) => {
+            updateVault(vault.id, { advisor_emails: emails });
+            setVault({ ...vault, advisor_emails: emails });
+          }} />
+
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
             <div className="mt-6 space-y-3">
@@ -239,6 +246,75 @@ function InactivityCondition({ cond, onCheckIn }: { cond: { kind: "inactivity"; 
           <p className="text-xs mt-3" style={{ color: "var(--warm-gray)" }}>Checking in resets your {cond.inactivity_days}-day countdown.</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function AdvisorAccess({ vault, onChange }: { vault: Vault; onChange: (emails: string[]) => void }) {
+  const [links, setLinks] = useState<AdvisorLink[]>([]);
+  const granted = vault.advisor_emails || [];
+  useEffect(() => { setLinks(getAdvisorLinks()); }, []);
+
+  const grantedLinks = links.filter(l => granted.includes(l.email));
+  const ungrantedLinks = links.filter(l => !granted.includes(l.email));
+
+  function grant(email: string, name: string) {
+    onChange([...granted, email]);
+    toast.success(`${name} now has read-only access to ${vault.name}.`);
+  }
+  function revoke(email: string, name: string) {
+    onChange(granted.filter(e => e !== email));
+    toast.success(`${name}'s access to ${vault.name} was revoked.`);
+  }
+
+  return (
+    <div className="ll-card p-8">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Advisor access</h3>
+          <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Only advisors you grant can see this trust. They can review beneficiaries, conditions and the audit trail — never edit.</p>
+        </div>
+      </div>
+
+      {grantedLinks.length > 0 && (
+        <div className="mt-5 space-y-2">
+          {grantedLinks.map(a => (
+            <div key={a.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(127,168,130,0.12)", border: "1px solid rgba(127,168,130,0.4)" }}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--sage)", color: "var(--forest)", fontFamily: "var(--font-serif)", fontWeight: 600 }}>
+                  {a.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+                </div>
+                <div className="min-w-0">
+                  <p style={{ color: "var(--forest)", fontWeight: 500 }} className="truncate">{a.name}</p>
+                  <p className="text-xs truncate" style={{ color: "var(--warm-gray)" }}>{a.firm || a.email} · ● Has access</p>
+                </div>
+              </div>
+              <button onClick={() => revoke(a.email, a.name)} className="text-xs underline" style={{ color: "var(--warm-gray)" }}>Revoke</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {ungrantedLinks.length > 0 && (
+        <div className="mt-5">
+          <p className="ll-label">Grant access to</p>
+          <div className="space-y-2">
+            {ungrantedLinks.map(a => (
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-xl" style={{ border: "1px solid rgba(26,46,26,0.1)" }}>
+                <div className="min-w-0">
+                  <p style={{ color: "var(--forest)", fontWeight: 500 }} className="truncate">{a.name}</p>
+                  <p className="text-xs truncate" style={{ color: "var(--warm-gray)" }}>{a.firm || a.email}</p>
+                </div>
+                <button onClick={() => grant(a.email, a.name)} className="ll-pill ll-pill-secondary text-sm" style={{ padding: "0.4rem 0.9rem" }}>+ Grant</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {links.length === 0 && (
+        <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>No advisors linked yet. Add one from your <Link to="/dashboard" className="underline" style={{ color: "var(--forest)" }}>dashboard</Link>.</p>
+      )}
     </div>
   );
 }

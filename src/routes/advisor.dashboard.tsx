@@ -474,10 +474,13 @@ function InviteModal({ advisor, onClose }: { advisor: Advisor; onClose: () => vo
   return (
     <ModalShell onClose={onClose}>
       <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>
-        Invite a Client to LegacyLink
+        Invite a Family to LegacyLink
       </h3>
+      <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+        We'll email them a private onboarding link. Once they sign up they're strongly linked to you, and they choose which trusts to share — you only see what they grant.
+      </p>
       <div className="mt-5 space-y-3">
-        <input className="ll-input" placeholder="Client name" value={name} onChange={(e) => setName(e.target.value)} />
+        <input className="ll-input" placeholder="Family contact name" value={name} onChange={(e) => setName(e.target.value)} />
         <input className="ll-input" placeholder="client@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         <textarea className="ll-input min-h-[120px]" value={msg} onChange={(e) => setMsg(e.target.value)} />
         <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>

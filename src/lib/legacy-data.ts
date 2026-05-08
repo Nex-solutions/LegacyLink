@@ -19,6 +19,10 @@ export type Vault = {
   condition: VaultCondition;
   beneficiaries: Beneficiary[];
   created_at: string;
+  // Per-vault advisor access. Owners must explicitly grant — advisors never
+  // see a vault unless their email is in this list. Mirrors the future
+  // `vault_advisors` join table on the backend.
+  advisor_emails?: string[];
 };
 
 const STORAGE_KEY = "legacylink:vaults";
