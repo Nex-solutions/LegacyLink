@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { clearUser, getUser } from "@/lib/legacy-auth";
+import { useEffect, useState } from "react";
+import { clearUser, getUser, type User } from "@/lib/legacy-auth";
 
 export function Logo({ light = false }: { light?: boolean }) {
   return (
@@ -22,7 +23,8 @@ export function Logo({ light = false }: { light?: boolean }) {
 
 export function AppHeader() {
   const navigate = useNavigate();
-  const user = typeof window !== "undefined" ? getUser() : null;
+  const [user, setUserState] = useState<User | null>(null);
+  useEffect(() => { setUserState(getUser()); }, []);
   return (
     <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between">
       <Logo />
