@@ -497,9 +497,17 @@ function ClientCard({ client, expanded, onToggle }: {
           <div className="flex flex-wrap gap-2">
             {client.conditionTypes.map((t) => <ConditionTag key={t} kind={t} />)}
           </div>
-          <button onClick={onToggle} className="text-sm font-medium" style={{ color: "var(--honey)" }}>
-            {expanded ? "Collapse ↑" : "View Portfolio →"}
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/advisor/client/$clientId"
+              params={{ clientId: client.id }}
+              className="text-sm font-medium"
+              style={{ color: "var(--forest)" }}
+            >Open detail →</Link>
+            <button onClick={onToggle} className="text-sm font-medium" style={{ color: "var(--honey)" }}>
+              {expanded ? "Collapse ↑" : "Quick view"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -509,7 +517,7 @@ function ClientCard({ client, expanded, onToggle }: {
             exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="px-6 pb-6 grid sm:grid-cols-2 gap-3 border-t pt-5"
               style={{ borderColor: "rgba(26,46,26,0.08)" }}>
-              {client.vaultDetail.map((v) => <ReadOnlyVault key={v.id} vault={v} />)}
+              {client.vaultDetail.map((v) => <ReadOnlyVault key={v.id} clientId={client.id} vault={v} />)}
             </div>
             <div className="px-6 pb-5 text-right">
               <button onClick={onToggle} className="text-sm" style={{ color: "var(--warm-gray)" }}>
@@ -523,7 +531,7 @@ function ClientCard({ client, expanded, onToggle }: {
   );
 }
 
-function ReadOnlyVault({ vault }: { vault: ClientVault }) {
+function ReadOnlyVault({ clientId, vault }: { clientId: string; vault: ClientVault }) {
   const cond = vault.condition;
   const desc =
     cond.kind === "time" ? `Releases on ${new Date(cond.unlock_date).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" })}`
