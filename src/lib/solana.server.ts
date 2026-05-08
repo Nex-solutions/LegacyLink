@@ -13,7 +13,11 @@ import { webcrypto } from "node:crypto";
 const subtle = (webcrypto as Crypto).subtle;
 
 function b64decode(s: string): Uint8Array {
-  return Uint8Array.from(Buffer.from(s, "base64"));
+  // Force a fresh ArrayBuffer copy so types match BufferSource (no SharedArrayBuffer).
+  const buf = Buffer.from(s, "base64");
+  const out = new Uint8Array(buf.length);
+  out.set(buf);
+  return out;
 }
 function b64encode(b: Uint8Array): string {
   return Buffer.from(b).toString("base64");
