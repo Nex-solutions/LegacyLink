@@ -6,7 +6,7 @@
 
 import nacl from "tweetnacl";
 import bs58 from "bs58";
-import BN from "bn.js";
+
 import { webcrypto } from "node:crypto";
 import {
   Connection,
@@ -21,7 +21,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import { AnchorProvider, Program, Wallet, type Idl } from "@coral-xyz/anchor";
+import { AnchorProvider, Program, Wallet, BN, type Idl } from "@coral-xyz/anchor";
 import vaultIdl from "./idl/vault.json";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -144,7 +144,7 @@ function buildProgram(signer: Keypair) {
   const wallet = new Wallet(signer);
   const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
   // Inject address into IDL so Program picks it up
-  const idl = { ...(vaultIdl as Idl), address: getProgramId().toBase58() } as Idl;
+  const idl = { ...(vaultIdl as unknown as Idl), address: getProgramId().toBase58() } as unknown as Idl;
   return { program: new Program(idl, provider), provider, connection };
 }
 
