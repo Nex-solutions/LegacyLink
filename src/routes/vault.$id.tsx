@@ -7,6 +7,8 @@ import { AppHeader } from "@/components/legacy/Nav";
 import { PageShell } from "@/components/legacy/PageShell";
 import { formatCAD, getVault, updateVault, type Vault, type Beneficiary, type VaultCondition } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
+import { evaluateReleases, shouldRelease } from "@/lib/vault-release";
+import { buildLegacyLetterPdf, downloadPdf } from "@/lib/legacy-letter";
 
 
 export const Route = createFileRoute("/vault/$id")({
@@ -55,8 +57,18 @@ function VaultDetail() {
 
   useEffect(() => {
     if (!getUser()) { navigate({ to: "/login" }); return; }
+    // Run release evaluation across all vaults so opening one detail keeps
+    // the dashboard view consistent.
+    evaluateReleases();
     const v = getVault(id);
     if (!v) { navigate({ to: "/dashboard" }); return; }
+    if (shouldRelease(v)) {
+      const released = { ...v, status: "Released" as const };
+      updateVault(id, { status: "Released" });
+      setVault(released);
+      toast.success("This vault just met its release condition. Beneficiaries are being notified.");
+      return;
+    }
     setVault(v);
   }, [id, navigate]);
 
