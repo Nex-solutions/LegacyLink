@@ -285,7 +285,7 @@ function Create() {
             {step === 2 && (
               <motion.div key="s3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="ll-card p-8">
                 <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Add your beneficiaries</h2>
-                <p className="mt-2" style={{ color: "var(--warm-gray)" }}>They'll receive Canadian dollars via Interac e-Transfer. No crypto needed.</p>
+                <p className="mt-2" style={{ color: "var(--warm-gray)" }}>They'll receive Canadian dollars directly via Interac e-Transfer — no setup required on their end.</p>
 
                 <div className="mt-6 space-y-3">
                   {bens.map((b, i) => (

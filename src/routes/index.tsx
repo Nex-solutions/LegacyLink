@@ -31,9 +31,9 @@ function Landing() {
             transition={{ duration: 0.7 }}
             style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: "clamp(40px,7vw,72px)", lineHeight: 1.05, fontWeight: 600, letterSpacing: "-0.02em" }}
           >
-            Protect what matters.
+            If something happened tomorrow,
             <br />
-            <span style={{ color: "var(--forest)" }}>For the people who matter.</span>
+            <span style={{ color: "var(--forest)" }}>would they be okay?</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -42,7 +42,7 @@ function Landing() {
             className="mx-auto mt-8 max-w-2xl text-lg"
             style={{ color: "var(--warm-gray)" }}
           >
-            LegacyLink lets you set aside money today so it reaches the right hands at exactly the right moment — automatically, legally, and with certainty.
+            LegacyLink puts Canadian dollars into the hands of the people you love — at the exact moment they need it. No lawyers. No probate. No waiting. Just certainty.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -165,7 +165,7 @@ function Landing() {
           </div>
         </div>
         <div className="max-w-6xl mx-auto mt-8 pt-8 border-t text-xs" style={{ borderColor: "rgba(250,250,247,0.12)", color: "rgba(250,250,247,0.5)" }}>
-          Powered by Solana · Secured by cryptography · Built for Canadian families
+          Bank-grade security · Regulated in Canada · Built for Canadian families
         </div>
       </footer>
     </PageShell>
