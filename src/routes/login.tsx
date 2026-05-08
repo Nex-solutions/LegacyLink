@@ -16,6 +16,7 @@ export const Route = createFileRoute("/login")({
 
 function Login() {
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
   const provision = useServerFn(provisionWallet);
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
