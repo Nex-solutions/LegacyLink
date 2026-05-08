@@ -22,8 +22,16 @@ const PROVINCES = [
 
 function SignupKyc() {
   const navigate = useNavigate();
+  const { reason } = Route.useSearch();
   const submit = useServerFn(submitKyc);
   const status = useServerFn(getMyKycStatus);
+  useEffect(() => {
+    if (reason === "funds") {
+      toast.message("Let's finish your profile first ✨", {
+        description: "We just need a few details before you can fund your trust — takes under 2 minutes.",
+      });
+    }
+  }, [reason]);
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
