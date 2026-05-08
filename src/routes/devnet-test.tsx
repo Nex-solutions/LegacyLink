@@ -50,10 +50,12 @@ function DevnetTest() {
     try {
       const provider = new AnchorProvider(
         connection,
-        wallet as Parameters<typeof AnchorProvider>[1],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        wallet as any,
         { commitment: "confirmed" }
       );
-      const program = new Program(idl as Idl, PROGRAM_ID, provider);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const program = new Program(idl as Idl, provider as any);
       const accountTypes = Object.keys(program.account);
       if (accountTypes.length === 0) {
         append(
@@ -62,8 +64,8 @@ function DevnetTest() {
         return;
       }
       append(`IDL accounts: ${accountTypes.join(", ")}`);
-      // @ts-expect-error dynamic key
-      const all = await program.account[accountTypes[0]].all();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const all = await (program.account as any)[accountTypes[0]].all();
       append(`✅ Fetched ${all.length} ${accountTypes[0]} account(s).`);
     } catch (e) {
       append(`❌ ${(e as Error).message}`);
