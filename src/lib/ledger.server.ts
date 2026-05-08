@@ -77,6 +77,29 @@ export async function postLedgerTx(args: {
  *   Tx A (mint):  Dr user_wallet,  Cr fiat_onramp_clearing
  *   Tx B (sweep): Dr master_wallet, Cr user_wallet
  */
+export async function recordGas(args: {
+  userId?: string | null;
+  reference?: string | null;
+  txSignature?: string | null;
+  lamports: number;
+}): Promise<string | null> {
+  if (!args.lamports || args.lamports <= 0) return null;
+  const sol = args.lamports / 1_000_000_000;
+  const masterAcct = await getAccountIdByCode("1000");
+  const gasAcct = await getAccountIdByCode("5000");
+  return postLedgerTx({
+    kind: "fee",
+    userId: args.userId ?? null,
+    reference: args.reference ?? null,
+    txSignature: args.txSignature ?? null,
+    memo: `Network gas ${sol.toFixed(9)} SOL`,
+    entries: [
+      { account_id: gasAcct, side: "debit", amount: sol, currency: "SOL" },
+      { account_id: masterAcct, side: "credit", amount: sol, currency: "SOL" },
+    ],
+  });
+}
+
 export async function recordOnRampAndSweep(args: {
   userId: string;
   amountUsdc: number;
@@ -84,6 +107,7 @@ export async function recordOnRampAndSweep(args: {
   reference?: string;
   feeUsdc?: number;
   sweepTxSignature?: string;
+  sweepGasLamports?: number;
 }): Promise<{ mintTxId: string; sweepTxId: string }> {
   const masterAcct = await getAccountIdByCode("1000");
   const onrampAcct = await getAccountIdByCode("2000");
