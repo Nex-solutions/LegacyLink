@@ -398,6 +398,81 @@ export const evaluateReleasesServer = createServerFn({ method: "POST" })
     return { released };
   });
 
+// ─── Update condition ─────────────────────────────────────────────────
+
+export const updateVaultCondition = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ vault_id: z.string().uuid(), condition: conditionSchema }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const c = data.condition;
+    const { error } = await supabase
+      .from("vaults")
+      .update({
+        condition_kind: c.kind,
+        unlock_date: c.kind === "time" ? c.unlock_date : null,
+        inactivity_days: c.kind === "inactivity" ? c.inactivity_days : null,
+        last_checkin: c.kind === "inactivity" ? c.last_checkin : null,
+      })
+      .eq("id", data.vault_id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+// ─── Add funds ────────────────────────────────────────────────────────
+
+export const addVaultFunds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ vault_id: z.string().uuid(), amount_cad: z.number().positive() }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: v, error: getErr } = await supabase
+      .from("vaults").select("amount_cad, vault_pda").eq("id", data.vault_id).single();
+    if (getErr) throw getErr;
+
+    const fund = v.vault_pda
+      ? await fundVaultOnChain({ vaultPda: v.vault_pda, amountCad: data.amount_cad })
+      : { signature: `sim_fund_${Date.now()}` };
+
+    const newAmount = Number(v.amount_cad) + data.amount_cad;
+    const { error } = await supabase
+      .from("vaults").update({ amount_cad: newAmount }).eq("id", data.vault_id);
+    if (error) throw error;
+
+    await supabase.from("vault_events").insert({
+      vault_id: data.vault_id, actor_id: userId, kind: "fund",
+      detail: `Added CA$${data.amount_cad}`, tx_signature: fund.signature,
+    });
+    return { ok: true, amount_cad: newAmount, tx_signature: fund.signature };
+  });
+
+// ─── Beneficiary claim by email (resolves token server-side) ──────────
+
+export const beneficiaryClaimByEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ vault_id: z.string().uuid(), email: z.string().email() }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    // Service-role-bypass not needed: owner/advisor RLS lets us read; for
+    // anonymous claim flow this would need an edge function. For demo we
+    // require the user to be signed in.
+    const { data: ben, error } = await supabase
+      .from("beneficiaries")
+      .select("claim_token")
+      .eq("vault_id", data.vault_id)
+      .ilike("email", data.email)
+      .maybeSingle();
+    if (error) throw error;
+    if (!ben?.claim_token) throw new Error("No claim token issued for this email yet");
+    return { claim_token: ben.claim_token };
+  });
+
 // ─── Beneficiary claim (called from /claim page) ──────────────────────
 
 export const beneficiaryClaim = createServerFn({ method: "POST" })
