@@ -14,16 +14,226 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      advisor_clients: {
+        Row: {
+          advisor_id: string
+          client_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          advisor_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          advisor_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      beneficiaries: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          payout_tx_signature: string | null
+          pct: number
+          vault_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          payout_tx_signature?: string | null
+          pct: number
+          vault_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          payout_tx_signature?: string | null
+          pct?: number
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beneficiaries_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          phone: string | null
+          solana_wallet: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          phone?: string | null
+          solana_wallet?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          solana_wallet?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vault_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          detail: string | null
+          id: string
+          kind: Database["public"]["Enums"]["event_kind"]
+          tx_signature: string | null
+          vault_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["event_kind"]
+          tx_signature?: string | null
+          vault_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["event_kind"]
+          tx_signature?: string | null
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_events_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vaults: {
+        Row: {
+          amount_cad: number
+          chain: string | null
+          condition_kind: Database["public"]["Enums"]["condition_kind"]
+          created_at: string
+          id: string
+          inactivity_days: number | null
+          last_checkin: string | null
+          name: string
+          owner_id: string
+          solana_pubkey: string | null
+          status: Database["public"]["Enums"]["vault_status"]
+          tx_signature: string | null
+          unlock_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cad?: number
+          chain?: string | null
+          condition_kind?: Database["public"]["Enums"]["condition_kind"]
+          created_at?: string
+          id?: string
+          inactivity_days?: number | null
+          last_checkin?: string | null
+          name: string
+          owner_id: string
+          solana_pubkey?: string | null
+          status?: Database["public"]["Enums"]["vault_status"]
+          tx_signature?: string | null
+          unlock_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cad?: number
+          chain?: string | null
+          condition_kind?: Database["public"]["Enums"]["condition_kind"]
+          created_at?: string
+          id?: string
+          inactivity_days?: number | null
+          last_checkin?: string | null
+          name?: string
+          owner_id?: string
+          solana_pubkey?: string | null
+          status?: Database["public"]["Enums"]["vault_status"]
+          tx_signature?: string | null
+          unlock_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "advisor" | "family"
+      condition_kind: "time" | "inactivity" | "manual"
+      event_kind:
+        | "fund"
+        | "checkin"
+        | "release"
+        | "warning"
+        | "beneficiary"
+        | "condition_update"
+      vault_status: "pending" | "active" | "released" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +360,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "advisor", "family"],
+      condition_kind: ["time", "inactivity", "manual"],
+      event_kind: [
+        "fund",
+        "checkin",
+        "release",
+        "warning",
+        "beneficiary",
+        "condition_update",
+      ],
+      vault_status: ["pending", "active", "released", "cancelled"],
+    },
   },
 } as const
