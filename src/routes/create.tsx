@@ -116,9 +116,11 @@ function Create() {
         condition: getCondition(),
         beneficiaries: bens,
         created_at: new Date().toISOString().slice(0, 10),
+        advisor_emails: grantedAdvisors,
       };
       addVault(v);
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
+      if (grantedAdvisors.length) toast.success(`${grantedAdvisors.length} advisor${grantedAdvisors.length > 1 ? "s" : ""} notified — they now have read-only access to this trust.`);
       setSuccess(id);
       setSubmitting(false);
     }, 3000);
