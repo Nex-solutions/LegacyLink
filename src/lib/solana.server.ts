@@ -142,7 +142,7 @@ async function ownerUserIdForVaultPda(vaultPda: string): Promise<string> {
 
 function buildProgram(signer: Keypair) {
   const connection = getConnection();
-  const wallet = new Wallet(signer);
+  const wallet = new NodeWallet(signer);
   const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
   // Inject address into IDL so Program picks it up
   const idl = { ...(vaultIdl as unknown as Idl), address: getProgramId().toBase58() } as unknown as Idl;
