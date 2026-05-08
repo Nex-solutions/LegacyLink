@@ -29,10 +29,21 @@ function Dashboard() {
     if (!u) { navigate({ to: "/login" }); return; }
     setUserState(u);
     setLinks(getAdvisorLinks());
+    // Render cached vaults instantly so the page paints without waiting on the network.
+    setVaults(getVaults());
+    // Hydrate fresh data, then evaluate releases in the background.
     (async () => {
       try {
-        const { released, vaults } = await evaluateAndHydrate();
-        setVaults(vaults);
+        const fresh = await hydrateVaults();
+        setVaults(fresh);
+      } catch (e) {
+        console.error(e);
+        toast.error("Couldn't load your vaults");
+        return;
+      }
+      try {
+        const { released, vaults: after } = await evaluateAndHydrate();
+        setVaults(after);
         if (released.length) {
           toast.success(
             released.length === 1
@@ -42,7 +53,6 @@ function Dashboard() {
         }
       } catch (e) {
         console.error(e);
-        toast.error("Couldn't load your vaults");
       }
     })();
   }, [navigate]);
