@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreateRouteImport } from './routes/create'
@@ -19,12 +20,18 @@ import { Route as AdvisorIndexRouteImport } from './routes/advisor.index'
 import { Route as VaultIdRouteImport } from './routes/vault.$id'
 import { Route as AdvisorSignupRouteImport } from './routes/advisor.signup'
 import { Route as AdvisorProfileRouteImport } from './routes/advisor.profile'
+import { Route as AdvisorMessagesRouteImport } from './routes/advisor.messages'
 import { Route as AdvisorLoginRouteImport } from './routes/advisor.login'
 import { Route as AdvisorDashboardRouteImport } from './routes/advisor.dashboard'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -72,6 +79,11 @@ const AdvisorProfileRoute = AdvisorProfileRouteImport.update({
   path: '/advisor/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdvisorMessagesRoute = AdvisorMessagesRouteImport.update({
+  id: '/advisor/messages',
+  path: '/advisor/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdvisorLoginRoute = AdvisorLoginRouteImport.update({
   id: '/advisor/login',
   path: '/advisor/login',
@@ -89,9 +101,11 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
+  '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
@@ -103,9 +117,11 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
+  '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
@@ -118,9 +134,11 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
+  '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
@@ -134,9 +152,11 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/login'
+    | '/messages'
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
+    | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
     | '/vault/$id'
@@ -148,9 +168,11 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/login'
+    | '/messages'
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
+    | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
     | '/vault/$id'
@@ -162,9 +184,11 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/login'
+    | '/messages'
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
+    | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
     | '/vault/$id'
@@ -177,9 +201,11 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  MessagesRoute: typeof MessagesRoute
   SignupRoute: typeof SignupRoute
   AdvisorDashboardRoute: typeof AdvisorDashboardRoute
   AdvisorLoginRoute: typeof AdvisorLoginRoute
+  AdvisorMessagesRoute: typeof AdvisorMessagesRoute
   AdvisorProfileRoute: typeof AdvisorProfileRoute
   AdvisorSignupRoute: typeof AdvisorSignupRoute
   VaultIdRoute: typeof VaultIdRoute
@@ -193,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -258,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdvisorProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/advisor/messages': {
+      id: '/advisor/messages'
+      path: '/advisor/messages'
+      fullPath: '/advisor/messages'
+      preLoaderRoute: typeof AdvisorMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/advisor/login': {
       id: '/advisor/login'
       path: '/advisor/login'
@@ -281,9 +321,11 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  MessagesRoute: MessagesRoute,
   SignupRoute: SignupRoute,
   AdvisorDashboardRoute: AdvisorDashboardRoute,
   AdvisorLoginRoute: AdvisorLoginRoute,
+  AdvisorMessagesRoute: AdvisorMessagesRoute,
   AdvisorProfileRoute: AdvisorProfileRoute,
   AdvisorSignupRoute: AdvisorSignupRoute,
   VaultIdRoute: VaultIdRoute,
