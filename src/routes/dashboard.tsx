@@ -8,6 +8,7 @@ import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
 import { formatCAD, getVaults, updateVault, type Vault } from "@/lib/legacy-data";
+import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
@@ -18,13 +19,61 @@ function Dashboard() {
   const navigate = useNavigate();
   const [user, setUserState] = useState<{ name: string; email: string } | null>(null);
   const [vaults, setVaults] = useState<Vault[]>([]);
+  const [links, setLinks] = useState<AdvisorLink[]>([]);
+  const [advisorModal, setAdvisorModal] = useState<null | { mode: "choose" | "invite" | "platform"; preset?: RecommendedAdvisor }>(null);
+  const [inviteForm, setInviteForm] = useState({ name: "", email: "", firm: "", note: "" });
 
   useEffect(() => {
     const u = getUser();
     if (!u) { navigate({ to: "/login" }); return; }
     setUserState(u);
     setVaults(getVaults());
+    setLinks(getAdvisorLinks());
   }, [navigate]);
+
+  function handleInviteExternal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!inviteForm.email || !inviteForm.name) return;
+    const link: AdvisorLink = {
+      id: `ext-${Date.now()}`,
+      source: "external",
+      status: "pending",
+      name: inviteForm.name,
+      email: inviteForm.email,
+      firm: inviteForm.firm || undefined,
+      invitedAt: new Date().toISOString(),
+    };
+    addAdvisorLink(link);
+    setLinks(getAdvisorLinks());
+    setAdvisorModal(null);
+    setInviteForm({ name: "", email: "", firm: "", note: "" });
+    toast.success(`Invite sent to ${link.email}. They'll be onboarded as your advisor once they accept.`);
+  }
+
+  function handleConnectPlatform(a: RecommendedAdvisor) {
+    const link: AdvisorLink = {
+      id: `plat-${a.id}`,
+      source: "platform",
+      status: "connected",
+      name: a.name,
+      email: a.email,
+      firm: a.firm,
+      city: a.city,
+      focus: a.focus,
+      invitedAt: new Date().toISOString(),
+    };
+    addAdvisorLink(link);
+    setLinks(getAdvisorLinks());
+    setAdvisorModal(null);
+    toast.success(`You're now linked with ${a.name}. They have read-only access to your vaults.`);
+  }
+
+  function unlink(id: string, name: string) {
+    removeAdvisorLink(id);
+    setLinks(getAdvisorLinks());
+    toast.success(`Disconnected from ${name}.`);
+  }
+
 
   function checkIn(id: string) {
     const today = new Date().toISOString().slice(0, 10);
@@ -109,48 +158,174 @@ function Dashboard() {
             <div className="flex items-end justify-between flex-wrap gap-3">
               <div>
                 <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your Advisor</h2>
-                <p className="mt-1" style={{ color: "var(--warm-gray)" }}>A licensed planner who can review your vaults and recommend coverage.</p>
+                <p className="mt-1" style={{ color: "var(--warm-gray)" }}>Bring your own planner — or pick one of ours. Either way, they're strongly linked to your vaults with read-only access.</p>
               </div>
               <button
-                onClick={() => {
-                  const code = prompt("Enter your advisor's invite code or email");
-                  if (code) toast.success(`Invite sent to ${code}. They'll appear here once they accept.`);
-                }}
+                onClick={() => setAdvisorModal({ mode: "choose" })}
                 className="ll-pill ll-pill-secondary"
               >+ Add an Advisor</button>
             </div>
 
+            {/* Linked advisors */}
+            {links.length > 0 && (
+              <div className="mt-6 grid md:grid-cols-2 gap-5">
+                {links.map((l) => (
+                  <div key={l.id} className="ll-card p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: l.status === "connected" ? "var(--sage)" : "var(--cream)", color: "var(--forest)", fontFamily: "var(--font-serif)", fontWeight: 600, border: "1px solid rgba(26,46,26,0.1)" }}>
+                          {l.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+                        </div>
+                        <div>
+                          <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>{l.name}</p>
+                          <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{l.firm || l.email}</p>
+                        </div>
+                      </div>
+                      <span
+                        className="text-[11px] uppercase tracking-wider px-2 py-1 rounded-full"
+                        style={{
+                          background: l.status === "connected" ? "rgba(127,168,130,0.18)" : "rgba(232,160,32,0.18)",
+                          color: l.status === "connected" ? "var(--forest)" : "var(--honey)",
+                        }}
+                      >
+                        {l.status === "connected" ? "● Linked" : "○ Pending"}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>
+                      {l.status === "connected"
+                        ? "Read-only access to your vaults, beneficiaries and audit trail."
+                        : l.source === "external"
+                          ? `We emailed ${l.email} an onboarding link. They'll appear connected once they finish signup.`
+                          : "Awaiting their acceptance."}
+                    </p>
+                    <div className="mt-4 flex items-center justify-end">
+                      <button onClick={() => unlink(l.id, l.name)} className="text-xs" style={{ color: "var(--warm-gray)", textDecoration: "underline" }}>Disconnect</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <p className="mt-8 ll-label">Recommended for you</p>
             <div className="grid md:grid-cols-3 gap-5">
-              {[
-                { name: "Élise Tremblay, CFP®", firm: "Boréal Wealth", city: "Montréal · QC", focus: "Estate & legacy planning", rating: "4.9" },
-                { name: "Marcus Bell, CIM", firm: "Pine Ridge Advisors", city: "Toronto · ON", focus: "Family trusts & insurance", rating: "4.8" },
-                { name: "Priya Nair, CFP®", firm: "Aster Private Wealth", city: "Vancouver · BC", focus: "Cross-border estates", rating: "5.0" },
-              ].map((a) => (
-                <div key={a.name} className="ll-card p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "var(--honey)", color: "var(--forest)", fontFamily: "var(--font-serif)", fontWeight: 600 }}>
-                      {a.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+              {recommendedAdvisors.map((a) => {
+                const linked = links.some(l => l.email === a.email);
+                return (
+                  <div key={a.id} className="ll-card p-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "var(--honey)", color: "var(--forest)", fontFamily: "var(--font-serif)", fontWeight: 600 }}>
+                        {a.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+                      </div>
+                      <div>
+                        <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>{a.name}</p>
+                        <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{a.firm} · {a.city}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>{a.name}</p>
-                      <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{a.firm} · {a.city}</p>
+                    <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>{a.focus}</p>
+                    <div className="flex items-center justify-between mt-4">
+                      <span className="text-xs" style={{ color: "var(--honey)" }}>★ {a.rating}</span>
+                      <button
+                        disabled={linked}
+                        onClick={() => handleConnectPlatform(a)}
+                        className="ll-pill ll-pill-ghost text-sm"
+                        style={{ padding: "0.4rem 0.9rem", opacity: linked ? 0.5 : 1, cursor: linked ? "default" : "pointer" }}
+                      >{linked ? "Linked" : "Connect"}</button>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>{a.focus}</p>
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-xs" style={{ color: "var(--honey)" }}>★ {a.rating}</span>
-                    <button
-                      onClick={() => toast.success(`Connection request sent to ${a.name}.`)}
-                      className="ll-pill ll-pill-ghost text-sm"
-                      style={{ padding: "0.4rem 0.9rem" }}
-                    >Connect</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
+
+        {/* Advisor modal */}
+        {advisorModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(26,46,26,0.55)", backdropFilter: "blur(4px)" }}
+            onClick={() => setAdvisorModal(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22 }}
+              className="w-full max-w-lg rounded-2xl p-7"
+              style={{ background: "var(--cream)", boxShadow: "0 24px 60px rgba(0,0,0,0.25)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {advisorModal.mode === "choose" && (
+                <div>
+                  <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600, color: "var(--forest)" }}>Add an advisor</h3>
+                  <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Choose how you'd like to bring an advisor onto your legacy.</p>
+                  <div className="mt-6 grid gap-3">
+                    <button
+                      onClick={() => setAdvisorModal({ mode: "invite" })}
+                      className="text-left p-4 rounded-xl transition hover:translate-y-[-1px]"
+                      style={{ border: "1px solid rgba(26,46,26,0.12)", background: "rgba(255,255,255,0.5)" }}
+                    >
+                      <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)", fontSize: 17 }}>Invite my own advisor</p>
+                      <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Send an email invite. We'll onboard them onto LegacyLink and link them to your account.</p>
+                    </button>
+                    <button
+                      onClick={() => setAdvisorModal({ mode: "platform" })}
+                      className="text-left p-4 rounded-xl transition hover:translate-y-[-1px]"
+                      style={{ border: "1px solid rgba(26,46,26,0.12)", background: "rgba(255,255,255,0.5)" }}
+                    >
+                      <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)", fontSize: 17 }}>Choose a LegacyLink advisor</p>
+                      <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Vetted Canadian planners already on the platform. Instant link.</p>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {advisorModal.mode === "invite" && (
+                <form onSubmit={handleInviteExternal}>
+                  <button type="button" onClick={() => setAdvisorModal({ mode: "choose" })} className="text-xs mb-3" style={{ color: "var(--warm-gray)" }}>← Back</button>
+                  <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>Invite your advisor</h3>
+                  <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>We'll email them a private onboarding link. Once they finish signup, you'll be strongly linked.</p>
+                  <div className="mt-5 space-y-3">
+                    <input required placeholder="Advisor's full name" value={inviteForm.name} onChange={e => setInviteForm({ ...inviteForm, name: e.target.value })} className="ll-input w-full" />
+                    <input required type="email" placeholder="Advisor's email" value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} className="ll-input w-full" />
+                    <input placeholder="Firm (optional)" value={inviteForm.firm} onChange={e => setInviteForm({ ...inviteForm, firm: e.target.value })} className="ll-input w-full" />
+                    <textarea placeholder="Personal note (optional)" value={inviteForm.note} onChange={e => setInviteForm({ ...inviteForm, note: e.target.value })} rows={3} className="ll-input w-full" />
+                  </div>
+                  <p className="mt-4 text-xs" style={{ color: "var(--warm-gray)" }}>They'll receive an email and an in-app notification when they create their account.</p>
+                  <div className="mt-5 flex justify-end gap-2">
+                    <button type="button" onClick={() => setAdvisorModal(null)} className="ll-pill ll-pill-ghost">Cancel</button>
+                    <button type="submit" className="ll-pill ll-pill-primary">Send invite</button>
+                  </div>
+                </form>
+              )}
+
+              {advisorModal.mode === "platform" && (
+                <div>
+                  <button type="button" onClick={() => setAdvisorModal({ mode: "choose" })} className="text-xs mb-3" style={{ color: "var(--warm-gray)" }}>← Back</button>
+                  <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>Choose a LegacyLink advisor</h3>
+                  <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Each one has been vetted and is licensed in Canada.</p>
+                  <div className="mt-5 space-y-2 max-h-[55vh] overflow-y-auto pr-1">
+                    {recommendedAdvisors.map(a => {
+                      const linked = links.some(l => l.email === a.email);
+                      return (
+                        <div key={a.id} className="flex items-center justify-between p-3 rounded-xl" style={{ border: "1px solid rgba(26,46,26,0.1)" }}>
+                          <div>
+                            <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>{a.name}</p>
+                            <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{a.firm} · {a.city} · ★ {a.rating}</p>
+                          </div>
+                          <button
+                            disabled={linked}
+                            onClick={() => handleConnectPlatform(a)}
+                            className="ll-pill ll-pill-secondary text-sm"
+                            style={{ padding: "0.4rem 0.9rem", opacity: linked ? 0.5 : 1 }}
+                          >{linked ? "Linked" : "Link"}</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
 
         {/* FAB */}
         <Link
