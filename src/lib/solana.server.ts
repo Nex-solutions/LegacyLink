@@ -8,14 +8,7 @@ import nacl from "tweetnacl";
 import bs58 from "bs58";
 
 import { webcrypto } from "node:crypto";
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  LAMPORTS_PER_SOL,
-} from "@solana/web3.js";
+import * as solanaWeb3 from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -27,7 +20,19 @@ const { AnchorProvider, Program, BN, Wallet: NodeWallet } = anchorPkg;
 import vaultIdl from "./idl/vault.json";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const {
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  LAMPORTS_PER_SOL,
+} = solanaWeb3;
 const subtle = (webcrypto as Crypto).subtle;
+
+type Connection = solanaWeb3.Connection;
+type Keypair = solanaWeb3.Keypair;
+type PublicKey = solanaWeb3.PublicKey;
 
 // ─────────────────────────────────────────────────────────────────
 // Simulated on-chain ops. Real Anchor calls slot in here later.
