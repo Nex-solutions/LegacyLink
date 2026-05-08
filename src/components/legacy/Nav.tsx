@@ -1,19 +1,31 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { clearUser, getUser, type User } from "@/lib/legacy-auth";
+import legacyMark from "@/assets/legacy-mark.png";
 
-export function Logo({ light = false }: { light?: boolean }) {
+export function Logo({ light = false, to = "/" }: { light?: boolean; to?: string }) {
   return (
-    <Link to="/" className="flex items-center gap-2">
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center"
-        style={{ background: light ? "var(--honey)" : "var(--forest)" }}
-      >
-        <span style={{ color: light ? "var(--forest)" : "var(--honey)", fontFamily: "var(--font-serif)", fontWeight: 700 }}>L</span>
-      </div>
+    <Link to={to} className="flex items-center gap-2.5 group">
       <span
-        className="text-xl"
-        style={{ fontFamily: "var(--font-serif)", color: light ? "var(--cream)" : "var(--forest)", fontWeight: 600 }}
+        className="inline-flex items-center justify-center rounded-full transition-transform group-hover:scale-[1.04]"
+        style={{
+          width: 36,
+          height: 36,
+          background: light ? "rgba(250,250,247,0.08)" : "rgba(26,46,26,0.04)",
+          padding: 4,
+        }}
+      >
+        <img
+          src={legacyMark}
+          alt="LegacyLink"
+          width={28}
+          height={28}
+          style={{ display: "block", filter: light ? "brightness(0) invert(1)" : "none" }}
+        />
+      </span>
+      <span
+        className="text-xl tracking-tight"
+        style={{ fontFamily: "var(--font-serif)", color: light ? "var(--cream)" : "var(--forest)", fontWeight: 600, letterSpacing: "-0.01em" }}
       >
         LegacyLink
       </span>
