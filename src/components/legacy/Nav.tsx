@@ -28,7 +28,16 @@ export function AppHeader() {
   return (
     <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between">
       <Logo />
-      <nav className="flex items-center gap-2 lg:gap-4">
+      <nav className="flex items-center gap-3 lg:gap-5">
+        <Link
+          to="/advisor"
+          className="hidden sm:inline-flex items-center gap-1.5 text-sm tracking-tight"
+          style={{ color: "var(--warm-gray)" }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
+          For Advisors
+        </Link>
+        <span className="hidden sm:inline-block h-4 w-px" style={{ background: "rgba(26,46,26,0.14)" }} />
         {user ? (
           <>
             <Link to="/dashboard" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Dashboard</Link>
