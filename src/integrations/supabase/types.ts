@@ -283,6 +283,75 @@ export type Database = {
         }
         Relationships: []
       }
+      ramp_intents: {
+        Row: {
+          amount_cad: number | null
+          amount_usdc: number | null
+          beneficiary_email: string | null
+          created_at: string
+          deposit_address: string | null
+          destination_wallet: string | null
+          fee_cad: number | null
+          id: string
+          kind: Database["public"]["Enums"]["ramp_kind"]
+          last_webhook: Json | null
+          ledger_tx_id: string | null
+          payout_tx_signature: string | null
+          paytrie_rmt: string | null
+          paytrie_tx_id: string | null
+          quote_id: number | null
+          reference: string | null
+          status: string
+          sweep_tx_signature: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cad?: number | null
+          amount_usdc?: number | null
+          beneficiary_email?: string | null
+          created_at?: string
+          deposit_address?: string | null
+          destination_wallet?: string | null
+          fee_cad?: number | null
+          id?: string
+          kind: Database["public"]["Enums"]["ramp_kind"]
+          last_webhook?: Json | null
+          ledger_tx_id?: string | null
+          payout_tx_signature?: string | null
+          paytrie_rmt?: string | null
+          paytrie_tx_id?: string | null
+          quote_id?: number | null
+          reference?: string | null
+          status?: string
+          sweep_tx_signature?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cad?: number | null
+          amount_usdc?: number | null
+          beneficiary_email?: string | null
+          created_at?: string
+          deposit_address?: string | null
+          destination_wallet?: string | null
+          fee_cad?: number | null
+          id?: string
+          kind?: Database["public"]["Enums"]["ramp_kind"]
+          last_webhook?: Json | null
+          ledger_tx_id?: string | null
+          payout_tx_signature?: string | null
+          paytrie_rmt?: string | null
+          paytrie_tx_id?: string | null
+          quote_id?: number | null
+          reference?: string | null
+          status?: string
+          sweep_tx_signature?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -470,6 +539,7 @@ export type Database = {
         | "offramp_burn"
         | "fee"
         | "adjustment"
+      ramp_kind: "onramp" | "offramp"
       vault_status: "pending" | "active" | "released" | "cancelled"
     }
     CompositeTypes: {
@@ -623,6 +693,7 @@ export const Constants = {
         "fee",
         "adjustment",
       ],
+      ramp_kind: ["onramp", "offramp"],
       vault_status: ["pending", "active", "released", "cancelled"],
     },
   },

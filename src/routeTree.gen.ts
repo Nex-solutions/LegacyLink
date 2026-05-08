@@ -19,12 +19,16 @@ import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdvisorIndexRouteImport } from './routes/advisor.index'
 import { Route as VaultIdRouteImport } from './routes/vault.$id'
+import { Route as FundsHistoryRouteImport } from './routes/funds.history'
+import { Route as FundsAddRouteImport } from './routes/funds.add'
 import { Route as AdvisorSignupRouteImport } from './routes/advisor.signup'
 import { Route as AdvisorProfileRouteImport } from './routes/advisor.profile'
 import { Route as AdvisorMessagesRouteImport } from './routes/advisor.messages'
 import { Route as AdvisorLoginRouteImport } from './routes/advisor.login'
 import { Route as AdvisorDashboardRouteImport } from './routes/advisor.dashboard'
+import { Route as AdminRampsRouteImport } from './routes/admin.ramps'
 import { Route as AdminLedgerRouteImport } from './routes/admin.ledger'
+import { Route as ApiPublicPaytrieWebhookRouteImport } from './routes/api/public/paytrie-webhook'
 import { Route as AdvisorClientsClientIdRouteImport } from './routes/advisor.clients.$clientId'
 import { Route as AdvisorClientsClientIdVaultVaultIdRouteImport } from './routes/advisor.clients.$clientId.vault.$vaultId'
 
@@ -78,6 +82,16 @@ const VaultIdRoute = VaultIdRouteImport.update({
   path: '/vault/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FundsHistoryRoute = FundsHistoryRouteImport.update({
+  id: '/funds/history',
+  path: '/funds/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FundsAddRoute = FundsAddRouteImport.update({
+  id: '/funds/add',
+  path: '/funds/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdvisorSignupRoute = AdvisorSignupRouteImport.update({
   id: '/advisor/signup',
   path: '/advisor/signup',
@@ -103,9 +117,19 @@ const AdvisorDashboardRoute = AdvisorDashboardRouteImport.update({
   path: '/advisor/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRampsRoute = AdminRampsRouteImport.update({
+  id: '/admin/ramps',
+  path: '/admin/ramps',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLedgerRoute = AdminLedgerRouteImport.update({
   id: '/admin/ledger',
   path: '/admin/ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPaytrieWebhookRoute = ApiPublicPaytrieWebhookRouteImport.update({
+  id: '/api/public/paytrie-webhook',
+  path: '/api/public/paytrie-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdvisorClientsClientIdRoute = AdvisorClientsClientIdRouteImport.update({
@@ -130,14 +154,18 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/admin/ledger': typeof AdminLedgerRoute
+  '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
   '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
+  '/funds/add': typeof FundsAddRoute
+  '/funds/history': typeof FundsHistoryRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/api/public/paytrie-webhook': typeof ApiPublicPaytrieWebhookRoute
   '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRoutesByTo {
@@ -150,14 +178,18 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/admin/ledger': typeof AdminLedgerRoute
+  '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
   '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
+  '/funds/add': typeof FundsAddRoute
+  '/funds/history': typeof FundsHistoryRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/api/public/paytrie-webhook': typeof ApiPublicPaytrieWebhookRoute
   '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRoutesById {
@@ -171,14 +203,18 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
   '/admin/ledger': typeof AdminLedgerRoute
+  '/admin/ramps': typeof AdminRampsRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
   '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
+  '/funds/add': typeof FundsAddRoute
+  '/funds/history': typeof FundsHistoryRoute
   '/vault/$id': typeof VaultIdRoute
   '/advisor/': typeof AdvisorIndexRoute
   '/advisor/clients/$clientId': typeof AdvisorClientsClientIdRouteWithChildren
+  '/api/public/paytrie-webhook': typeof ApiPublicPaytrieWebhookRoute
   '/advisor/clients/$clientId/vault/$vaultId': typeof AdvisorClientsClientIdVaultVaultIdRoute
 }
 export interface FileRouteTypes {
@@ -193,14 +229,18 @@ export interface FileRouteTypes {
     | '/messages'
     | '/signup'
     | '/admin/ledger'
+    | '/admin/ramps'
     | '/advisor/dashboard'
     | '/advisor/login'
     | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
+    | '/funds/add'
+    | '/funds/history'
     | '/vault/$id'
     | '/advisor/'
     | '/advisor/clients/$clientId'
+    | '/api/public/paytrie-webhook'
     | '/advisor/clients/$clientId/vault/$vaultId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -213,14 +253,18 @@ export interface FileRouteTypes {
     | '/messages'
     | '/signup'
     | '/admin/ledger'
+    | '/admin/ramps'
     | '/advisor/dashboard'
     | '/advisor/login'
     | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
+    | '/funds/add'
+    | '/funds/history'
     | '/vault/$id'
     | '/advisor'
     | '/advisor/clients/$clientId'
+    | '/api/public/paytrie-webhook'
     | '/advisor/clients/$clientId/vault/$vaultId'
   id:
     | '__root__'
@@ -233,14 +277,18 @@ export interface FileRouteTypes {
     | '/messages'
     | '/signup'
     | '/admin/ledger'
+    | '/admin/ramps'
     | '/advisor/dashboard'
     | '/advisor/login'
     | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
+    | '/funds/add'
+    | '/funds/history'
     | '/vault/$id'
     | '/advisor/'
     | '/advisor/clients/$clientId'
+    | '/api/public/paytrie-webhook'
     | '/advisor/clients/$clientId/vault/$vaultId'
   fileRoutesById: FileRoutesById
 }
@@ -254,14 +302,18 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRoute
   SignupRoute: typeof SignupRoute
   AdminLedgerRoute: typeof AdminLedgerRoute
+  AdminRampsRoute: typeof AdminRampsRoute
   AdvisorDashboardRoute: typeof AdvisorDashboardRoute
   AdvisorLoginRoute: typeof AdvisorLoginRoute
   AdvisorMessagesRoute: typeof AdvisorMessagesRoute
   AdvisorProfileRoute: typeof AdvisorProfileRoute
   AdvisorSignupRoute: typeof AdvisorSignupRoute
+  FundsAddRoute: typeof FundsAddRoute
+  FundsHistoryRoute: typeof FundsHistoryRoute
   VaultIdRoute: typeof VaultIdRoute
   AdvisorIndexRoute: typeof AdvisorIndexRoute
   AdvisorClientsClientIdRoute: typeof AdvisorClientsClientIdRouteWithChildren
+  ApiPublicPaytrieWebhookRoute: typeof ApiPublicPaytrieWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -336,6 +388,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VaultIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/funds/history': {
+      id: '/funds/history'
+      path: '/funds/history'
+      fullPath: '/funds/history'
+      preLoaderRoute: typeof FundsHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funds/add': {
+      id: '/funds/add'
+      path: '/funds/add'
+      fullPath: '/funds/add'
+      preLoaderRoute: typeof FundsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/advisor/signup': {
       id: '/advisor/signup'
       path: '/advisor/signup'
@@ -371,11 +437,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdvisorDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/ramps': {
+      id: '/admin/ramps'
+      path: '/admin/ramps'
+      fullPath: '/admin/ramps'
+      preLoaderRoute: typeof AdminRampsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/ledger': {
       id: '/admin/ledger'
       path: '/admin/ledger'
       fullPath: '/admin/ledger'
       preLoaderRoute: typeof AdminLedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/paytrie-webhook': {
+      id: '/api/public/paytrie-webhook'
+      path: '/api/public/paytrie-webhook'
+      fullPath: '/api/public/paytrie-webhook'
+      preLoaderRoute: typeof ApiPublicPaytrieWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/advisor/clients/$clientId': {
@@ -420,14 +500,18 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRoute,
   SignupRoute: SignupRoute,
   AdminLedgerRoute: AdminLedgerRoute,
+  AdminRampsRoute: AdminRampsRoute,
   AdvisorDashboardRoute: AdvisorDashboardRoute,
   AdvisorLoginRoute: AdvisorLoginRoute,
   AdvisorMessagesRoute: AdvisorMessagesRoute,
   AdvisorProfileRoute: AdvisorProfileRoute,
   AdvisorSignupRoute: AdvisorSignupRoute,
+  FundsAddRoute: FundsAddRoute,
+  FundsHistoryRoute: FundsHistoryRoute,
   VaultIdRoute: VaultIdRoute,
   AdvisorIndexRoute: AdvisorIndexRoute,
   AdvisorClientsClientIdRoute: AdvisorClientsClientIdRouteWithChildren,
+  ApiPublicPaytrieWebhookRoute: ApiPublicPaytrieWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
