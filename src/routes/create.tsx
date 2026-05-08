@@ -369,7 +369,7 @@ function Create() {
                   </div>
                 </div>
 
-                <p className="text-sm mt-6 text-center" style={{ color: "var(--warm-gray)" }}>Estimated network fee: &lt; $0.50 CAD</p>
+                
 
                 <label className="flex items-start gap-3 mt-6 cursor-pointer">
                   <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1" style={{ accentColor: "var(--honey)" }} />
