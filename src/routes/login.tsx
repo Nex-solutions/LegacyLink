@@ -53,6 +53,11 @@ function Login() {
         <div>
           <label className="ll-label">Password</label>
           <input type="password" className="ll-input" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <div className="mt-2 text-right">
+            <Link to="/forgot-password" className="text-xs" style={{ color: "var(--honey)" }}>
+              Forgot password?
+            </Link>
+          </div>
         </div>
         <button disabled={loading} type="submit" className="ll-pill ll-pill-primary w-full mt-2" style={{ opacity: loading ? 0.7 : 1 }}>
           {loading ? "Signing in…" : "Sign In"}
@@ -60,6 +65,9 @@ function Login() {
       </form>
       <p className="mt-6 text-sm text-center" style={{ color: "var(--warm-gray)" }}>
         New to LegacyLink? <Link to="/signup" style={{ color: "var(--honey)" }} className="font-medium">Create an account</Link>
+      </p>
+      <p className="mt-3 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
+        Are you an advisor? <Link to="/advisor/login" style={{ color: "var(--honey)" }} className="font-medium">Sign in to the advisor portal →</Link>
       </p>
     </AuthSplit>
   );

@@ -33,8 +33,8 @@ function Signup() {
         return;
       }
       try { await provision({ data: undefined } as never); } catch (e) { console.warn("wallet provisioning", e); }
-      toast.success("Welcome to LegacyLink.");
-      navigate({ to: "/dashboard" });
+      toast.success("Account created. Let's verify your identity.");
+      navigate({ to: "/signup/kyc" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sign up failed";
       toast.error(msg);
