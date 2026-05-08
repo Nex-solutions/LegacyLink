@@ -66,6 +66,7 @@ function Create() {
   const [bens, setBens] = useState<{ name: string; email: string; pct: number }[]>([
     { name: "", email: "", pct: 100 },
   ]);
+  const [trustee, setTrustee] = useState<{ name: string; email: string }>({ name: "", email: "" });
 
   // step 4
   const [agree, setAgree] = useState(false);
