@@ -193,25 +193,67 @@ function Create() {
                   ].map((m) => (
                     <button
                       key={m.k}
-                      onClick={() => fund(m.k)}
-                      disabled={funding_loading}
+                      onClick={() => selectMethod(m.k)}
+                      disabled={funding_loading || funded}
                       className="text-left p-5 rounded-2xl transition-all"
                       style={{
                         background: "var(--card-white)",
                         border: `2px solid ${funding === m.k ? "var(--honey)" : "rgba(26,46,26,0.08)"}`,
+                        cursor: funded ? "not-allowed" : "pointer",
                       }}
                     >
                       <div className="text-2xl">{m.icon}</div>
                       <div className="mt-2 font-medium" style={{ color: "var(--forest)" }}>{m.t}</div>
                       <div className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>{m.s}</div>
-                      {funding === m.k && (
-                        <div className="mt-2 text-xs" style={{ color: funded ? "var(--sage)" : "var(--honey)" }}>
-                          {funding_loading ? "Processing…" : funded ? "✓ Funded" : ""}
-                        </div>
+                      {funding === m.k && funded && (
+                        <div className="mt-2 text-xs" style={{ color: "var(--sage)" }}>✓ Paid</div>
                       )}
                     </button>
                   ))}
                 </div>
+
+                {funding && !funded && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-6 p-5 rounded-2xl"
+                    style={{ background: "rgba(26,46,26,0.04)", border: "1px solid rgba(26,46,26,0.1)" }}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600, color: "var(--forest)" }}>
+                          Confirm payment
+                        </p>
+                        <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>
+                          {funding === "card" ? "Credit or Debit Card" : "Interac e-Transfer"} · ${amountNum.toFixed(2)} CAD
+                        </p>
+                        <p className="mt-1 text-xs" style={{ color: "var(--warm-gray)", opacity: 0.8 }}>
+                          Demo payment — no real charge will be made.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={changeMethod}
+                        disabled={funding_loading}
+                        className="ll-pill ll-pill-ghost text-sm"
+                        style={{ padding: "0.5rem 1rem" }}
+                      >
+                        Change method
+                      </button>
+                      <button
+                        type="button"
+                        onClick={confirmPayment}
+                        disabled={funding_loading}
+                        className="ll-pill ll-pill-primary text-sm"
+                        style={{ padding: "0.5rem 1.2rem" }}
+                      >
+                        {funding_loading ? "Processing…" : `Confirm payment of $${amountNum.toFixed(2)}`}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
 
                 <div className="mt-8">
                   <label className="ll-label">Give this vault a name</label>
