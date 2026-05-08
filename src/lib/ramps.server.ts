@@ -26,14 +26,62 @@ export interface RampProvider {
   offramp(input: OffRampInput): Promise<RampResult>;
 }
 
+import { recordOnRampAndSweep, recordPayoutAndOffRamp } from "./ledger.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+async function userIdForPubkey(pubkey: string): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("custodial_wallets")
+    .select("user_id")
+    .eq("pubkey", pubkey)
+    .maybeSingle();
+  return data?.user_id ?? null;
+}
+
 class MockRampProvider implements RampProvider {
   async onramp(input: OnRampInput): Promise<RampResult> {
     console.log(`[ramp:mock] onramp CA$${input.amountCad} → ${input.userPubkey} (${input.reference})`);
-    return { providerRef: `mock_on_${Date.now().toString(36)}`, status: "completed" };
+    const ref = `mock_on_${Date.now().toString(36)}`;
+    // Mock 1:1 CAD→USDC. In production use the provider's quoted USDC amount.
+    const amountUsdc = input.amountCad;
+    const userId = await userIdForPubkey(input.userPubkey);
+    if (userId) {
+      try {
+        await recordOnRampAndSweep({
+          userId,
+          amountUsdc,
+          externalRef: ref,
+          reference: input.reference,
+        });
+      } catch (e) {
+        console.error("[ramp:mock] ledger onramp failed", e);
+      }
+    }
+    return { providerRef: ref, status: "completed" };
   }
   async offramp(input: OffRampInput): Promise<RampResult> {
     console.log(`[ramp:mock] offramp CA$${input.amountCad} → ${input.beneficiaryEmail} via ${input.payoutMethod ?? "interac"} (${input.reference})`);
-    return { providerRef: `mock_off_${Date.now().toString(36)}`, status: "completed" };
+    const ref = `mock_off_${Date.now().toString(36)}`;
+    // Look up the beneficiary's user_id by email if they have an account.
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("display_name", input.beneficiaryEmail)
+      .maybeSingle();
+    const userId = prof?.id ?? null;
+    if (userId) {
+      try {
+        await recordPayoutAndOffRamp({
+          userId,
+          amountUsdc: input.amountCad,
+          reference: input.reference,
+          externalRef: ref,
+        });
+      } catch (e) {
+        console.error("[ramp:mock] ledger offramp failed", e);
+      }
+    }
+    return { providerRef: ref, status: "completed" };
   }
 }
 

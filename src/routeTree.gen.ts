@@ -24,6 +24,7 @@ import { Route as AdvisorProfileRouteImport } from './routes/advisor.profile'
 import { Route as AdvisorMessagesRouteImport } from './routes/advisor.messages'
 import { Route as AdvisorLoginRouteImport } from './routes/advisor.login'
 import { Route as AdvisorDashboardRouteImport } from './routes/advisor.dashboard'
+import { Route as AdminLedgerRouteImport } from './routes/admin.ledger'
 import { Route as AdvisorClientsClientIdRouteImport } from './routes/advisor.clients.$clientId'
 import { Route as AdvisorClientsClientIdVaultVaultIdRouteImport } from './routes/advisor.clients.$clientId.vault.$vaultId'
 
@@ -102,6 +103,11 @@ const AdvisorDashboardRoute = AdvisorDashboardRouteImport.update({
   path: '/advisor/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLedgerRoute = AdminLedgerRouteImport.update({
+  id: '/admin/ledger',
+  path: '/admin/ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdvisorClientsClientIdRoute = AdvisorClientsClientIdRouteImport.update({
   id: '/advisor/clients/$clientId',
   path: '/advisor/clients/$clientId',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
+  '/admin/ledger': typeof AdminLedgerRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
   '/advisor/messages': typeof AdvisorMessagesRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
+  '/admin/ledger': typeof AdminLedgerRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
   '/advisor/messages': typeof AdvisorMessagesRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
+  '/admin/ledger': typeof AdminLedgerRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
   '/advisor/messages': typeof AdvisorMessagesRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/messages'
     | '/signup'
+    | '/admin/ledger'
     | '/advisor/dashboard'
     | '/advisor/login'
     | '/advisor/messages'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/messages'
     | '/signup'
+    | '/admin/ledger'
     | '/advisor/dashboard'
     | '/advisor/login'
     | '/advisor/messages'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/messages'
     | '/signup'
+    | '/admin/ledger'
     | '/advisor/dashboard'
     | '/advisor/login'
     | '/advisor/messages'
@@ -241,6 +253,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MessagesRoute: typeof MessagesRoute
   SignupRoute: typeof SignupRoute
+  AdminLedgerRoute: typeof AdminLedgerRoute
   AdvisorDashboardRoute: typeof AdvisorDashboardRoute
   AdvisorLoginRoute: typeof AdvisorLoginRoute
   AdvisorMessagesRoute: typeof AdvisorMessagesRoute
@@ -358,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdvisorDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/ledger': {
+      id: '/admin/ledger'
+      path: '/admin/ledger'
+      fullPath: '/admin/ledger'
+      preLoaderRoute: typeof AdminLedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/advisor/clients/$clientId': {
       id: '/advisor/clients/$clientId'
       path: '/advisor/clients/$clientId'
@@ -399,6 +419,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MessagesRoute: MessagesRoute,
   SignupRoute: SignupRoute,
+  AdminLedgerRoute: AdminLedgerRoute,
   AdvisorDashboardRoute: AdvisorDashboardRoute,
   AdvisorLoginRoute: AdvisorLoginRoute,
   AdvisorMessagesRoute: AdvisorMessagesRoute,
@@ -411,3 +432,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

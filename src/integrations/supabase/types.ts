@@ -118,6 +118,144 @@ export type Database = {
         }
         Relationships: []
       }
+      ledger_accounts: {
+        Row: {
+          code: string
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["ledger_account_type"]
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency?: string
+          id?: string
+          name: string
+          type: Database["public"]["Enums"]["ledger_account_type"]
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["ledger_account_type"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ledger_entries: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          side: string
+          transaction_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          side: string
+          transaction_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          side?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_entries_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_transactions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          external_ref: string | null
+          id: string
+          kind: Database["public"]["Enums"]["ledger_tx_kind"]
+          memo: string | null
+          reference: string | null
+          tx_signature: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          external_ref?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["ledger_tx_kind"]
+          memo?: string | null
+          reference?: string | null
+          tx_signature?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          external_ref?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["ledger_tx_kind"]
+          memo?: string | null
+          reference?: string | null
+          tx_signature?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      master_wallet: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          encrypted_mnemonic: string
+          encrypted_secret: string
+          id: boolean
+          pubkey: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          encrypted_mnemonic: string
+          encrypted_secret: string
+          id?: boolean
+          pubkey: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          encrypted_mnemonic?: string
+          encrypted_secret?: string
+          id?: boolean
+          pubkey?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -283,12 +421,29 @@ export type Database = {
           vault_name: string
         }[]
       }
+      ensure_user_wallet_account: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      ledger_account_balance: { Args: { _account_id: string }; Returns: number }
+      post_ledger_transaction: {
+        Args: {
+          _entries: Json
+          _external_ref: string
+          _kind: Database["public"]["Enums"]["ledger_tx_kind"]
+          _memo: string
+          _reference: string
+          _tx_signature: string
+          _user_id: string
+        }
+        Returns: string
       }
       seed_demo_for_user: { Args: never; Returns: undefined }
     }
@@ -302,6 +457,19 @@ export type Database = {
         | "warning"
         | "beneficiary"
         | "condition_update"
+      ledger_account_type:
+        | "asset"
+        | "liability"
+        | "equity"
+        | "revenue"
+        | "expense"
+      ledger_tx_kind:
+        | "onramp_mint"
+        | "sweep_to_master"
+        | "payout_from_master"
+        | "offramp_burn"
+        | "fee"
+        | "adjustment"
       vault_status: "pending" | "active" | "released" | "cancelled"
     }
     CompositeTypes: {
@@ -439,6 +607,21 @@ export const Constants = {
         "warning",
         "beneficiary",
         "condition_update",
+      ],
+      ledger_account_type: [
+        "asset",
+        "liability",
+        "equity",
+        "revenue",
+        "expense",
+      ],
+      ledger_tx_kind: [
+        "onramp_mint",
+        "sweep_to_master",
+        "payout_from_master",
+        "offramp_burn",
+        "fee",
+        "adjustment",
       ],
       vault_status: ["pending", "active", "released", "cancelled"],
     },
