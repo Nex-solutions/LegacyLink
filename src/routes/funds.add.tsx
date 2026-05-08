@@ -47,6 +47,11 @@ function AddFundsPage() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [intent, setIntent] = useState<Intent | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoMethod, setDemoMethod] = useState<"interac" | "card">("interac");
+  const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
+  const [cardExp, setCardExp] = useState("12/29");
+  const [cardCvc, setCardCvc] = useState("123");
 
   const quoteMut = useMutation({
     mutationFn: () => quoteFn({ data: { amountCad: amount } }),
