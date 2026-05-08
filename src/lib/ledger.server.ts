@@ -146,6 +146,15 @@ export async function recordOnRampAndSweep(args: {
     ],
   });
 
+  if (args.sweepGasLamports) {
+    await recordGas({
+      userId: args.userId,
+      reference: args.reference,
+      txSignature: args.sweepTxSignature,
+      lamports: args.sweepGasLamports,
+    });
+  }
+
   return { mintTxId, sweepTxId };
 }
 
