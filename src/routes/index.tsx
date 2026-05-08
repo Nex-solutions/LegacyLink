@@ -54,15 +54,6 @@ function Landing() {
             <a href="#how" className="ll-pill ll-pill-ghost">See How It Works</a>
           </motion.div>
         </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, y: [0, 8, 0] }}
-          transition={{ delay: 1, duration: 2, repeat: Infinity }}
-          className="absolute left-1/2 -translate-x-1/2 bottom-6 text-sm"
-          style={{ color: "var(--warm-gray)" }}
-        >
-          ↓ Scroll
-        </motion.div>
       </section>
 
       {/* Stats strip */}
