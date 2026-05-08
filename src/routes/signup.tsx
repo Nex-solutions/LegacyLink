@@ -55,7 +55,7 @@ function Signup() {
         Already have an account? <Link to="/login" style={{ color: "var(--honey)" }} className="font-medium">Sign in</Link>
       </p>
       <p className="mt-8 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
-        LegacyLink creates a secure vault for you automatically. No crypto knowledge needed.
+        Your vault is created the moment you sign up — protected, private, and yours alone.
       </p>
     </AuthSplit>
   );
