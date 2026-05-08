@@ -7,6 +7,9 @@ import { signIn } from "@/lib/legacy-auth";
 import { provisionWallet } from "@/lib/wallet.functions";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : "/dashboard",
+  }),
   head: () => ({ meta: [{ title: "Sign in — LegacyLink" }] }),
   component: Login,
 });
