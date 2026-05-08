@@ -28,22 +28,34 @@ function Dashboard() {
     const u = getUser();
     if (!u) { navigate({ to: "/login" }); return; }
     setUserState(u);
-    const released = evaluateReleases();
-    setVaults(getVaults());
     setLinks(getAdvisorLinks());
-    if (released.length) {
-      toast.success(
-        released.length === 1
-          ? "A vault just met its release condition and was released to its beneficiaries."
-          : `${released.length} vaults just met their release conditions.`
-      );
-    }
+    (async () => {
+      try {
+        const { released, vaults } = await evaluateAndHydrate();
+        setVaults(vaults);
+        if (released.length) {
+          toast.success(
+            released.length === 1
+              ? "A vault just met its release condition and was released to its beneficiaries."
+              : `${released.length} vaults just met their release conditions.`
+          );
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Couldn't load your vaults");
+      }
+    })();
   }, [navigate]);
 
-  function handleResetDemo() {
-    resetDemo();
-    setVaults(getVaults());
-    toast.success("Demo data reset. Four vaults loaded for the live walkthrough.");
+  async function handleResetDemo() {
+    try {
+      await serverResetDemo();
+      setVaults(getVaults());
+      toast.success("Demo data reset. Four vaults loaded for the live walkthrough.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't reset demo");
+    }
   }
 
   function handleInviteExternal(e: React.FormEvent) {
