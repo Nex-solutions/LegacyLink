@@ -37,6 +37,8 @@ export type Database = {
       }
       beneficiaries: {
         Row: {
+          claim_token: string | null
+          claimed_at: string | null
           created_at: string
           email: string
           id: string
@@ -44,8 +46,11 @@ export type Database = {
           payout_tx_signature: string | null
           pct: number
           vault_id: string
+          wallet_pubkey: string | null
         }
         Insert: {
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           email: string
           id?: string
@@ -53,8 +58,11 @@ export type Database = {
           payout_tx_signature?: string | null
           pct: number
           vault_id: string
+          wallet_pubkey?: string | null
         }
         Update: {
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -62,6 +70,7 @@ export type Database = {
           payout_tx_signature?: string | null
           pct?: number
           vault_id?: string
+          wallet_pubkey?: string | null
         }
         Relationships: [
           {
@@ -72,6 +81,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      custodial_wallets: {
+        Row: {
+          created_at: string
+          encrypted_secret: string
+          pubkey: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_secret: string
+          pubkey: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_secret?: string
+          pubkey?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -167,7 +197,9 @@ export type Database = {
           created_at: string
           id: string
           inactivity_days: number | null
+          init_tx: string | null
           last_checkin: string | null
+          letter_message: string | null
           name: string
           owner_id: string
           solana_pubkey: string | null
@@ -175,6 +207,8 @@ export type Database = {
           tx_signature: string | null
           unlock_date: string | null
           updated_at: string
+          usdc_ata: string | null
+          vault_pda: string | null
         }
         Insert: {
           amount_cad?: number
@@ -183,7 +217,9 @@ export type Database = {
           created_at?: string
           id?: string
           inactivity_days?: number | null
+          init_tx?: string | null
           last_checkin?: string | null
+          letter_message?: string | null
           name: string
           owner_id: string
           solana_pubkey?: string | null
@@ -191,6 +227,8 @@ export type Database = {
           tx_signature?: string | null
           unlock_date?: string | null
           updated_at?: string
+          usdc_ata?: string | null
+          vault_pda?: string | null
         }
         Update: {
           amount_cad?: number
@@ -199,7 +237,9 @@ export type Database = {
           created_at?: string
           id?: string
           inactivity_days?: number | null
+          init_tx?: string | null
           last_checkin?: string | null
+          letter_message?: string | null
           name?: string
           owner_id?: string
           solana_pubkey?: string | null
@@ -207,6 +247,8 @@ export type Database = {
           tx_signature?: string | null
           unlock_date?: string | null
           updated_at?: string
+          usdc_ata?: string | null
+          vault_pda?: string | null
         }
         Relationships: []
       }
@@ -215,6 +257,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_advisor_role: { Args: never; Returns: undefined }
+      consume_claim_token: {
+        Args: { _payout_signature: string; _token: string; _vault_id: string }
+        Returns: {
+          amount_cad: number
+          beneficiary_id: string
+          email: string
+          pct: number
+          vault_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -222,6 +275,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      seed_demo_for_user: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "advisor" | "family"
