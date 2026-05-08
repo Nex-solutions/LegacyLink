@@ -8,6 +8,7 @@ import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
 import { formatCAD, getVaults, updateVault, type Vault } from "@/lib/legacy-data";
+import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
