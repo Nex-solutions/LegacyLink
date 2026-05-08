@@ -150,6 +150,9 @@ function VaultDetail() {
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
             <div className="mt-6 space-y-3">
+              {vault.status === "Active" && (
+                <AddFundsButton vault={vault} onAdded={(amt) => { const next = { ...vault, amount_cad: vault.amount_cad + amt }; updateVault(vault.id, { amount_cad: next.amount_cad }); setVault(next); }} />
+              )}
               {cond.kind === "manual" && vault.status === "Active" && (
                 <button onClick={() => setShowRelease(true)} className="ll-pill ll-pill-secondary w-full">Release Now</button>
               )}
@@ -299,5 +302,54 @@ function TrusteesPanel({ vault, onChange }: { vault: Vault; onChange: (b: Benefi
         <button onClick={save} className="ll-pill ll-pill-secondary flex-1">Save</button>
       </div>
     </div>
+  );
+}
+
+function AddFundsButton({ vault, onAdded }: { vault: Vault; onAdded: (amt: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const [amt, setAmt] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+
+  function submit() {
+    const n = Number(amt);
+    if (!n || n <= 0) { toast.error("Enter an amount greater than $0"); return; }
+    setBusy(true);
+    setTimeout(() => {
+      onAdded(n);
+      setBusy(false);
+      setOpen(false);
+      setAmt("");
+      toast.success(`Added ${formatCAD(n)} to ${vault.name}`);
+    }, 900);
+  }
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="ll-pill ll-pill-sage w-full">+ Add Funds</button>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(26,46,26,0.5)" }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="ll-card p-8 max-w-md w-full">
+            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600 }}>Add funds</h3>
+            <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+              Top up <strong>{vault.name}</strong>. Funds can only be added — not removed — once a trust is active.
+            </p>
+            <div className="mt-6">
+              <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Amount (CAD)</label>
+              <input
+                type="number" min={1} value={amt} onChange={(e) => setAmt(e.target.value)}
+                placeholder="e.g. 500" autoFocus
+                className="mt-2 w-full px-4 py-3 rounded border text-lg"
+                style={{ borderColor: "rgba(26,46,26,0.2)", fontFamily: "var(--font-serif)" }}
+              />
+              <p className="text-xs mt-2" style={{ color: "var(--warm-gray)" }}>Funded via Interac e-Transfer.</p>
+            </div>
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setOpen(false)} className="ll-pill ll-pill-ghost">Cancel</button>
+              <button onClick={submit} disabled={busy} className="ll-pill ll-pill-secondary">{busy ? "Adding…" : "Confirm"}</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </>
   );
 }
