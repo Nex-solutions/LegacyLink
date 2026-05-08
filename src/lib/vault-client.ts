@@ -15,6 +15,7 @@ import {
   beneficiaryClaim,
   beneficiaryClaimByEmail,
   resetDemoServer,
+  ensureClaimTokens,
 } from "./vault.functions";
 import { setVaultsCache, type Vault, type VaultCondition, type Beneficiary } from "./legacy-data";
 
