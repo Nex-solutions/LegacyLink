@@ -164,6 +164,12 @@ function VaultDetail() {
             </div>
           </div>
 
+          {/* Advisor access */}
+          <AdvisorAccess vault={vault} onChange={(emails) => {
+            updateVault(vault.id, { advisor_emails: emails });
+            setVault({ ...vault, advisor_emails: emails });
+          }} />
+
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
             <div className="mt-6 space-y-3">
