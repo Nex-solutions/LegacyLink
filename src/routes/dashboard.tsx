@@ -19,13 +19,61 @@ function Dashboard() {
   const navigate = useNavigate();
   const [user, setUserState] = useState<{ name: string; email: string } | null>(null);
   const [vaults, setVaults] = useState<Vault[]>([]);
+  const [links, setLinks] = useState<AdvisorLink[]>([]);
+  const [advisorModal, setAdvisorModal] = useState<null | { mode: "choose" | "invite" | "platform"; preset?: RecommendedAdvisor }>(null);
+  const [inviteForm, setInviteForm] = useState({ name: "", email: "", firm: "", note: "" });
 
   useEffect(() => {
     const u = getUser();
     if (!u) { navigate({ to: "/login" }); return; }
     setUserState(u);
     setVaults(getVaults());
+    setLinks(getAdvisorLinks());
   }, [navigate]);
+
+  function handleInviteExternal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!inviteForm.email || !inviteForm.name) return;
+    const link: AdvisorLink = {
+      id: `ext-${Date.now()}`,
+      source: "external",
+      status: "pending",
+      name: inviteForm.name,
+      email: inviteForm.email,
+      firm: inviteForm.firm || undefined,
+      invitedAt: new Date().toISOString(),
+    };
+    addAdvisorLink(link);
+    setLinks(getAdvisorLinks());
+    setAdvisorModal(null);
+    setInviteForm({ name: "", email: "", firm: "", note: "" });
+    toast.success(`Invite sent to ${link.email}. They'll be onboarded as your advisor once they accept.`);
+  }
+
+  function handleConnectPlatform(a: RecommendedAdvisor) {
+    const link: AdvisorLink = {
+      id: `plat-${a.id}`,
+      source: "platform",
+      status: "connected",
+      name: a.name,
+      email: a.email,
+      firm: a.firm,
+      city: a.city,
+      focus: a.focus,
+      invitedAt: new Date().toISOString(),
+    };
+    addAdvisorLink(link);
+    setLinks(getAdvisorLinks());
+    setAdvisorModal(null);
+    toast.success(`You're now linked with ${a.name}. They have read-only access to your vaults.`);
+  }
+
+  function unlink(id: string, name: string) {
+    removeAdvisorLink(id);
+    setLinks(getAdvisorLinks());
+    toast.success(`Disconnected from ${name}.`);
+  }
+
 
   function checkIn(id: string) {
     const today = new Date().toISOString().slice(0, 10);
