@@ -6,7 +6,7 @@ import { AuthSplit } from "@/components/legacy/AuthSplit";
 import { supabase } from "@/integrations/supabase/client";
 import { submitKyc, getMyKycStatus } from "@/lib/paytrie-onboarding.functions";
 
-export const Route = createFileRoute("/signup_/kyc")({
+export const Route = createFileRoute("/signup/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
   component: SignupKyc,
 });
