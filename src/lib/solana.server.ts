@@ -95,7 +95,7 @@ export async function initVaultOnChain(args: {
   const vaultPda = await deriveVaultPda(args.ownerPubkey, args.vaultId);
   // Associated token accounts derive from (owner, mint) — simulated.
   const ataData = new TextEncoder().encode(`ata|${vaultPda}|usdc`);
-  const usdcAta = bs58.encode(new Uint8Array(await subtle.digest("SHA-256", ataData)));
+  const usdcAta = bs58.encode(new Uint8Array(await subtle.digest("SHA-256", ataData as BufferSource)));
   const signature = await fakeSig("init_vault", vaultPda);
   return { vaultPda, usdcAta, signature };
 }
