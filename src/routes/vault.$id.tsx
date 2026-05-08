@@ -662,8 +662,33 @@ function ConditionPanel({ vault, onChange }: { vault: Vault; onChange: (c: Vault
 
       <div className="flex gap-2 mt-6">
         <button onClick={() => setEditing(false)} className="ll-pill ll-pill-ghost flex-1">Cancel</button>
-        <button onClick={save} className="ll-pill ll-pill-secondary flex-1">Save</button>
+        <button onClick={requestSave} className="ll-pill ll-pill-secondary flex-1">Save</button>
       </div>
+
+      {authOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(26,46,26,0.5)" }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="ll-card p-8 max-w-md w-full">
+            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>Confirm it's you</h3>
+            <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+              Changing release conditions is a sensitive action. Re-enter your account password to continue.
+            </p>
+            <input
+              type="password"
+              autoFocus
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") confirmAuth(); }}
+              placeholder="Account password"
+              className="mt-5 w-full px-3 py-2 rounded border text-sm"
+              style={{ borderColor: "rgba(26,46,26,0.2)" }}
+            />
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => { setAuthOpen(false); setPendingNext(null); setPwd(""); }} className="ll-pill ll-pill-ghost" disabled={verifying}>Cancel</button>
+              <button onClick={confirmAuth} disabled={verifying} className="ll-pill ll-pill-secondary">{verifying ? "Verifying…" : "Confirm & Save"}</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
