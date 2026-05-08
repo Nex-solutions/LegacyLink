@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
 import {
   advisorClients, advisorTotals, activityFeed, formatCAD,
+  advisorRisks, upcomingReleases, allBeneficiaries, exportBookCSV,
   type AdvisorClient, type ClientVault, type ActivityKind,
 } from "@/lib/legacy-data";
 import {
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/advisor/dashboard")({
 });
 
 type SortKey = "recent" | "aum" | "name" | "vaults" | "upcoming";
+type View = "clients" | "beneficiaries";
 
 function AdvisorDashboard() {
   const navigate = useNavigate();
@@ -25,9 +27,13 @@ function AdvisorDashboard() {
   const [open, setOpen] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
+  const [view, setView] = useState<View>("clients");
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState<null | "invite" | "report" | "review">(null);
   const totals = useMemo(() => advisorTotals(), []);
+  const risks = useMemo(() => advisorRisks(), []);
+  const upcoming = useMemo(() => upcomingReleases(90), []);
+  const beneficiaries = useMemo(() => allBeneficiaries(), []);
 
   useEffect(() => {
     const a = getAdvisor();
@@ -154,32 +160,51 @@ function AdvisorDashboard() {
 
       {/* Main */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12 grid lg:grid-cols-[1.85fr_1fr] gap-10">
-        {/* LEFT — Clients */}
+        {/* LEFT — Clients / Beneficiaries */}
         <section>
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600, color: "var(--forest)" }}>
-              Your Clients
-            </h2>
+            <div className="flex items-center gap-3">
+              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600, color: "var(--forest)" }}>
+                Your Book
+              </h2>
+              <div className="flex rounded-full overflow-hidden" style={{ border: "1px solid rgba(26,46,26,0.12)" }}>
+                {(["clients", "beneficiaries"] as View[]).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className="px-3 py-1.5 text-xs capitalize"
+                    style={{
+                      background: view === v ? "var(--forest)" : "transparent",
+                      color: view === v ? "var(--cream)" : "var(--forest)",
+                    }}
+                  >{v}</button>
+                ))}
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or email…"
-                className="ll-input"
-                style={{ width: 240, padding: "0.6rem 0.9rem" }}
-              />
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
-                className="ll-input"
-                style={{ width: 200, padding: "0.6rem 0.9rem" }}
-              >
-                <option value="recent">Sort: Recent</option>
-                <option value="aum">Sort: AUM</option>
-                <option value="name">Sort: Name</option>
-                <option value="vaults">Sort: Vault Count</option>
-                <option value="upcoming">Sort: Upcoming Releases</option>
-              </select>
+              {view === "clients" && (
+                <>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name or email…"
+                    className="ll-input"
+                    style={{ width: 240, padding: "0.6rem 0.9rem" }}
+                  />
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as SortKey)}
+                    className="ll-input"
+                    style={{ width: 200, padding: "0.6rem 0.9rem" }}
+                  >
+                    <option value="recent">Sort: Recent</option>
+                    <option value="aum">Sort: AUM</option>
+                    <option value="name">Sort: Name</option>
+                    <option value="vaults">Sort: Vault Count</option>
+                    <option value="upcoming">Sort: Upcoming Releases</option>
+                  </select>
+                </>
+              )}
               <button onClick={() => setModal("invite")}
                 className="ll-pill ll-pill-secondary text-sm" style={{ padding: "0.6rem 1.1rem" }}>
                 + Invite Client
@@ -187,25 +212,120 @@ function AdvisorDashboard() {
             </div>
           </div>
 
-          <div className="mt-6 space-y-4">
-            {filtered.map((c) => (
-              <ClientCard
-                key={c.id}
-                client={c}
-                expanded={open === c.id}
-                onToggle={() => setOpen(open === c.id ? null : c.id)}
-              />
-            ))}
-            {filtered.length === 0 && (
-              <div className="ll-card p-12 text-center" style={{ color: "var(--warm-gray)" }}>
-                No clients match "{search}".
+          {view === "clients" ? (
+            <div className="mt-6 space-y-4">
+              {filtered.map((c) => (
+                <ClientCard
+                  key={c.id}
+                  client={c}
+                  expanded={open === c.id}
+                  onToggle={() => setOpen(open === c.id ? null : c.id)}
+                />
+              ))}
+              {filtered.length === 0 && (
+                <div className="ll-card p-12 text-center" style={{ color: "var(--warm-gray)" }}>
+                  No clients match "{search}".
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-6 ll-card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead style={{ background: "rgba(26,46,26,0.04)" }}>
+                  <tr>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Beneficiary</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Client</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Vault</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Share</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Flag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {beneficiaries.map((b, i) => (
+                    <tr key={i} className="border-t" style={{ borderColor: "rgba(26,46,26,0.06)" }}>
+                      <td className="px-4 py-3" style={{ color: "var(--forest)", fontWeight: 500 }}>{b.name}</td>
+                      <td className="px-4 py-3">
+                        <Link to="/advisor/client/$clientId" params={{ clientId: b.clientId }} style={{ color: "var(--honey)" }}>{b.clientName}</Link>
+                      </td>
+                      <td className="px-4 py-3" style={{ color: "var(--warm-gray)" }}>{b.vaultName}</td>
+                      <td className="px-4 py-3" style={{ color: "var(--honey)", fontWeight: 600 }}>{formatCAD(b.amount_cad)}</td>
+                      <td className="px-4 py-3 text-[12px]" style={{ color: b.flag ? "#C0392B" : "var(--warm-gray)" }}>{b.flag || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Upcoming releases pipeline */}
+          {upcoming.length > 0 && view === "clients" && (
+            <div className="mt-10">
+              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600, color: "var(--forest)" }}>
+                Upcoming releases · next 90 days
+              </h3>
+              <div className="mt-4 ll-card p-5">
+                <div className="space-y-3">
+                  {upcoming.map((u) => (
+                    <Link
+                      key={`${u.clientId}-${u.vaultId}`}
+                      to="/advisor/client/$clientId/vault/$vaultId"
+                      params={{ clientId: u.clientId, vaultId: u.vaultId }}
+                      className="flex items-center gap-4 p-3 rounded-xl transition hover:bg-[rgba(232,160,32,0.08)]"
+                    >
+                      <div className="w-14 text-center">
+                        <div style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600, color: "var(--honey)", lineHeight: 1 }}>{u.daysAway}</div>
+                        <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>days</div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>{u.vaultName}</p>
+                        <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>{u.clientName} · {formatCAD(u.amount_cad)} · {u.kind === "time" ? "Time-based" : "Inactivity"}</p>
+                      </div>
+                      <span style={{ color: "var(--honey)" }}>→</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </section>
 
-        {/* RIGHT — Activity + Quick Actions */}
+        {/* RIGHT — Risk + Activity + Quick Actions */}
         <aside className="space-y-6">
+          {risks.length > 0 && (
+            <div className="ll-card p-6" style={{ borderTop: "3px solid var(--honey)" }}>
+              <div className="flex items-center justify-between">
+                <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600, color: "var(--forest)" }}>
+                  Needs your attention
+                </h3>
+                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "rgba(232,160,32,0.18)", color: "var(--forest)" }}>{risks.length}</span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {risks.slice(0, 5).map((r) => (
+                  <Link
+                    key={r.id}
+                    to="/advisor/client/$clientId/vault/$vaultId"
+                    params={{ clientId: r.clientId, vaultId: r.vaultId }}
+                    className="block p-3 rounded-xl transition hover:bg-[rgba(26,46,26,0.04)]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.severity === "high" ? "#C0392B" : r.severity === "medium" ? "var(--honey)" : "var(--sage)" }} />
+                      <div className="flex-1">
+                        <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>{r.clientName} · {r.vaultName}</p>
+                        <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>{r.message}</p>
+                        {r.kind === "inactivity" && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); toast.success(`Check-in nudge sent to ${r.clientName}.`); }}
+                            className="mt-1.5 text-[11px] font-medium" style={{ color: "var(--honey)" }}
+                          >Send check-in nudge →</button>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="ll-card p-6">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600, color: "var(--forest)" }}>
               Recent Activity
@@ -237,6 +357,19 @@ function AdvisorDashboard() {
               <QuickActionButton onClick={() => setModal("invite")} icon="✉" label="Invite a New Client" />
               <QuickActionButton onClick={() => setModal("report")} icon="📋" label="Download Client Report" />
               <QuickActionButton onClick={() => setModal("review")} icon="📞" label="Schedule a Review" />
+              <QuickActionButton onClick={() => setView("beneficiaries")} icon="👥" label="Open Beneficiary Roster" />
+              <QuickActionButton
+                onClick={() => {
+                  const blob = new window.Blob([exportBookCSV()], { type: "text/csv" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url; a.download = `legacylink-book-${new Date().toISOString().slice(0, 10)}.csv`;
+                  document.body.appendChild(a); a.click(); a.remove();
+                  URL.revokeObjectURL(url);
+                  toast.success("Book exported.");
+                }}
+                icon="⬇" label="Export Book (CSV)"
+              />
             </div>
           </div>
         </aside>
@@ -364,9 +497,17 @@ function ClientCard({ client, expanded, onToggle }: {
           <div className="flex flex-wrap gap-2">
             {client.conditionTypes.map((t) => <ConditionTag key={t} kind={t} />)}
           </div>
-          <button onClick={onToggle} className="text-sm font-medium" style={{ color: "var(--honey)" }}>
-            {expanded ? "Collapse ↑" : "View Portfolio →"}
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/advisor/client/$clientId"
+              params={{ clientId: client.id }}
+              className="text-sm font-medium"
+              style={{ color: "var(--forest)" }}
+            >Open detail →</Link>
+            <button onClick={onToggle} className="text-sm font-medium" style={{ color: "var(--honey)" }}>
+              {expanded ? "Collapse ↑" : "Quick view"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -376,7 +517,7 @@ function ClientCard({ client, expanded, onToggle }: {
             exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="px-6 pb-6 grid sm:grid-cols-2 gap-3 border-t pt-5"
               style={{ borderColor: "rgba(26,46,26,0.08)" }}>
-              {client.vaultDetail.map((v) => <ReadOnlyVault key={v.id} vault={v} />)}
+              {client.vaultDetail.map((v) => <ReadOnlyVault key={v.id} clientId={client.id} vault={v} />)}
             </div>
             <div className="px-6 pb-5 text-right">
               <button onClick={onToggle} className="text-sm" style={{ color: "var(--warm-gray)" }}>
@@ -390,7 +531,7 @@ function ClientCard({ client, expanded, onToggle }: {
   );
 }
 
-function ReadOnlyVault({ vault }: { vault: ClientVault }) {
+function ReadOnlyVault({ clientId, vault }: { clientId: string; vault: ClientVault }) {
   const cond = vault.condition;
   const desc =
     cond.kind === "time" ? `Releases on ${new Date(cond.unlock_date).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" })}`
@@ -432,10 +573,12 @@ function ReadOnlyVault({ vault }: { vault: ClientVault }) {
             {b.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}
           </span>
         ))}
-        <button onClick={() => toast("Read-only vault detail coming soon.")}
+        <Link
+          to="/advisor/client/$clientId/vault/$vaultId"
+          params={{ clientId, vaultId: vault.id }}
           className="ml-auto text-[12px]" style={{ color: "var(--honey)" }}>
           View Full Detail →
-        </button>
+        </Link>
       </div>
     </div>
   );
