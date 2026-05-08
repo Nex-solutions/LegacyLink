@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/legacy/Nav";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
-import { addVault, formatCAD, type Vault, type VaultCondition } from "@/lib/legacy-data";
+import { formatCAD, type VaultCondition } from "@/lib/legacy-data";
+import { serverCreateVault } from "@/lib/vault-client";
 import { getUser } from "@/lib/legacy-auth";
 
 
@@ -104,22 +105,21 @@ function Create() {
 
   async function submit() {
     setSubmitting(true);
-    setTimeout(() => {
-      const id = "vault-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-      const v: Vault = {
-        id,
+    try {
+      const { id } = await serverCreateVault({
         name: name || "Untitled Vault",
         amount_cad: amountNum,
-        status: "Active",
         condition: getCondition(),
-        beneficiaries: bens,
-        created_at: new Date().toISOString().slice(0, 10),
-      };
-      addVault(v);
+        beneficiaries: bens.map((b) => ({ name: b.name, email: b.email, pct: Number(b.pct) })),
+      });
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
       setSuccess(id);
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Couldn't create vault");
+    } finally {
       setSubmitting(false);
-    }, 3000);
+    }
   }
 
   if (success) {

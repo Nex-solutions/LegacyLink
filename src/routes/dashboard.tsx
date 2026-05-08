@@ -7,10 +7,9 @@ import { AppHeader } from "@/components/legacy/Nav";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
-import { formatCAD, getVaults, updateVault, type Vault } from "@/lib/legacy-data";
+import { formatCAD, getVaults, type Vault } from "@/lib/legacy-data";
 import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
-import { evaluateReleases } from "@/lib/vault-release";
-import { resetDemo } from "@/lib/demo-seed";
+import { evaluateAndHydrate, serverCheckIn, serverResetDemo } from "@/lib/vault-client";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
@@ -29,22 +28,34 @@ function Dashboard() {
     const u = getUser();
     if (!u) { navigate({ to: "/login" }); return; }
     setUserState(u);
-    const released = evaluateReleases();
-    setVaults(getVaults());
     setLinks(getAdvisorLinks());
-    if (released.length) {
-      toast.success(
-        released.length === 1
-          ? "A vault just met its release condition and was released to its beneficiaries."
-          : `${released.length} vaults just met their release conditions.`
-      );
-    }
+    (async () => {
+      try {
+        const { released, vaults } = await evaluateAndHydrate();
+        setVaults(vaults);
+        if (released.length) {
+          toast.success(
+            released.length === 1
+              ? "A vault just met its release condition and was released to its beneficiaries."
+              : `${released.length} vaults just met their release conditions.`
+          );
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Couldn't load your vaults");
+      }
+    })();
   }, [navigate]);
 
-  function handleResetDemo() {
-    resetDemo();
-    setVaults(getVaults());
-    toast.success("Demo data reset. Four vaults loaded for the live walkthrough.");
+  async function handleResetDemo() {
+    try {
+      await serverResetDemo();
+      setVaults(getVaults());
+      toast.success("Demo data reset. Four vaults loaded for the live walkthrough.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't reset demo");
+    }
   }
 
   function handleInviteExternal(e: React.FormEvent) {
@@ -91,14 +102,14 @@ function Dashboard() {
   }
 
 
-  function checkIn(id: string) {
-    const today = new Date().toISOString().slice(0, 10);
-    const v = vaults.find(x => x.id === id);
-    if (v && v.condition.kind === "inactivity") {
-      const updated: Vault = { ...v, condition: { ...v.condition, last_checkin: today } };
-      updateVault(id, updated);
+  async function checkIn(id: string) {
+    try {
+      await serverCheckIn(id);
       setVaults(getVaults());
       toast.success("Checked in. Countdown reset.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't check in");
     }
   }
 

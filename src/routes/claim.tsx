@@ -4,8 +4,9 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/legacy/Nav";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
-import { formatCAD, getVault, updateVault, type Vault } from "@/lib/legacy-data";
-import { evaluateReleases, conditionSummary } from "@/lib/vault-release";
+import { formatCAD, getVault, type Vault } from "@/lib/legacy-data";
+import { evaluateAndHydrate, serverClaimByEmail } from "@/lib/vault-client";
+import { conditionSummary } from "@/lib/vault-release";
 
 type Search = { vault?: string };
 
@@ -33,13 +34,14 @@ function Claim() {
     return { ...me, payout: vault.amount_cad * me.pct / 100 };
   }, [vault, email]);
 
-  function lookup(e: React.FormEvent) {
+  async function lookup(e: React.FormEvent) {
     e.preventDefault();
     const id = vaultId.trim();
     const em = email.trim().toLowerCase();
     if (!id || !em) return toast.error("Vault ID and your email are both required.");
-    // Make sure status reflects current condition.
-    evaluateReleases();
+    try {
+      await evaluateAndHydrate();
+    } catch (err) { console.error(err); }
     const v = getVault(id);
     if (!v) { setStep("missing"); return; }
     setVaultState(v);
@@ -49,17 +51,16 @@ function Claim() {
     setStep("found");
   }
 
-  function confirmClaim() {
+  async function confirmClaim() {
     if (!vault || !myShare) return;
-    setStep("claimed");
-    // Tag the beneficiary as claimed in our local mirror.
-    const updated = vault.beneficiaries.map(b =>
-      b.email.toLowerCase() === email.toLowerCase()
-        ? { ...b, claimed_at: new Date().toISOString() } as typeof b & { claimed_at: string }
-        : b
-    );
-    updateVault(vault.id, { beneficiaries: updated as typeof vault.beneficiaries });
-    toast.success(`${formatCAD(myShare.payout)} on its way to ${email} via Interac e-Transfer.`);
+    try {
+      const res = await serverClaimByEmail(vault.id, email);
+      setStep("claimed");
+      toast.success(`${formatCAD(res.amount_cad)} on its way to ${email} via Interac e-Transfer.`);
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Claim failed");
+    }
   }
 
   function reset() {
