@@ -8,8 +8,11 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
+import { useEffect } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { hydrateUserFromSession, clearUser, setUser } from "@/lib/legacy-auth";
 
 function NotFoundComponent() {
   return (
@@ -111,6 +114,18 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    // Set up listener BEFORE checking session, per Supabase guidance.
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (!session?.user) { clearUser(); return; }
+      const email = session.user.email ?? "";
+      const name = (session.user.user_metadata?.display_name as string | undefined) ?? email.split("@")[0];
+      setUser({ name, email });
+    });
+    void hydrateUserFromSession();
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
