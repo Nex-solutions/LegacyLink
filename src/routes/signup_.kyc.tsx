@@ -36,11 +36,21 @@ function SignupKyc() {
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
       if (!sess.session) { navigate({ to: "/login" }); return; }
+      const meta = sess.session.user.user_metadata as { display_name?: string } | undefined;
+      const fallback = (meta?.display_name ?? "").trim();
+      const [fbFirst, ...fbRest] = fallback.split(/\s+/);
+      const fbLast = fbRest.join(" ");
       try {
         const s = await status({ data: undefined } as never);
-        if (s.firstName) setForm((f) => ({ ...f, first_name: s.firstName!, last_name: s.lastName ?? "" }));
+        setForm((f) => ({
+          ...f,
+          first_name: s.firstName || fbFirst || f.first_name,
+          last_name: s.lastName || fbLast || f.last_name,
+        }));
         if (s.verificationLink) setVerificationLink(s.verificationLink);
-      } catch { /* noop */ }
+      } catch {
+        if (fbFirst) setForm((f) => ({ ...f, first_name: fbFirst, last_name: fbLast }));
+      }
     })();
   }, [navigate, status]);
 
