@@ -356,7 +356,7 @@ function Create() {
                   <button
                     onClick={() => setStep(3)}
                     disabled={totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim()))}
-                    onClick={submit}
+                    className="ll-pill ll-pill-primary"
                     style={{ opacity: totalPct !== 100 || bens.some(b => !b.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim())) ? 0.5 : 1 }}
                   >Continue →</button>
                 </div>
