@@ -21,7 +21,8 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import { AnchorProvider, Program, Wallet, BN, type Idl } from "@coral-xyz/anchor";
+import { AnchorProvider, Program, BN, type Idl } from "@coral-xyz/anchor";
+import NodeWallet from "@coral-xyz/anchor/dist/esm/nodewallet.js";
 import vaultIdl from "./idl/vault.json";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
