@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AuthSplit } from "@/components/legacy/AuthSplit";
 import { supabase } from "@/integrations/supabase/client";
-import { submitKyc, getMyKycStatus } from "@/lib/paytrie-onboarding.functions";
+import { submitKyc, getMyKycStatus, simulateKycApproval } from "@/lib/paytrie-onboarding.functions";
 
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
