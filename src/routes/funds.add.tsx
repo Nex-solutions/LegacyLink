@@ -63,7 +63,11 @@ function AddFundsPage() {
       if (!quote) throw new Error("Get a quote first");
       return intentFn({ data: { amountCad: amount, quoteId: quote.quoteId } });
     },
-    onSuccess: (res) => setIntent(res),
+    onSuccess: (res) => {
+      setIntent(res);
+      setDemoMethod("interac");
+      setDemoOpen(true);
+    },
   });
 
   return (
@@ -98,7 +102,7 @@ function AddFundsPage() {
                 <div className="flex justify-between text-sm"><span>Fee</span><span className="font-mono">CA${quote.fee.toFixed(2)}</span></div>
                 <div className="flex justify-between font-semibold"><span>You'll receive</span><span className="font-mono">{quote.rightSideValue} USDC</span></div>
                 <Button className="w-full mt-2" onClick={() => intentMut.mutate()} disabled={intentMut.isPending}>
-                  {intentMut.isPending ? "Creating…" : "Continue to payment"}
+                  {intentMut.isPending ? "Preparing…" : "Make Payment"}
                 </Button>
               </div>
             )}
