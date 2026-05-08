@@ -139,7 +139,7 @@ function Create() {
           </motion.h1>
           <p className="mt-4" style={{ color: "var(--warm-gray)" }}>Vault ID</p>
           <p className="mt-1" style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 20, letterSpacing: "0.08em" }}>{success}</p>
-          <a href="#" className="block mt-3 text-[10px]" style={{ color: "var(--warm-gray)", opacity: 0.7 }}>View on Solana Explorer</a>
+          
           <button onClick={() => navigate({ to: "/dashboard" })} className="ll-pill ll-pill-primary mt-8">Go to Dashboard</button>
         </div>
       </PageShell>
