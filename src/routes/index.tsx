@@ -42,7 +42,7 @@ function Landing() {
             className="mx-auto mt-8 max-w-2xl text-lg"
             style={{ color: "var(--warm-gray)" }}
           >
-            Your spouse shouldn't have to wait eight months for probate to pay the mortgage. Your kids shouldn't need a lawyer to access tuition. LegacyLink moves Canadian dollars to the people you love the moment they need them — not the moment a court allows it.
+            Money where it's needed. When it's needed. Without the eight-month wait.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
