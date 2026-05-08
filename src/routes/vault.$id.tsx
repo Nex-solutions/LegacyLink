@@ -305,22 +305,55 @@ function TrusteesPanel({ vault, onChange }: { vault: Vault; onChange: (b: Benefi
   );
 }
 
+type PayMethod = "interac" | "card" | "bank";
+type PayStep = "amount" | "method" | "details" | "review" | "processing" | "success";
+
 function AddFundsButton({ vault, onAdded }: { vault: Vault; onAdded: (amt: number) => void }) {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<PayStep>("amount");
   const [amt, setAmt] = useState<string>("");
-  const [busy, setBusy] = useState(false);
+  const [method, setMethod] = useState<PayMethod>("interac");
+  const [email, setEmail] = useState("");
+  const [card, setCard] = useState({ number: "", exp: "", cvc: "", name: "" });
 
-  function submit() {
-    const n = Number(amt);
-    if (!n || n <= 0) { toast.error("Enter an amount greater than $0"); return; }
-    setBusy(true);
-    setTimeout(() => {
-      onAdded(n);
-      setBusy(false);
-      setOpen(false);
-      setAmt("");
-      toast.success(`Added ${formatCAD(n)} to ${vault.name}`);
-    }, 900);
+  function reset() {
+    setStep("amount"); setAmt(""); setMethod("interac");
+    setEmail(""); setCard({ number: "", exp: "", cvc: "", name: "" });
+  }
+  function close() { setOpen(false); setTimeout(reset, 300); }
+
+  const n = Number(amt);
+  const fee = method === "card" ? Math.round(n * 0.029 * 100) / 100 + 0.30 : 0;
+  const total = n + fee;
+
+  function next() {
+    if (step === "amount") {
+      if (!n || n <= 0) { toast.error("Enter an amount greater than $0"); return; }
+      setStep("method");
+    } else if (step === "method") {
+      setStep("details");
+    } else if (step === "details") {
+      if (method === "interac" && !email.trim()) { toast.error("Enter the email to send from"); return; }
+      if (method === "card") {
+        if (card.number.replace(/\s/g, "").length < 12) { toast.error("Enter a valid card number"); return; }
+        if (!card.exp.match(/^\d{2}\/\d{2}$/)) { toast.error("Expiry must be MM/YY"); return; }
+        if (card.cvc.length < 3) { toast.error("Enter the CVC"); return; }
+        if (!card.name.trim()) { toast.error("Enter the cardholder name"); return; }
+      }
+      setStep("review");
+    } else if (step === "review") {
+      setStep("processing");
+      setTimeout(() => {
+        setStep("success");
+        onAdded(n);
+      }, 1800);
+    }
+  }
+
+  function back() {
+    if (step === "method") setStep("amount");
+    else if (step === "details") setStep("method");
+    else if (step === "review") setStep("details");
   }
 
   return (
@@ -329,27 +362,150 @@ function AddFundsButton({ vault, onAdded }: { vault: Vault; onAdded: (amt: numbe
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(26,46,26,0.5)" }}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="ll-card p-8 max-w-md w-full">
-            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600 }}>Add funds</h3>
-            <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
-              Top up <strong>{vault.name}</strong>. Funds can only be added — not removed — once a trust is active.
-            </p>
-            <div className="mt-6">
-              <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Amount (CAD)</label>
-              <input
-                type="number" min={1} value={amt} onChange={(e) => setAmt(e.target.value)}
-                placeholder="e.g. 500" autoFocus
-                className="mt-2 w-full px-4 py-3 rounded border text-lg"
-                style={{ borderColor: "rgba(26,46,26,0.2)", fontFamily: "var(--font-serif)" }}
-              />
-              <p className="text-xs mt-2" style={{ color: "var(--warm-gray)" }}>Funded via Interac e-Transfer.</p>
-            </div>
-            <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setOpen(false)} className="ll-pill ll-pill-ghost">Cancel</button>
-              <button onClick={submit} disabled={busy} className="ll-pill ll-pill-secondary">{busy ? "Adding…" : "Confirm"}</button>
-            </div>
+            {step !== "success" && step !== "processing" && (
+              <>
+                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>
+                  Add funds · Step {step === "amount" ? 1 : step === "method" ? 2 : step === "details" ? 3 : 4} of 4
+                </p>
+                <h3 className="mt-1" style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600 }}>
+                  {step === "amount" && "How much?"}
+                  {step === "method" && "Payment method"}
+                  {step === "details" && (method === "interac" ? "Interac e-Transfer" : method === "card" ? "Card details" : "Bank transfer")}
+                  {step === "review" && "Review & confirm"}
+                </h3>
+              </>
+            )}
+
+            {step === "amount" && (
+              <div className="mt-6">
+                <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Amount (CAD)</label>
+                <input type="number" min={1} value={amt} onChange={(e) => setAmt(e.target.value)} placeholder="e.g. 500" autoFocus
+                  className="mt-2 w-full px-4 py-3 rounded border text-lg"
+                  style={{ borderColor: "rgba(26,46,26,0.2)", fontFamily: "var(--font-serif)" }} />
+                <p className="text-xs mt-2" style={{ color: "var(--warm-gray)" }}>Topping up <strong>{vault.name}</strong>. Funds can only be added once active.</p>
+              </div>
+            )}
+
+            {step === "method" && (
+              <div className="mt-6 space-y-2">
+                {([
+                  { id: "interac", label: "Interac e-Transfer", desc: "Free · 1–2 min" },
+                  { id: "card", label: "Credit / Debit card", desc: "2.9% + $0.30 · Instant" },
+                  { id: "bank", label: "Bank transfer (EFT)", desc: "Free · 1–3 business days" },
+                ] as const).map(opt => (
+                  <button key={opt.id} onClick={() => setMethod(opt.id)}
+                    className="w-full text-left p-4 rounded border flex items-center gap-3"
+                    style={{ borderColor: method === opt.id ? "var(--honey)" : "rgba(26,46,26,0.15)", background: method === opt.id ? "rgba(218,165,32,0.06)" : "transparent" }}>
+                    <span className="w-4 h-4 rounded-full border-2 flex-shrink-0" style={{ borderColor: "var(--honey)", background: method === opt.id ? "var(--honey)" : "transparent" }} />
+                    <div className="flex-1">
+                      <p style={{ color: "var(--forest)", fontWeight: 500 }}>{opt.label}</p>
+                      <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {step === "details" && method === "interac" && (
+              <div className="mt-6">
+                <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Send from email</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" autoFocus
+                  className="mt-2 w-full px-4 py-3 rounded border" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+                <p className="text-xs mt-3" style={{ color: "var(--warm-gray)" }}>We'll send a request for {formatCAD(n)} to your bank's Interac.</p>
+              </div>
+            )}
+
+            {step === "details" && method === "card" && (
+              <div className="mt-6 space-y-3">
+                <div>
+                  <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Card number</label>
+                  <input value={card.number} onChange={(e) => setCard({ ...card, number: e.target.value })} placeholder="1234 5678 9012 3456" autoFocus
+                    className="mt-1 w-full px-4 py-3 rounded border" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Expiry</label>
+                    <input value={card.exp} onChange={(e) => setCard({ ...card, exp: e.target.value })} placeholder="MM/YY"
+                      className="mt-1 w-full px-4 py-3 rounded border" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>CVC</label>
+                    <input value={card.cvc} onChange={(e) => setCard({ ...card, cvc: e.target.value })} placeholder="123"
+                      className="mt-1 w-full px-4 py-3 rounded border" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Cardholder</label>
+                  <input value={card.name} onChange={(e) => setCard({ ...card, name: e.target.value })} placeholder="Name on card"
+                    className="mt-1 w-full px-4 py-3 rounded border" style={{ borderColor: "rgba(26,46,26,0.2)" }} />
+                </div>
+              </div>
+            )}
+
+            {step === "details" && method === "bank" && (
+              <div className="mt-6 space-y-2 text-sm" style={{ color: "var(--forest)" }}>
+                <p style={{ color: "var(--warm-gray)" }}>Send an EFT to:</p>
+                <div className="p-4 rounded" style={{ background: "rgba(26,46,26,0.04)" }}>
+                  <p><strong>Institution:</strong> 003 (RBC)</p>
+                  <p><strong>Transit:</strong> 04821</p>
+                  <p><strong>Account:</strong> 1029384756</p>
+                  <p><strong>Reference:</strong> {vault.id.slice(0, 8).toUpperCase()}</p>
+                </div>
+                <p className="text-xs" style={{ color: "var(--warm-gray)" }}>Funds will appear in {vault.name} within 1–3 business days.</p>
+              </div>
+            )}
+
+            {step === "review" && (
+              <div className="mt-6 space-y-3 text-sm">
+                <Row label="Vault" value={vault.name} />
+                <Row label="Amount" value={formatCAD(n)} />
+                <Row label="Method" value={method === "interac" ? "Interac e-Transfer" : method === "card" ? `Card ····${card.number.slice(-4)}` : "Bank EFT"} />
+                {fee > 0 && <Row label="Processing fee" value={formatCAD(fee)} />}
+                <div className="pt-3" style={{ borderTop: "1px solid rgba(26,46,26,0.1)" }}>
+                  <Row label="Total" value={formatCAD(total)} bold />
+                </div>
+              </div>
+            )}
+
+            {step === "processing" && (
+              <div className="py-10 text-center">
+                <div className="w-12 h-12 mx-auto rounded-full border-4 animate-spin" style={{ borderColor: "rgba(26,46,26,0.1)", borderTopColor: "var(--honey)" }} />
+                <p className="mt-6" style={{ fontFamily: "var(--font-serif)", fontSize: 22, color: "var(--forest)" }}>Processing payment…</p>
+                <p className="text-xs mt-2" style={{ color: "var(--warm-gray)" }}>Securely charging {formatCAD(total)}</p>
+              </div>
+            )}
+
+            {step === "success" && (
+              <div className="py-8 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl" style={{ background: "var(--sage)", color: "var(--forest)" }}>✓</div>
+                <h3 className="mt-5" style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600 }}>Payment successful</h3>
+                <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>{formatCAD(n)} added to {vault.name}.</p>
+                <button onClick={close} className="ll-pill ll-pill-secondary mt-6">Done</button>
+              </div>
+            )}
+
+            {step !== "processing" && step !== "success" && (
+              <div className="flex justify-between gap-3 mt-8">
+                <button onClick={step === "amount" ? close : back} className="ll-pill ll-pill-ghost">
+                  {step === "amount" ? "Cancel" : "Back"}
+                </button>
+                <button onClick={next} className="ll-pill ll-pill-secondary">
+                  {step === "review" ? `Pay ${formatCAD(total)}` : "Continue"}
+                </button>
+              </div>
+            )}
           </motion.div>
         </div>
       )}
     </>
+  );
+}
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className="flex justify-between">
+      <span style={{ color: "var(--warm-gray)" }}>{label}</span>
+      <span style={{ color: "var(--forest)", fontWeight: bold ? 600 : 500, fontFamily: bold ? "var(--font-serif)" : undefined }}>{value}</span>
+    </div>
   );
 }
