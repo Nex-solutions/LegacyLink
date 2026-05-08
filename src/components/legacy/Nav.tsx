@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { clearUser, getUser, type User } from "@/lib/legacy-auth";
+import { clearUser, clearAdvisor, getUser, getAdvisor, type User, type Advisor } from "@/lib/legacy-auth";
 import legacyMark from "@/assets/legacy-mark.png";
 
 export function Logo({ light = false, to = "/" }: { light?: boolean; to?: string }) {
