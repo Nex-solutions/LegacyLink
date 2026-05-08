@@ -15,6 +15,15 @@ export const Route = createFileRoute("/funds/add")({
   beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/login", search: { redirect: location.href } });
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("kyc_status")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    const status = (prof?.kyc_status as string | undefined) ?? "not_started";
+    if (status === "not_started") {
+      throw redirect({ to: "/signup/kyc", search: { reason: "funds" } });
+    }
   },
   component: AddFundsPage,
 });
