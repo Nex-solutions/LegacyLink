@@ -8,7 +8,7 @@ import { generateApiLink, paytrieOnboardingEnabled } from "./paytrie-onboarding.
 const KycSchema = z.object({
   first_name: z.string().trim().min(1).max(80),
   last_name: z.string().trim().min(1).max(80),
-  phone: z.string().trim().min(7).max(20),
+  phone: z.string().trim().max(20).optional().or(z.literal("")),
   dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   address1: z.string().trim().min(1).max(200),
   address2: z.string().trim().max(200).optional().or(z.literal("")),
