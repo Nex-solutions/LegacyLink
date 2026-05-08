@@ -69,9 +69,9 @@ function Landing() {
       <section style={{ background: "var(--forest)" }} className="px-6 lg:px-12 py-14">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
           {[
-            { stat: "$2.4B", label: "In planned Canadian estates" },
-            { stat: "47%", label: "Of Canadians have no estate plan" },
-            { stat: "100%", label: "Automated when conditions are met" },
+            { stat: "$1.2T", label: "Canadian intergenerational wealth transfer projected by 2030 (CIBC)" },
+            { stat: "51%", label: "Of Canadian adults have no will (Angus Reid, 2023)" },
+            { stat: "8 mo.", label: "Average probate processing time across Canada" },
           ].map((s) => (
             <div key={s.label}>
               <div style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 56, fontWeight: 600 }}>{s.stat}</div>
