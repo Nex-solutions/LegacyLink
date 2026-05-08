@@ -150,6 +150,9 @@ function VaultDetail() {
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
             <div className="mt-6 space-y-3">
+              {vault.status === "Active" && (
+                <AddFundsButton vault={vault} onAdded={(amt) => { const next = { ...vault, amount_cad: vault.amount_cad + amt }; updateVault(vault.id, { amount_cad: next.amount_cad }); setVault(next); }} />
+              )}
               {cond.kind === "manual" && vault.status === "Active" && (
                 <button onClick={() => setShowRelease(true)} className="ll-pill ll-pill-secondary w-full">Release Now</button>
               )}
