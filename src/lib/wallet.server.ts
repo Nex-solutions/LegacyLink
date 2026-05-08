@@ -1,8 +1,8 @@
 // Server-only helper: ensures an authenticated user has a custodial wallet row.
-// Called on first sign-in / before any vault operation.
-//
-// Uses the admin client because custodial_wallets is INSERT-locked (no client
-// policy) — only server code can provision wallets.
+// The encrypted secret lives in a separate table (`custodial_wallet_secrets`)
+// that has NO authenticated policies — only the service-role admin client can
+// read or write it. This keeps the secret unreachable even if a future RLS
+// rule on `custodial_wallets` is too permissive.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateWallet } from "./solana.server";
@@ -18,16 +18,17 @@ export async function ensureCustodialWallet(userId: string): Promise<string> {
   if (existing?.pubkey) return existing.pubkey;
 
   const wallet = await generateWallet();
-  const { error: insertErr } = await supabaseAdmin
-    .from("custodial_wallets")
-    .insert({
-      user_id: userId,
-      pubkey: wallet.pubkey,
-      encrypted_secret: wallet.encryptedSecret,
-    });
-  if (insertErr) throw insertErr;
 
-  // Mirror pubkey on profile for easy display
+  const { error: pubErr } = await supabaseAdmin
+    .from("custodial_wallets")
+    .insert({ user_id: userId, pubkey: wallet.pubkey });
+  if (pubErr) throw pubErr;
+
+  const { error: secErr } = await supabaseAdmin
+    .from("custodial_wallet_secrets")
+    .insert({ user_id: userId, encrypted_secret: wallet.encryptedSecret });
+  if (secErr) throw secErr;
+
   await supabaseAdmin
     .from("profiles")
     .update({ solana_wallet: wallet.pubkey })

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { clearUser, clearAdvisor, getUser, getAdvisor, type User, type Advisor } from "@/lib/legacy-auth";
+import { clearAdvisor, getUser, getAdvisor, signOut, type User, type Advisor } from "@/lib/legacy-auth";
 import legacyMark from "@/assets/legacy-mark.png";
 
 export function Logo({ light = false, to = "/" }: { light?: boolean; to?: string }) {
@@ -64,7 +64,7 @@ export function AppHeader() {
             <Link to="/messages" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Messages</Link>
             <Link to="/dashboard" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Dashboard</Link>
             <button
-              onClick={() => { clearUser(); navigate({ to: "/" }); }}
+              onClick={async () => { await signOut(); navigate({ to: "/" }); }}
               className="ll-pill ll-pill-ghost text-sm"
               style={{ padding: "0.5rem 1rem" }}
             >

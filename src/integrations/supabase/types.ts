@@ -82,22 +82,37 @@ export type Database = {
           },
         ]
       }
-      custodial_wallets: {
+      custodial_wallet_secrets: {
         Row: {
           created_at: string
           encrypted_secret: string
-          pubkey: string
           user_id: string
         }
         Insert: {
           created_at?: string
           encrypted_secret: string
-          pubkey: string
           user_id: string
         }
         Update: {
           created_at?: string
           encrypted_secret?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custodial_wallets: {
+        Row: {
+          created_at: string
+          pubkey: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          pubkey: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
           pubkey?: string
           user_id?: string
         }
