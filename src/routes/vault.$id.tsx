@@ -517,6 +517,10 @@ function ConditionPanel({ vault, onChange }: { vault: Vault; onChange: (c: Vault
   const [days, setDays] = useState<number>(
     vault.condition.kind === "inactivity" ? vault.condition.inactivity_days : 180
   );
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pwd, setPwd] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [pendingNext, setPendingNext] = useState<VaultCondition | null>(null);
 
   function open() {
     setKind(vault.condition.kind);
@@ -525,7 +529,7 @@ function ConditionPanel({ vault, onChange }: { vault: Vault; onChange: (c: Vault
     setEditing(true);
   }
 
-  function save() {
+  function requestSave() {
     let next: VaultCondition;
     if (kind === "time") {
       const target = parseISO(unlockDate);
@@ -549,9 +553,24 @@ function ConditionPanel({ vault, onChange }: { vault: Vault; onChange: (c: Vault
     } else {
       next = { kind: "manual" };
     }
-    onChange(next);
-    setEditing(false);
-    toast.success("Release conditions updated");
+    setPendingNext(next);
+    setPwd("");
+    setAuthOpen(true);
+  }
+
+  function confirmAuth() {
+    if (pwd.trim().length < 4) { toast.error("Enter your account password to confirm"); return; }
+    if (!pendingNext) return;
+    setVerifying(true);
+    setTimeout(() => {
+      onChange(pendingNext);
+      setVerifying(false);
+      setAuthOpen(false);
+      setPendingNext(null);
+      setPwd("");
+      setEditing(false);
+      toast.success("Identity verified — release conditions updated");
+    }, 900);
   }
 
   const cond = vault.condition;
