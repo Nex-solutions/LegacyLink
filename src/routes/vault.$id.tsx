@@ -648,6 +648,8 @@ function ConditionPanel({ vault, onChange }: { vault: Vault; onChange: (c: Vault
     </div>
   );
 }
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
     <div className="flex justify-between">
       <span style={{ color: "var(--warm-gray)" }}>{label}</span>
