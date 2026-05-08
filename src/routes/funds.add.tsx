@@ -63,7 +63,11 @@ function AddFundsPage() {
       if (!quote) throw new Error("Get a quote first");
       return intentFn({ data: { amountCad: amount, quoteId: quote.quoteId } });
     },
-    onSuccess: (res) => setIntent(res),
+    onSuccess: (res) => {
+      setIntent(res);
+      setDemoMethod("interac");
+      setDemoOpen(true);
+    },
   });
 
   return (
