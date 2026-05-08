@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
 import {
   advisorClients, advisorTotals, activityFeed, formatCAD,
+  advisorRisks, upcomingReleases, allBeneficiaries, exportBookCSV,
   type AdvisorClient, type ClientVault, type ActivityKind,
 } from "@/lib/legacy-data";
 import {
