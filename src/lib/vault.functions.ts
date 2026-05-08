@@ -15,6 +15,7 @@ import {
 } from "./solana.server";
 import { ensureCustodialWallet } from "./wallet.server";
 import { getRampProvider } from "./ramps.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // ─── Shared types mirroring the UI ────────────────────────────────────
 
