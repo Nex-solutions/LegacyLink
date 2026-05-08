@@ -88,3 +88,9 @@ export async function serverResetDemo() {
   await resetDemoServer();
   await hydrateVaults();
 }
+
+export async function serverEnsureClaimTokens(vaultId: string) {
+  const res = await ensureClaimTokens({ data: { vault_id: vaultId } });
+  await hydrateVaults();
+  return res.beneficiaries;
+}
