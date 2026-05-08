@@ -71,6 +71,9 @@ function Signup() {
       <p className="mt-6 text-sm text-center" style={{ color: "var(--warm-gray)" }}>
         Already have an account? <Link to="/login" style={{ color: "var(--honey)" }} className="font-medium">Sign in</Link>
       </p>
+      <p className="mt-3 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
+        Are you an advisor? <Link to="/advisor/signup" style={{ color: "var(--honey)" }} className="font-medium">Create an advisor account →</Link>
+      </p>
       <p className="mt-8 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
         Your vault is created the moment you sign up — protected, private, and yours alone.
       </p>

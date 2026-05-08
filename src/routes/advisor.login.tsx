@@ -54,10 +54,9 @@ function AdvisorLogin() {
           <input type="password" className="ll-input" placeholder="••••••••"
             value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           <div className="mt-2 text-right">
-            <button type="button" onClick={() => toast.success("Password reset email sent.")}
-              className="text-xs" style={{ color: "var(--honey)" }}>
+            <Link to="/forgot-password" className="text-xs" style={{ color: "var(--honey)" }}>
               Forgot password?
-            </button>
+            </Link>
           </div>
         </div>
         <button disabled={loading} type="submit"
@@ -71,6 +70,12 @@ function AdvisorLogin() {
         New advisor?{" "}
         <Link to="/advisor/signup" style={{ color: "var(--honey)", fontWeight: 500 }}>
           Create your account →
+        </Link>
+      </p>
+      <p className="mt-3 text-xs text-center" style={{ color: "var(--warm-gray)" }}>
+        Are you an individual?{" "}
+        <Link to="/login" style={{ color: "var(--honey)", fontWeight: 500 }}>
+          Sign in here →
         </Link>
       </p>
       <p className="mt-3 text-xs text-center">
