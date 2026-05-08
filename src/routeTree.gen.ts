@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DevnetTestRouteImport } from './routes/devnet-test'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as ClaimRouteImport } from './routes/claim'
@@ -39,6 +40,11 @@ const MessagesRoute = MessagesRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevnetTestRoute = DevnetTestRouteImport.update({
+  id: '/devnet-test',
+  path: '/devnet-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/claim': typeof ClaimRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/devnet-test': typeof DevnetTestRoute
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/claim': typeof ClaimRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/devnet-test': typeof DevnetTestRoute
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/claim': typeof ClaimRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/devnet-test': typeof DevnetTestRoute
   '/login': typeof LoginRoute
   '/messages': typeof MessagesRoute
   '/signup': typeof SignupRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/claim'
     | '/create'
     | '/dashboard'
+    | '/devnet-test'
     | '/login'
     | '/messages'
     | '/signup'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/claim'
     | '/create'
     | '/dashboard'
+    | '/devnet-test'
     | '/login'
     | '/messages'
     | '/signup'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/claim'
     | '/create'
     | '/dashboard'
+    | '/devnet-test'
     | '/login'
     | '/messages'
     | '/signup'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   ClaimRoute: typeof ClaimRoute
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
+  DevnetTestRoute: typeof DevnetTestRoute
   LoginRoute: typeof LoginRoute
   MessagesRoute: typeof MessagesRoute
   SignupRoute: typeof SignupRoute
@@ -259,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/devnet-test': {
+      id: '/devnet-test'
+      path: '/devnet-test'
+      fullPath: '/devnet-test'
+      preLoaderRoute: typeof DevnetTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -374,6 +394,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClaimRoute: ClaimRoute,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
+  DevnetTestRoute: DevnetTestRoute,
   LoginRoute: LoginRoute,
   MessagesRoute: MessagesRoute,
   SignupRoute: SignupRoute,

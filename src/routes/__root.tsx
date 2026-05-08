@@ -6,7 +6,9 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  ClientOnly,
 } from "@tanstack/react-router";
+import { SolanaProvider } from "@/lib/solana/provider";
 
 import { useEffect } from "react";
 import appCss from "../styles.css?url";
@@ -129,7 +131,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <ClientOnly fallback={<Outlet />}>
+        <SolanaProvider>
+          <Outlet />
+        </SolanaProvider>
+      </ClientOnly>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
