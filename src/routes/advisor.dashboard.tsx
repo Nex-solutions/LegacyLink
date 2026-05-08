@@ -573,10 +573,12 @@ function ReadOnlyVault({ clientId, vault }: { clientId: string; vault: ClientVau
             {b.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}
           </span>
         ))}
-        <button onClick={() => toast("Read-only vault detail coming soon.")}
+        <Link
+          to="/advisor/client/$clientId/vault/$vaultId"
+          params={{ clientId, vaultId: vault.id }}
           className="ml-auto text-[12px]" style={{ color: "var(--honey)" }}>
           View Full Detail →
-        </button>
+        </Link>
       </div>
     </div>
   );
