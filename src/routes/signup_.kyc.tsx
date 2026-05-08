@@ -150,7 +150,7 @@ function SignupKyc() {
         </label>
 
         <button disabled={loading} type="submit" className="ll-pill ll-pill-primary w-full mt-2" style={{ height: 52, opacity: loading ? 0.7 : 1 }}>
-          {loading ? "Preparing verification…" : "Continue to identity check"}
+          {loading ? "Preparing verification…" : "Continue"}
         </button>
         <Link to="/dashboard" className="block text-center text-xs mt-2" style={{ color: "var(--warm-gray)" }}>
           Skip for now — I'll verify before creating a trust
