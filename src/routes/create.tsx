@@ -115,6 +115,7 @@ function Create() {
         created_at: new Date().toISOString().slice(0, 10),
       };
       addVault(v);
+      if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
       setSuccess(id);
       setSubmitting(false);
     }, 3000);
