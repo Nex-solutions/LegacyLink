@@ -80,15 +80,26 @@ function Create() {
   const amountNum = parseFloat(amount.replace(/[^0-9.]/g, "")) || 0;
   const totalPct = useMemo(() => bens.reduce((s, b) => s + (Number(b.pct) || 0), 0), [bens]);
 
-  function fund(method: "card" | "bank") {
+  function selectMethod(method: "card" | "bank") {
     if (amountNum <= 0) return toast.error("Enter an amount first.");
+    if (funded) return; // already paid
     setFunding(method);
+  }
+
+  function confirmPayment() {
+    if (!funding) return;
+    if (amountNum <= 0) return toast.error("Enter an amount first.");
     setFundingLoading(true);
     setTimeout(() => {
       setFundingLoading(false);
       setFunded(true);
-      toast.success(`${method === "card" ? "Card" : "Bank transfer"} funding confirmed.`);
-    }, 2000);
+      toast.success(`${funding === "card" ? "Card" : "Bank transfer"} payment confirmed.`);
+    }, 1600);
+  }
+
+  function changeMethod() {
+    if (funding_loading || funded) return;
+    setFunding(null);
   }
 
   function condDescription(): string {
