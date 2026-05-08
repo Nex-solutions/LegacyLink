@@ -8,6 +8,7 @@ import { submitKyc, getMyKycStatus } from "@/lib/paytrie-onboarding.functions";
 
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({ reason: typeof s.reason === "string" ? s.reason : undefined }),
   component: SignupKyc,
 });
 
