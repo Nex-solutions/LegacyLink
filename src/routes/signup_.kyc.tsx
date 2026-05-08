@@ -57,7 +57,10 @@ function SignupKyc() {
           first_name: s.firstName || fbFirst || f.first_name,
           last_name: s.lastName || fbLast || f.last_name,
         }));
-        if (s.verificationLink) setVerificationLink(s.verificationLink);
+        if (s.verificationLink) {
+          setVerificationLink(s.verificationLink);
+          setSimulated(!s.paytrieLive);
+        }
       } catch {
         if (fbFirst) setForm((f) => ({ ...f, first_name: fbFirst, last_name: fbLast }));
       }
@@ -78,8 +81,8 @@ function SignupKyc() {
     try {
       const r = await submit({ data: form });
       setVerificationLink(r.verificationLink);
-      setSimulated(r.simulated);
-      toast.success("Identity verification link ready.");
+      setSimulated(true);
+      toast.success("Thanks — your profile is ready.");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Couldn't submit KYC.");
     } finally { setLoading(false); }
