@@ -93,16 +93,6 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
             ✓ Check In
           </button>
         )}
-        {onSendPdfs && (
-          <button
-            onClick={() => onSendPdfs(vault.id)}
-            disabled={sendingPdfs}
-            className="ll-pill ll-pill-ghost text-sm"
-            style={{ padding: "0.5rem 1.1rem", opacity: sendingPdfs ? 0.6 : 1 }}
-          >
-            {sendingPdfs ? "Preparing…" : "📄 Send PDFs"}
-          </button>
-        )}
       </div>
     </motion.div>
   );
