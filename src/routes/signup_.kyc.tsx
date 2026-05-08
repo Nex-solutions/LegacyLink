@@ -95,7 +95,7 @@ function SignupKyc() {
   return (
     <AuthSplit quote="A verified identity protects every legacy you build.">
       <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 32, fontWeight: 600, color: "var(--forest)" }}>
-        Verify your identity
+        Now let's get to know you better
       </h1>
       <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
         Required by Canadian regulations to fund your vault. Takes 2 minutes.
