@@ -147,6 +147,13 @@ function VaultDetail() {
         <div className="space-y-6">
           <TrusteesPanel vault={vault} onChange={(b) => { updateVault(vault.id, { beneficiaries: b }); setVault({ ...vault, beneficiaries: b }); }} />
 
+          {vault.status === "Active" && (
+            <ConditionPanel
+              vault={vault}
+              onChange={(c) => { updateVault(vault.id, { condition: c }); setVault({ ...vault, condition: c }); }}
+            />
+          )}
+
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Actions</h3>
             <div className="mt-6 space-y-3">
