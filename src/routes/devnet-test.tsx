@@ -55,7 +55,7 @@ function DevnetTest() {
         { commitment: "confirmed" }
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const program = new Program(idl as Idl, provider as any);
+      const program = new Program(idl as unknown as Idl, provider as any);
       const accountTypes = Object.keys(program.account);
       if (accountTypes.length === 0) {
         append(

@@ -201,7 +201,7 @@ export const createVault = createServerFn({ method: "POST" })
     const vaultId = inserted.id as string;
 
     // On-chain init + fund (simulated unless SOLANA_PROGRAM_ID is set)
-    const init = await initVaultOnChain({ ownerPubkey, vaultId });
+    const init = await initVaultOnChain({ ownerPubkey, vaultId, amountCadCents: Math.round(data.amount_cad * 100) });
     const fund = await fundVaultOnChain({ vaultPda: init.vaultPda, amountCad: data.amount_cad });
 
     // Run on-ramp to bring fiat into custodial USDC
