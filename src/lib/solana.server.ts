@@ -47,7 +47,7 @@ export async function decryptSecret(payload: string): Promise<Uint8Array> {
   const packed = b64decode(payload);
   const iv = packed.slice(0, 12);
   const ct = packed.slice(12);
-  const pt = new Uint8Array(await subtle.decrypt({ name: "AES-GCM", iv }, key, ct));
+  const pt = new Uint8Array(await subtle.decrypt({ name: "AES-GCM", iv }, key, ct as BufferSource));
   return pt;
 }
 
@@ -76,7 +76,7 @@ export async function generateWallet(): Promise<GeneratedWallet> {
 
 async function fakeSig(kind: string, ...parts: string[]): Promise<string> {
   const data = new TextEncoder().encode([kind, Date.now().toString(), ...parts].join("|"));
-  const digest = new Uint8Array(await subtle.digest("SHA-512", data));
+  const digest = new Uint8Array(await subtle.digest("SHA-512", data as BufferSource));
   // Solana signatures are 64 bytes, base58 encoded
   return bs58.encode(digest);
 }
@@ -84,7 +84,7 @@ async function fakeSig(kind: string, ...parts: string[]): Promise<string> {
 export async function deriveVaultPda(ownerPubkey: string, vaultId: string): Promise<string> {
   // Simulated PDA — sha256(owner|vaultId), encoded base58, 32 bytes.
   const data = new TextEncoder().encode(`vault|${ownerPubkey}|${vaultId}`);
-  const digest = new Uint8Array(await subtle.digest("SHA-256", data));
+  const digest = new Uint8Array(await subtle.digest("SHA-256", data as BufferSource));
   return bs58.encode(digest);
 }
 
