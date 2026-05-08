@@ -1,6 +1,7 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { supabase } from "./integrations/supabase/client";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -17,6 +18,25 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+// Attach the Supabase access token to every server-fn call on the client so
+// requireSupabaseAuth middleware can authenticate the request.
+const supabaseAuthClientMiddleware = createMiddleware({ type: "function" }).client(
+  async ({ next }) => {
+    let headers: Record<string, string> = {};
+    if (typeof window !== "undefined") {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (token) headers = { Authorization: `Bearer ${token}` };
+      } catch {
+        // ignore — request will proceed unauthenticated
+      }
+    }
+    return next({ headers });
+  },
+);
+
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware],
+  functionMiddleware: [supabaseAuthClientMiddleware],
 }));
