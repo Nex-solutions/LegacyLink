@@ -29,7 +29,7 @@ function Initials({ name, i }: { name: string; i: number }) {
   );
 }
 
-export function VaultCard({ vault, onCheckIn, onSendPdfs, sendingPdfs }: { vault: Vault; onCheckIn?: (id: string) => void; onSendPdfs?: (id: string) => void; sendingPdfs?: boolean }) {
+export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id: string) => void }) {
   const cond = vault.condition;
   let conditionText = "";
   let progress = 0;
@@ -91,16 +91,6 @@ export function VaultCard({ vault, onCheckIn, onSendPdfs, sendingPdfs }: { vault
             style={{ padding: "0.5rem 1.1rem" }}
           >
             ✓ Check In
-          </button>
-        )}
-        {onSendPdfs && (
-          <button
-            onClick={() => onSendPdfs(vault.id)}
-            disabled={sendingPdfs}
-            className="ll-pill ll-pill-ghost text-sm"
-            style={{ padding: "0.5rem 1.1rem", opacity: sendingPdfs ? 0.6 : 1 }}
-          >
-            {sendingPdfs ? "Preparing…" : "📄 Send PDFs"}
           </button>
         )}
       </div>

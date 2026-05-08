@@ -8,8 +8,9 @@ import { PageShell } from "@/components/legacy/PageShell";
 import { formatCAD, getVault, type Vault, type Beneficiary, type VaultCondition } from "@/lib/legacy-data";
 import { getUser } from "@/lib/legacy-auth";
 import { shouldRelease } from "@/lib/vault-release";
-import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverRelease, serverReplaceBeneficiaries, serverUpdateCondition, serverUpdateLetter, serverAddFunds } from "@/lib/vault-client";
+import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverRelease, serverReplaceBeneficiaries, serverUpdateCondition, serverUpdateLetter, serverAddFunds, serverEnsureClaimTokens } from "@/lib/vault-client";
 import { buildLegacyLetterPdf, downloadPdf } from "@/lib/legacy-letter";
+import { generateBeneficiaryPdf } from "@/lib/beneficiary-pdf";
 import { getAdvisorLinks } from "@/lib/legacy-advisors";
 
 
@@ -56,6 +57,7 @@ function VaultDetail() {
   const [vault, setVault] = useState<Vault | null>(null);
   const [showRelease, setShowRelease] = useState(false);
   const [releasing, setReleasing] = useState(false);
+  const [sendingPdfs, setSendingPdfs] = useState(false);
 
   useEffect(() => {
     if (!getUser()) { navigate({ to: "/login" }); return; }
@@ -99,6 +101,38 @@ function VaultDetail() {
       console.error(e); toast.error("Couldn't release vault");
     } finally {
       setReleasing(false);
+    }
+  }
+
+  async function sendPdfs() {
+    if (!vault) return;
+    if (!vault.beneficiaries.length) { toast.error("Add at least one beneficiary first."); return; }
+    setSendingPdfs(true);
+    try {
+      const owner = getUser();
+      const bens = await serverEnsureClaimTokens(vault.id);
+      const merged = vault.beneficiaries.map((b) => {
+        const match = bens.find((x) => x.email.toLowerCase() === b.email.toLowerCase());
+        return { ...b, claim_token: match?.claim_token ?? null };
+      });
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      for (const b of merged) {
+        const claimUrl = `${origin}/claim?vault=${vault.id}&token=${encodeURIComponent(b.claim_token ?? "")}`;
+        const bytes = await generateBeneficiaryPdf({
+          vault,
+          beneficiary: b,
+          ownerName: owner?.name ?? "Your loved one",
+          letterMessage: (vault as Vault & { letter_message?: string | null }).letter_message,
+          claimUrl,
+        });
+        const safeName = b.name.replace(/[^a-z0-9]+/gi, "-");
+        downloadPdf(bytes, `LegacyLink-${vault.name.replace(/[^a-z0-9]+/gi, "-")}-${safeName}.pdf`);
+      }
+      toast.success(`${merged.length} PDF${merged.length === 1 ? "" : "s"} downloaded. Forward each to its beneficiary.`);
+    } catch (e) {
+      console.error(e); toast.error("Couldn't prepare PDFs");
+    } finally {
+      setSendingPdfs(false);
     }
   }
 
@@ -191,6 +225,14 @@ function VaultDetail() {
               {cond.kind === "manual" && vault.status === "Active" && (
                 <button onClick={() => setShowRelease(true)} className="ll-pill ll-pill-secondary w-full">Release Now</button>
               )}
+              <button
+                onClick={sendPdfs}
+                disabled={sendingPdfs || vault.beneficiaries.length === 0}
+                className="ll-pill ll-pill-ghost w-full"
+                style={{ opacity: sendingPdfs || vault.beneficiaries.length === 0 ? 0.6 : 1 }}
+              >
+                {sendingPdfs ? "Preparing PDFs…" : "📄 Send PDFs to beneficiaries"}
+              </button>
             </div>
           </div>
 

@@ -9,8 +9,7 @@ import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
 import { formatCAD, getVaults, type Vault } from "@/lib/legacy-data";
 import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
-import { evaluateAndHydrate, serverCheckIn, serverResetDemo, serverEnsureClaimTokens } from "@/lib/vault-client";
-import { generateBeneficiaryPdf, downloadPdf } from "@/lib/beneficiary-pdf";
+import { evaluateAndHydrate, serverCheckIn, serverResetDemo } from "@/lib/vault-client";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
@@ -114,42 +113,6 @@ function Dashboard() {
     }
   }
 
-  const [sendingFor, setSendingFor] = useState<string | null>(null);
-  async function sendPdfs(id: string) {
-    const vault = vaults.find((v) => v.id === id);
-    if (!vault) return;
-    if (!vault.beneficiaries.length) {
-      toast.error("Add at least one beneficiary first.");
-      return;
-    }
-    setSendingFor(id);
-    try {
-      const bens = await serverEnsureClaimTokens(id);
-      const merged = vault.beneficiaries.map((b) => {
-        const match = bens.find((x) => x.email.toLowerCase() === b.email.toLowerCase());
-        return { ...b, claim_token: match?.claim_token ?? null };
-      });
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
-      for (const b of merged) {
-        const claimUrl = `${origin}/claim?vault=${vault.id}&token=${encodeURIComponent(b.claim_token ?? "")}`;
-        const bytes = await generateBeneficiaryPdf({
-          vault,
-          beneficiary: b,
-          ownerName: user?.name ?? "Your loved one",
-          letterMessage: (vault as Vault & { letter_message?: string | null }).letter_message,
-          claimUrl,
-        });
-        const safeName = b.name.replace(/[^a-z0-9]+/gi, "-");
-        downloadPdf(bytes, `LegacyLink-${vault.name.replace(/[^a-z0-9]+/gi, "-")}-${safeName}.pdf`);
-      }
-      toast.success(`${merged.length} PDF${merged.length === 1 ? "" : "s"} downloaded. Forward each to its beneficiary.`);
-    } catch (e) {
-      console.error(e);
-      toast.error("Couldn't prepare PDFs");
-    } finally {
-      setSendingFor(null);
-    }
-  }
 
   if (!user) return null;
   const total = vaults.reduce((s, v) => s + v.amount_cad, 0);
@@ -214,7 +177,7 @@ function Dashboard() {
             </div>
           ) : (
             <div className="mt-6 grid md:grid-cols-2 gap-6">
-              {vaults.map((v) => <VaultCard key={v.id} vault={v} onCheckIn={checkIn} onSendPdfs={sendPdfs} sendingPdfs={sendingFor === v.id} />)}
+              {vaults.map((v) => <VaultCard key={v.id} vault={v} onCheckIn={checkIn} />)}
             </div>
           )}
 
