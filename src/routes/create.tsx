@@ -337,6 +337,18 @@ function Create() {
                   </div>
                 </div>
 
+                <div className="mt-8 p-5 rounded-2xl" style={{ background: "rgba(26,46,26,0.04)", border: "1px dashed rgba(26,46,26,0.15)" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🛡️</span>
+                    <p style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600, color: "var(--forest)" }}>Trusted claim contact <span className="text-xs font-normal" style={{ color: "var(--warm-gray)" }}>(optional)</span></p>
+                  </div>
+                  <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>Someone allowed to start a claim on behalf of your beneficiaries. They'll get an email at setup explaining how it works.</p>
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <input className="ll-input" placeholder="Full name" value={trustee.name} onChange={(e) => setTrustee({ ...trustee, name: e.target.value })} />
+                    <input className="ll-input" placeholder="Email" value={trustee.email} onChange={(e) => setTrustee({ ...trustee, email: e.target.value })} />
+                  </div>
+                </div>
+
                 <div className="flex justify-between mt-8">
                   <button onClick={() => setStep(1)} className="ll-pill ll-pill-ghost">← Back</button>
                   <button
