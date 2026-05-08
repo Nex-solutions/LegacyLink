@@ -36,25 +36,47 @@ export function Logo({ light = false, to = "/" }: { light?: boolean; to?: string
 export function AppHeader() {
   const navigate = useNavigate();
   const [user, setUserState] = useState<User | null>(null);
-  useEffect(() => { setUserState(getUser()); }, []);
+  const [advisor, setAdvisorState] = useState<Advisor | null>(null);
+  useEffect(() => {
+    setUserState(getUser());
+    setAdvisorState(getAdvisor());
+  }, []);
+  const signedIn = !!user || !!advisor;
   return (
     <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between">
       <Logo />
       <nav className="flex items-center gap-3 lg:gap-5">
-        <Link
-          to="/advisor"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm tracking-tight rounded-full px-3 py-1.5 transition-colors"
-          style={{ color: "var(--forest)", background: "rgba(232,160,32,0.14)" }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
-          For Advisors
-        </Link>
-        <span className="hidden sm:inline-block h-4 w-px" style={{ background: "rgba(26,46,26,0.14)" }} />
+        {!signedIn && (
+          <>
+            <Link
+              to="/advisor"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm tracking-tight rounded-full px-3 py-1.5 transition-colors"
+              style={{ color: "var(--forest)", background: "rgba(232,160,32,0.14)" }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
+              For Advisors
+            </Link>
+            <span className="hidden sm:inline-block h-4 w-px" style={{ background: "rgba(26,46,26,0.14)" }} />
+          </>
+        )}
         {user ? (
           <>
+            <Link to="/messages" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Messages</Link>
             <Link to="/dashboard" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Dashboard</Link>
             <button
               onClick={() => { clearUser(); navigate({ to: "/" }); }}
+              className="ll-pill ll-pill-ghost text-sm"
+              style={{ padding: "0.5rem 1rem" }}
+            >
+              Sign out
+            </button>
+          </>
+        ) : advisor ? (
+          <>
+            <Link to="/advisor/messages" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Messages</Link>
+            <Link to="/advisor/dashboard" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Dashboard</Link>
+            <button
+              onClick={() => { clearAdvisor(); navigate({ to: "/" }); }}
               className="ll-pill ll-pill-ghost text-sm"
               style={{ padding: "0.5rem 1rem" }}
             >
