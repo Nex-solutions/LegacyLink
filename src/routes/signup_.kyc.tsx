@@ -86,7 +86,7 @@ function SignupKyc() {
         </a>
         <button onClick={() => navigate({ to: "/dashboard" })}
                 className="mt-4 w-full text-sm" style={{ color: "var(--warm-gray)" }}>
-          I'll do this later
+          Skip for now — I'll verify before creating a trust
         </button>
       </AuthSplit>
     );
@@ -95,7 +95,7 @@ function SignupKyc() {
   return (
     <AuthSplit quote="A verified identity protects every legacy you build.">
       <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 32, fontWeight: 600, color: "var(--forest)" }}>
-        Verify your identity
+        Now let's get to know you better
       </h1>
       <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
         Required by Canadian regulations to fund your vault. Takes 2 minutes.
@@ -143,7 +143,7 @@ function SignupKyc() {
           {loading ? "Preparing verification…" : "Continue to identity check"}
         </button>
         <Link to="/dashboard" className="block text-center text-xs mt-2" style={{ color: "var(--warm-gray)" }}>
-          Skip for now — I'll verify before adding funds
+          Skip for now — I'll verify before creating a trust
         </Link>
       </form>
     </AuthSplit>
