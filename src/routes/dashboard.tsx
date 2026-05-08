@@ -214,7 +214,7 @@ function Dashboard() {
             </div>
           ) : (
             <div className="mt-6 grid md:grid-cols-2 gap-6">
-              {vaults.map((v) => <VaultCard key={v.id} vault={v} onCheckIn={checkIn} />)}
+              {vaults.map((v) => <VaultCard key={v.id} vault={v} onCheckIn={checkIn} onSendPdfs={sendPdfs} sendingPdfs={sendingFor === v.id} />)}
             </div>
           )}
 
