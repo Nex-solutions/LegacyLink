@@ -20,6 +20,7 @@ import { Route as AdvisorIndexRouteImport } from './routes/advisor.index'
 import { Route as VaultIdRouteImport } from './routes/vault.$id'
 import { Route as AdvisorSignupRouteImport } from './routes/advisor.signup'
 import { Route as AdvisorProfileRouteImport } from './routes/advisor.profile'
+import { Route as AdvisorMessagesRouteImport } from './routes/advisor.messages'
 import { Route as AdvisorLoginRouteImport } from './routes/advisor.login'
 import { Route as AdvisorDashboardRouteImport } from './routes/advisor.dashboard'
 
@@ -78,6 +79,11 @@ const AdvisorProfileRoute = AdvisorProfileRouteImport.update({
   path: '/advisor/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdvisorMessagesRoute = AdvisorMessagesRouteImport.update({
+  id: '/advisor/messages',
+  path: '/advisor/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdvisorLoginRoute = AdvisorLoginRouteImport.update({
   id: '/advisor/login',
   path: '/advisor/login',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
+  '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
+  '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/advisor/dashboard': typeof AdvisorDashboardRoute
   '/advisor/login': typeof AdvisorLoginRoute
+  '/advisor/messages': typeof AdvisorMessagesRoute
   '/advisor/profile': typeof AdvisorProfileRoute
   '/advisor/signup': typeof AdvisorSignupRoute
   '/vault/$id': typeof VaultIdRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
+    | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
     | '/vault/$id'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
+    | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
     | '/vault/$id'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/advisor/dashboard'
     | '/advisor/login'
+    | '/advisor/messages'
     | '/advisor/profile'
     | '/advisor/signup'
     | '/vault/$id'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   AdvisorDashboardRoute: typeof AdvisorDashboardRoute
   AdvisorLoginRoute: typeof AdvisorLoginRoute
+  AdvisorMessagesRoute: typeof AdvisorMessagesRoute
   AdvisorProfileRoute: typeof AdvisorProfileRoute
   AdvisorSignupRoute: typeof AdvisorSignupRoute
   VaultIdRoute: typeof VaultIdRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdvisorProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/advisor/messages': {
+      id: '/advisor/messages'
+      path: '/advisor/messages'
+      fullPath: '/advisor/messages'
+      preLoaderRoute: typeof AdvisorMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/advisor/login': {
       id: '/advisor/login'
       path: '/advisor/login'
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   AdvisorDashboardRoute: AdvisorDashboardRoute,
   AdvisorLoginRoute: AdvisorLoginRoute,
+  AdvisorMessagesRoute: AdvisorMessagesRoute,
   AdvisorProfileRoute: AdvisorProfileRoute,
   AdvisorSignupRoute: AdvisorSignupRoute,
   VaultIdRoute: VaultIdRoute,
@@ -313,3 +334,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
