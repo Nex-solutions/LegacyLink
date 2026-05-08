@@ -1,13 +1,85 @@
 {
-  "address": "Hgoj8QY12vd8iVZJczjuNw2Z6z4XHhFRYWP7ikHeBava",
-  "metadata": {
-    "name": "vault",
-    "version": "0.1.0",
-    "spec": "0.1.0",
-    "note": "PLACEHOLDER — Replace this file with the IDL exported from Solana Playground (left sidebar -> Program -> IDL -> Download)."
-  },
-  "instructions": [],
-  "accounts": [],
-  "types": []
+  "address": "4ivAJT437HRojo79Q8aRoi21vFrhDDaCzdLQ6C9uUe3p",
+  "metadata": { "name": "vault", "version": "0.1.0", "spec": "0.1.0" },
+  "version": "0.1.0",
+  "name": "vault",
+  "instructions": [
+    {
+      "name": "initializeVault",
+      "accounts": [
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "vaultUsdcAta", "isMut": true, "isSigner": false },
+        { "name": "owner", "isMut": true, "isSigner": true },
+        { "name": "usdcMint", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "associatedTokenProgram", "isMut": false, "isSigner": false },
+        { "name": "rent", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "vaultId", "type": { "array": ["u8", 16] } },
+        { "name": "amountCadCents", "type": "u64" }
+      ]
+    },
+    {
+      "name": "fundVault",
+      "accounts": [
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "vaultUsdcAta", "isMut": true, "isSigner": false },
+        { "name": "funderUsdcAta", "isMut": true, "isSigner": false },
+        { "name": "funder", "isMut": true, "isSigner": true },
+        { "name": "usdcMint", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [{ "name": "amountUsdc", "type": "u64" }]
+    },
+    {
+      "name": "checkIn",
+      "accounts": [
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "owner", "isMut": false, "isSigner": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "releaseVault",
+      "accounts": [
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "owner", "isMut": false, "isSigner": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim",
+      "accounts": [
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "vaultUsdcAta", "isMut": true, "isSigner": false },
+        { "name": "beneficiaryUsdcAta", "isMut": true, "isSigner": false },
+        { "name": "owner", "isMut": true, "isSigner": true },
+        { "name": "usdcMint", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [{ "name": "amountUsdc", "type": "u64" }]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "owner", "type": "publicKey" },
+          { "name": "vaultId", "type": { "array": ["u8", 16] } },
+          { "name": "amountCadCents", "type": "u64" },
+          { "name": "status", "type": "u8" },
+          { "name": "lastCheckinTs", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    { "code": 6000, "name": "NotFunded", "msg": "Vault is not funded yet" },
+    { "code": 6001, "name": "NotReleased", "msg": "Vault is not released yet" }
+  ]
 }
-
