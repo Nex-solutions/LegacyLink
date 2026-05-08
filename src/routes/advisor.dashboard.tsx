@@ -19,6 +19,7 @@ export const Route = createFileRoute("/advisor/dashboard")({
 });
 
 type SortKey = "recent" | "aum" | "name" | "vaults" | "upcoming";
+type View = "clients" | "beneficiaries";
 
 function AdvisorDashboard() {
   const navigate = useNavigate();
@@ -26,9 +27,13 @@ function AdvisorDashboard() {
   const [open, setOpen] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
+  const [view, setView] = useState<View>("clients");
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState<null | "invite" | "report" | "review">(null);
   const totals = useMemo(() => advisorTotals(), []);
+  const risks = useMemo(() => advisorRisks(), []);
+  const upcoming = useMemo(() => upcomingReleases(90), []);
+  const beneficiaries = useMemo(() => allBeneficiaries(), []);
 
   useEffect(() => {
     const a = getAdvisor();
