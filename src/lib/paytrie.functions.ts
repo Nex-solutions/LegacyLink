@@ -49,7 +49,7 @@ export const createBuyIntent = createServerFn({ method: "POST" })
     }).parse
   )
   .handler(async ({ context, data }) => {
-    const wallet = await ensureCustodialWallet(context.userId);
+    const wallet = (await ensureCustodialWallet(context.userId)).pubkey;
     const tx = await createTransaction({
       leftSideLabel: "CAD",
       leftSideValue: data.amountCad,
