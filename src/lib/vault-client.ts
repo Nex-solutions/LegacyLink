@@ -95,3 +95,8 @@ export async function serverEnsureClaimTokens(vaultId: string) {
   await hydrateVaults();
   return res.beneficiaries;
 }
+
+export async function serverRetryVault(vaultId: string) {
+  await retryVault({ data: { vault_id: vaultId } });
+  await hydrateVaults();
+}
