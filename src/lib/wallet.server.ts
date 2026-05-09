@@ -5,7 +5,6 @@
 // rule on `custodial_wallets` is too permissive.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { generateWallet } from "./solana.server";
 
 export async function ensureCustodialWallet(userId: string): Promise<string> {
   const { data: existing, error: readErr } = await supabaseAdmin
@@ -17,6 +16,7 @@ export async function ensureCustodialWallet(userId: string): Promise<string> {
   if (readErr) throw readErr;
   if (existing?.pubkey) return existing.pubkey;
 
+  const { generateWallet } = await import("./solana.server");
   const wallet = await generateWallet();
 
   const { error: pubErr } = await supabaseAdmin
