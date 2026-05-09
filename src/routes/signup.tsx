@@ -14,10 +14,25 @@ export const Route = createFileRoute("/signup")({
   component: Signup,
 });
 
+const FIRST = ["James", "Amara", "Noah", "Ada", "Liam", "Zara", "Ethan", "Maya", "Jordan", "Sofia", "Kai", "Naomi"];
+const LAST = ["Okafor", "Adeyemi", "Chen", "Patel", "Nguyen", "Morgan", "Rivera", "Brooks", "Hassan", "Klein"];
+function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+function makeFake() {
+  const first = pick(FIRST);
+  const last = pick(LAST);
+  const num = Math.floor(100 + Math.random() * 9000);
+  return {
+    name: `${first} ${last}`,
+    email: `${first.toLowerCase()}.${last.toLowerCase()}${num}@demo.legacylink.app`,
+    password: "demo1234!",
+    confirm: "demo1234!",
+  };
+}
+
 function Signup() {
   const navigate = useNavigate();
   const provision = useServerFn(provisionWallet);
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState(() => makeFake());
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -47,7 +62,13 @@ function Signup() {
     <AuthSplit quote="The greatest gift you leave behind is certainty.">
       <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 40, fontWeight: 600, color: "var(--forest)" }}>Create your account</h1>
       <p className="mt-2" style={{ color: "var(--warm-gray)" }}>Begin protecting what matters in under 10 minutes.</p>
-      <form onSubmit={submit} className="mt-8 space-y-4">
+      <div
+        className="mt-4 px-3 py-2 rounded-lg text-xs"
+        style={{ background: "rgba(232,160,32,0.14)", color: "var(--forest)", border: "1px solid rgba(232,160,32,0.35)" }}
+      >
+        <strong style={{ color: "var(--honey)" }}>Test mode:</strong> we pre-filled fake demo credentials so you can sign up with one click. Edit any field if you'd like.
+      </div>
+      <form onSubmit={submit} className="mt-6 space-y-4">
         <div>
           <label className="ll-label">Full Name</label>
           <input className="ll-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="James Okafor" />

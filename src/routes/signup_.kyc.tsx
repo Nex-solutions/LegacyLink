@@ -233,7 +233,7 @@ function SignupKyc() {
                 )}
                 <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>
                   {wallet.airdropSig
-                    ? "Funded with 0.01 devnet SOL so the address is live on-chain."
+                    ? "Funded with 0.01 devnet SOL so the address is live on-chain. The funding tx may take ~30s to appear on devnet explorer."
                     : wallet.airdropFailed
                     ? "Address reserved — devnet faucet is rate-limited right now; it will activate on your first vault transaction."
                     : "Address reserved — it will activate on your first vault transaction."}

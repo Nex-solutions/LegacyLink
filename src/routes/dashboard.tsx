@@ -246,8 +246,11 @@ function Dashboard() {
           )}
 
           {/* Vaults */}
-          <div className="mt-12 flex items-center justify-between">
+          <div className="mt-12 flex items-center justify-between flex-wrap gap-3">
             <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your Vaults</h2>
+            <button onClick={handleResetDemo} className="ll-pill ll-pill-ghost text-sm" style={{ padding: "0.45rem 0.95rem" }}>
+              ⚡ Load demo data
+            </button>
           </div>
 
           {completed.length === 0 ? (
