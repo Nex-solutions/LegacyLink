@@ -22,10 +22,12 @@ export type Vault = {
   id: string;
   name: string;
   amount_cad: number;
-  status: "Active" | "Released" | "Pending";
+  status: "Active" | "Released" | "Pending" | "Failed" | "Draft";
   condition: VaultCondition;
   beneficiaries: Beneficiary[];
   created_at: string;
+  failure_count?: number;
+  last_step?: string | null;
   // Per-vault advisor access. Owners must explicitly grant — advisors never
   // see a vault unless their email is in this list. Mirrors the future
   // `vault_advisors` join table on the backend.

@@ -9,7 +9,7 @@ import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
 import { formatCAD, getVaults, type Vault } from "@/lib/legacy-data";
 import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
-import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverResetDemo } from "@/lib/vault-client";
+import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverResetDemo, serverRetryVault } from "@/lib/vault-client";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
@@ -123,10 +123,39 @@ function Dashboard() {
     }
   }
 
+  const [retrying, setRetrying] = useState<string | null>(null);
+  const [supportFor, setSupportFor] = useState<Vault | null>(null);
+
+  async function retryVault(v: Vault) {
+    if ((v.failure_count ?? 0) >= 3) {
+      setSupportFor(v);
+      return;
+    }
+    setRetrying(v.id);
+    try {
+      await serverRetryVault(v.id);
+      setVaults(getVaults());
+      toast.success(`"${v.name}" is back online.`);
+    } catch (e) {
+      console.error(e);
+      const fresh = getVaults().find(x => x.id === v.id);
+      if (fresh && (fresh.failure_count ?? 0) >= 3) {
+        setSupportFor(fresh);
+      } else {
+        toast.error("That attempt failed. Try once more or reach support.");
+      }
+      setVaults(getVaults());
+    } finally {
+      setRetrying(null);
+    }
+  }
+
 
   if (!user) return null;
-  const total = vaults.reduce((s, v) => s + v.amount_cad, 0);
-  const beneficiaries = new Set(vaults.flatMap(v => v.beneficiaries.map(b => b.email))).size;
+  const unfinished = vaults.filter(v => v.status === "Failed" || v.status === "Draft");
+  const completed = vaults.filter(v => v.status !== "Failed" && v.status !== "Draft");
+  const total = completed.reduce((s, v) => s + v.amount_cad, 0);
+  const beneficiaries = new Set(completed.flatMap(v => v.beneficiaries.map(b => b.email))).size;
   const greeting = (() => {
     const h = new Date().getHours();
     return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
@@ -169,12 +198,59 @@ function Dashboard() {
             ))}
           </div>
 
+          {/* Unfinished / failed vaults */}
+          {unfinished.length > 0 && (
+            <div className="mt-12">
+              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>Continue where you left off</h2>
+              <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>These vaults didn't finish setting up. Pick one up and try again.</p>
+              <div className="mt-4 grid md:grid-cols-2 gap-4">
+                {unfinished.map((v) => {
+                  const fc = v.failure_count ?? 0;
+                  const exhausted = fc >= 3;
+                  return (
+                    <div key={v.id} className="ll-card p-5" style={{ borderColor: "rgba(232,160,32,0.4)" }}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)", fontSize: 18 }}>{v.name}</p>
+                          <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>
+                            {formatCAD(v.amount_cad)} · {v.beneficiaries.length} beneficiar{v.beneficiaries.length === 1 ? "y" : "ies"}
+                            {fc > 0 && ` · ${fc} failed attempt${fc === 1 ? "" : "s"}`}
+                          </p>
+                        </div>
+                        <span className="text-[11px] uppercase tracking-wider px-2 py-1 rounded-full" style={{ background: "rgba(232,160,32,0.18)", color: "var(--honey)" }}>
+                          {v.status === "Draft" ? "○ Draft" : "● Needs attention"}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                        {exhausted ? (
+                          <button onClick={() => setSupportFor(v)} className="ll-pill ll-pill-primary text-sm" style={{ padding: "0.45rem 0.95rem" }}>
+                            Reach customer support
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => retryVault(v)}
+                            disabled={retrying === v.id}
+                            className="ll-pill ll-pill-secondary text-sm"
+                            style={{ padding: "0.45rem 0.95rem", opacity: retrying === v.id ? 0.6 : 1 }}
+                          >
+                            {retrying === v.id ? "Retrying…" : "Try again"}
+                          </button>
+                        )}
+                        <Link to="/create" className="text-xs underline" style={{ color: "var(--warm-gray)" }}>Edit details</Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Vaults */}
           <div className="mt-12 flex items-center justify-between">
             <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your Vaults</h2>
           </div>
 
-          {vaults.length === 0 ? (
+          {completed.length === 0 ? (
             <div className="ll-card p-12 mt-6 text-center">
               <svg viewBox="0 0 200 200" className="w-40 h-40 mx-auto">
                 <rect x="40" y="60" width="120" height="110" rx="14" fill="var(--forest)" opacity="0.08" />
@@ -187,7 +263,7 @@ function Dashboard() {
             </div>
           ) : (
             <div className="mt-6 grid md:grid-cols-2 gap-6">
-              {vaults.map((v) => <VaultCard key={v.id} vault={v} onCheckIn={checkIn} />)}
+              {completed.map((v) => <VaultCard key={v.id} vault={v} onCheckIn={checkIn} />)}
             </div>
           )}
 
@@ -405,6 +481,43 @@ function Dashboard() {
         >
           <span aria-hidden>↻</span> Reset demo
         </button>
+
+        {/* Customer support modal — appears after 3 failed retries */}
+        {supportFor && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(26,46,26,0.55)", backdropFilter: "blur(4px)" }}
+            onClick={() => setSupportFor(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22 }}
+              className="w-full max-w-md rounded-2xl p-7"
+              style={{ background: "var(--cream)", boxShadow: "0 24px 60px rgba(0,0,0,0.25)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>
+                Let's get this sorted together
+              </h3>
+              <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+                "{supportFor.name}" hasn't been able to finish setup after {supportFor.failure_count ?? 0} attempts.
+                Our team can complete it for you in minutes.
+              </p>
+              <div className="mt-5 rounded-xl p-4" style={{ background: "rgba(127,168,130,0.12)" }}>
+                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Vault reference</p>
+                <code className="text-xs">{supportFor.id}</code>
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2 justify-end">
+                <button onClick={() => setSupportFor(null)} className="ll-pill ll-pill-ghost text-sm">Not now</button>
+                <a
+                  href={`mailto:support@legacylink.app?subject=${encodeURIComponent(`Help finishing vault ${supportFor.name}`)}&body=${encodeURIComponent(`Hi LegacyLink team,\n\nMy vault "${supportFor.name}" (id ${supportFor.id}) has failed to set up ${supportFor.failure_count ?? 0} times. Can you help me finish it?\n\nThanks.`)}`}
+                  className="ll-pill ll-pill-primary text-sm"
+                >Email support</a>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </PageShell>
   );

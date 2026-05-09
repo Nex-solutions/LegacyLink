@@ -16,6 +16,7 @@ import {
   beneficiaryClaimByEmail,
   resetDemoServer,
   ensureClaimTokens,
+  retryVault,
 } from "./vault.functions";
 import { setVaultsCache, type Vault, type VaultCondition, type Beneficiary } from "./legacy-data";
 
@@ -93,4 +94,9 @@ export async function serverEnsureClaimTokens(vaultId: string) {
   const res = await ensureClaimTokens({ data: { vault_id: vaultId } });
   await hydrateVaults();
   return res.beneficiaries;
+}
+
+export async function serverRetryVault(vaultId: string) {
+  await retryVault({ data: { vault_id: vaultId } });
+  await hydrateVaults();
 }
