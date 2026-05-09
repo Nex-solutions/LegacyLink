@@ -39,24 +39,15 @@ function DevnetTest() {
     if (!input) return append("Enter a wallet address first.");
     const wallet = new PublicKey(input);
     const connection = new Connection(import.meta.env.VITE_SOLANA_RPC || "https://api.devnet.solana.com", "confirmed");
-    const lamports = await connection.getBalance(wallet.publicKey);
+    const lamports = await connection.getBalance(wallet);
     append(`Wallet ${wallet.toBase58()} = ${lamports / LAMPORTS_PER_SOL} SOL`);
   }
 
   async function listAccounts() {
-    if (!wallet.publicKey || !wallet.signTransaction) {
-      return append("Connect a wallet first.");
-    }
     try {
-      const provider = new AnchorProvider(
-        connection,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        wallet as any,
-        { commitment: "confirmed" }
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const program = new Program(idl as unknown as Idl, provider as any);
-      const accountTypes = Object.keys(program.account);
+      const accountTypes = Array.isArray((idl as { accounts?: unknown[] }).accounts)
+        ? ((idl as { accounts?: Array<{ name?: string }> }).accounts ?? []).map((a) => a.name).filter(Boolean)
+        : [];
       if (accountTypes.length === 0) {
         append(
           "⚠️ IDL has no account types. Replace src/lib/idl/vault.json with the real IDL from Solana Playground."
@@ -64,9 +55,6 @@ function DevnetTest() {
         return;
       }
       append(`IDL accounts: ${accountTypes.join(", ")}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const all = await (program.account as any)[accountTypes[0]].all();
-      append(`✅ Fetched ${all.length} ${accountTypes[0]} account(s).`);
     } catch (e) {
       append(`❌ ${(e as Error).message}`);
     }
@@ -77,20 +65,18 @@ function DevnetTest() {
       <div>
         <h1 className="text-2xl font-bold">Devnet smoke test</h1>
         <p className="text-sm text-muted-foreground">
-          Program: <code>{PROGRAM_ID.toBase58()}</code>
+          Program: <code>{import.meta.env.VITE_PROGRAM_ID || "not configured"}</code>
         </p>
       </div>
-
-      <WalletMultiButton />
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={checkProgram} variant="outline">1. Check program exists</Button>
         <Button onClick={checkBalance} variant="outline">2. My SOL balance</Button>
-        <Button onClick={listAccounts} variant="outline">3. List program accounts</Button>
+        <Button onClick={listAccounts} variant="outline">3. List IDL accounts</Button>
       </div>
 
       <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-4 text-xs font-mono min-h-[200px]">
-        {log || "Click a button above. Connect Phantom (set to Devnet) first."}
+        {log || "Click a button above to run a devnet smoke test."}
       </pre>
     </div>
   );
