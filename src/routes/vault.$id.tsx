@@ -185,23 +185,43 @@ function VaultDetail() {
             </div>
           )}
 
+          {/* Released — surface claim links inline so judges can self-test without a second inbox */}
+          {vault.status === "Released" && (
+            <ReleasedClaimPanel vault={vault} />
+          )}
+
           {/* Timeline */}
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Activity</h3>
             <div className="mt-6 relative pl-8">
               <div className="absolute left-2 top-2 bottom-2 w-px" style={{ background: "rgba(26,46,26,0.15)" }} />
-              {[
-                { d: vault.created_at, label: "Vault created" },
-                { d: vault.created_at, label: `Funded with ${formatCAD(vault.amount_cad)}` },
-                ...(cond.kind === "inactivity" ? [{ d: cond.last_checkin, label: "Last check-in" }] : []),
-                ...(vault.status === "Released" ? [{ d: new Date().toISOString().slice(0, 10), label: "Released to beneficiaries" }] : []),
-              ].map((e, i) => (
-                <div key={i} className="relative mb-5">
-                  <div className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full" style={{ background: "var(--honey)" }} />
-                  <p style={{ color: "var(--forest)", fontWeight: 500 }}>{e.label}</p>
-                  <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{format(parseISO(e.d), "MMMM d, yyyy")}</p>
-                </div>
-              ))}
+              {(() => {
+                const v = vault as Vault & { tx_signature?: string | null; vault_pda?: string | null };
+                const events: { d: string; label: string; sig?: string | null }[] = [
+                  { d: vault.created_at, label: "Vault created", sig: v.tx_signature },
+                  { d: vault.created_at, label: `Funded with ${formatCAD(vault.amount_cad)}`, sig: v.tx_signature },
+                  ...(cond.kind === "inactivity" ? [{ d: cond.last_checkin, label: "Last check-in" }] : []),
+                  ...(vault.status === "Released" ? [{ d: new Date().toISOString().slice(0, 10), label: "Released to beneficiaries", sig: v.tx_signature }] : []),
+                ];
+                return events.map((e, i) => (
+                  <div key={i} className="relative mb-5">
+                    <div className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full" style={{ background: "var(--honey)" }} />
+                    <p style={{ color: "var(--forest)", fontWeight: 500 }}>{e.label}</p>
+                    <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{format(parseISO(e.d), "MMMM d, yyyy")}</p>
+                    {e.sig && (
+                      <a
+                        href={`https://explorer.solana.com/tx/${e.sig}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] mt-1 inline-flex items-center gap-1 underline"
+                        style={{ color: "var(--honey)" }}
+                      >
+                        View on Solana devnet ↗ <span className="font-mono opacity-70">{e.sig.slice(0, 8)}…{e.sig.slice(-6)}</span>
+                      </a>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>
@@ -931,4 +951,54 @@ function LegacyLetterPanel({ vault }: { vault: Vault }) {
 function defaultLetter(v: Vault): string {
   const names = v.beneficiaries.map(b => b.name.split(" ")[0]).join(", ");
   return `To ${names || "my loved ones"},\n\nIf you are reading this, the conditions on this vault have been met. The funds set aside here are yours, with my love. Use them well, and look after each other.\n\nThis was never just about the money — it was about making sure you would be okay.\n\nWith all my love,`;
+}
+
+function ReleasedClaimPanel({ vault }: { vault: Vault }) {
+  const [tokens, setTokens] = useState<{ email: string; claim_token: string | null }[]>([]);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(typeof window !== "undefined" ? window.location.origin : "");
+    (async () => {
+      try {
+        const bens = await serverEnsureClaimTokens(vault.id);
+        setTokens(bens.map((b) => ({ email: b.email, claim_token: b.claim_token })));
+      } catch (e) { console.error(e); }
+    })();
+  }, [vault.id]);
+
+  function copy(url: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => toast.success("Claim link copied"));
+    }
+  }
+
+  return (
+    <div className="ll-card p-8" style={{ background: "rgba(127,168,130,0.08)", border: "1px solid rgba(127,168,130,0.35)" }}>
+      <div className="flex items-center gap-2">
+        <span className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider" style={{ background: "var(--sage)", color: "var(--forest)" }}>Released</span>
+        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Beneficiary claim links</h3>
+      </div>
+      <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+        Open any link below in a private window and use the matching email to walk through the claim flow yourself — no second inbox needed.
+      </p>
+      <div className="mt-5 space-y-3">
+        {vault.beneficiaries.map((b) => {
+          const tk = tokens.find((t) => t.email.toLowerCase() === b.email.toLowerCase());
+          const url = `${origin}/claim?vault=${vault.id}${tk?.claim_token ? `&token=${encodeURIComponent(tk.claim_token)}` : ""}`;
+          return (
+            <div key={b.email} className="flex items-start gap-3 p-3 rounded-lg" style={{ background: "rgba(250,250,247,0.6)" }}>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>{b.name} <span style={{ color: "var(--warm-gray)", fontWeight: 400 }}>· {b.email}</span></p>
+                <a href={url} target="_blank" rel="noopener noreferrer" className="block text-xs font-mono mt-1 truncate underline" style={{ color: "var(--honey)" }}>
+                  {url}
+                </a>
+              </div>
+              <button onClick={() => copy(url)} className="ll-pill ll-pill-ghost text-xs" style={{ padding: "0.35rem 0.75rem" }}>Copy</button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }

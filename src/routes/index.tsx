@@ -129,6 +129,35 @@ function Landing() {
         </div>
       </section>
 
+      {/* Tester quickstart */}
+      <section className="px-6 lg:px-12 py-20" style={{ background: "rgba(127,168,130,0.10)" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center">
+            <span className="text-[10px] uppercase tracking-[0.18em] px-2.5 py-1 rounded-full" style={{ background: "rgba(232,160,32,0.18)", color: "var(--honey)" }}>For hackathon judges</span>
+            <h2 className="mt-4" style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(28px,4vw,40px)", lineHeight: 1.15, fontWeight: 600 }}>
+              Try it end-to-end in 3 minutes.
+            </h2>
+            <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
+              Devnet build. No real funds move. Every Solana action shows a live explorer link.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5 mt-10">
+            {[
+              { n: "01", t: "Sign up", d: "Email + password. A custodial Solana wallet is provisioned automatically.", to: "/signup", cta: "Create account" },
+              { n: "02", t: "Load demo data", d: "From your dashboard, click Load demo data to seed 4 vaults covering every state.", to: "/dashboard", cta: "Go to dashboard" },
+              { n: "03", t: "Try a claim", d: "Open the released vault to grab a claim link, then walk through it as a beneficiary.", to: "/claim", cta: "Claim a vault" },
+            ].map((s) => (
+              <div key={s.n} className="ll-card p-6">
+                <div style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 36, fontWeight: 700, lineHeight: 1 }}>{s.n}</div>
+                <h3 className="mt-3 text-xl font-semibold">{s.t}</h3>
+                <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>{s.d}</p>
+                <Link to={s.to} className="ll-pill ll-pill-ghost text-sm mt-5 inline-block" style={{ padding: "0.45rem 0.9rem" }}>{s.cta} →</Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="px-6 lg:px-12 py-24 text-center relative overflow-hidden">
         <Blob className="w-[420px] h-[420px] left-1/2 -translate-x-1/2 top-10" color="var(--honey)" opacity={0.10} />
