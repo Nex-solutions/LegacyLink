@@ -4,9 +4,24 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
+import { getBalanceLamports, getLatestBlockhashDirect, getSolanaRpcUrl, sendRawTransactionDirect } from "./solana-rpc.server";
 
 function getRpcUrl(): string {
-  return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
+  return getSolanaRpcUrl();
+}
+
+async function sendSignedTransfer(args: {
+  from: Awaited<ReturnType<typeof loadKeypair>>;
+  to: import("@solana/web3.js").PublicKey;
+  lamports: number;
+}): Promise<string> {
+  const { Transaction, SystemProgram } = await import("@solana/web3.js");
+  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashDirect();
+  const tx = new Transaction({ feePayer: args.from.publicKey, blockhash, lastValidBlockHeight }).add(
+    SystemProgram.transfer({ fromPubkey: args.from.publicKey, toPubkey: args.to, lamports: args.lamports }),
+  );
+  tx.sign(args.from);
+  return sendRawTransactionDirect(tx.serialize());
 }
 
 async function loadKeypair(encryptedSecret: string) {
@@ -29,9 +44,6 @@ export async function sendUserToHotProof(
   const {
     Connection,
     PublicKey,
-    Transaction,
-    SystemProgram,
-    sendAndConfirmTransaction,
     LAMPORTS_PER_SOL,
   } = web3;
 
@@ -64,31 +76,15 @@ export async function sendUserToHotProof(
   const feeBuffer = 10_000; // ~2x signature fee headroom
 
   // Top up the user wallet if it can't cover the transfer + fees.
-  const balance = await connection.getBalance(userKp.publicKey).catch(() => 0);
+  const balance = await getBalanceLamports(userKp.publicKey.toBase58()).catch(() => 0);
   if (balance < lamports + feeBuffer) {
     const masterKp = await loadKeypair(master.encrypted_secret);
     const needed = lamports + feeBuffer - balance + 5_000_000; // add 0.005 SOL headroom
-    const topUp = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: masterKp.publicKey,
-        toPubkey: userKp.publicKey,
-        lamports: needed,
-      }),
-    );
-    await sendAndConfirmTransaction(connection, topUp, [masterKp], { commitment: "confirmed" });
+    await sendSignedTransfer({ from: masterKp, to: userKp.publicKey, lamports: needed });
   }
 
   // The actual proof: user wallet → hot wallet
-  const tx = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: userKp.publicKey,
-      toPubkey: hotPubkey,
-      lamports,
-    }),
-  );
-  const signature = await sendAndConfirmTransaction(connection, tx, [userKp], {
-    commitment: "confirmed",
-  });
+  const signature = await sendSignedTransfer({ from: userKp, to: hotPubkey, lamports });
 
   return {
     signature,
