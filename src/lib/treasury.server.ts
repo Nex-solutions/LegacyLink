@@ -4,12 +4,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
-
-function getRpcUrls(): string[] {
-  const urls = [process.env.SOLANA_RPC].filter(Boolean) as string[];
-  if (urls.length === 0) throw new Error("SOLANA_RPC env var not set");
-  return [...new Set(urls)];
-}
+import { getBalanceLamports, getLatestBlockhashDirect, requestAirdropDirect, sendRawTransactionDirect } from "./solana-rpc.server";
 
 async function loadMasterKeypair() {
   const { data, error } = await supabaseAdmin
@@ -42,44 +37,34 @@ export async function fundFromMaster(toPubkey: string, solAmount: number): Promi
   const master = await loadMasterKeypair();
   let lastError: unknown;
   try {
-    for (const rpcUrl of getRpcUrls()) {
-      const connection = new Connection(rpcUrl, "confirmed");
-      try {
-        const balance = await connection.getBalance(master.publicKey);
-        if (balance < lamports + 5000) {
-          throw new Error(`treasury underfunded: ${balance} lamports`);
-        }
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-        const tx = new Transaction({ feePayer: master.publicKey, blockhash, lastValidBlockHeight }).add(
-          SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
-        );
-        tx.sign(master);
-        const sig = await connection.sendRawTransaction(tx.serialize(), {
-          skipPreflight: false,
-          preflightCommitment: "confirmed",
-        });
-        console.log(`[treasury] funded ${toPubkey} ${lamports} lamports (${sig})`);
-        return sig;
-      } catch (e) {
-        lastError = e;
-        console.warn("[treasury] RPC funding attempt failed", e instanceof Error ? e.message : e);
+    try {
+      const balance = await getBalanceLamports(master.publicKey.toBase58());
+      if (balance < lamports + 5000) {
+        throw new Error(`treasury underfunded: ${balance} lamports`);
       }
+      const { blockhash, lastValidBlockHeight } = await getLatestBlockhashDirect();
+      const tx = new Transaction({ feePayer: master.publicKey, blockhash, lastValidBlockHeight }).add(
+        SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
+      );
+      tx.sign(master);
+      const sig = await sendRawTransactionDirect(tx.serialize());
+      console.log(`[treasury] funded ${toPubkey} ${lamports} lamports (${sig})`);
+      return sig;
+    } catch (e) {
+      lastError = e;
+      console.warn("[treasury] RPC funding attempt failed", e instanceof Error ? e.message : e);
     }
-    throw lastError ?? new Error("No RPC endpoints available");
+    throw lastError ?? new Error("No RPC endpoint available");
   } catch (e) {
     console.warn("[treasury] master transfer failed, trying airdrop", e instanceof Error ? e.stack || e.message : e);
   }
 
   // Last resort: devnet airdrop (often rate-limited but worth a shot).
-  for (const rpcUrl of getRpcUrls()) {
-    try {
-      const connection = new Connection(rpcUrl, "confirmed");
-      const sig = await connection.requestAirdrop(recipient, lamports);
-      return sig;
-    } catch (e) {
-      lastError = e;
-      console.warn("[treasury] RPC airdrop attempt failed", e instanceof Error ? e.message : e);
-    }
+  try {
+    return await requestAirdropDirect(recipient.toBase58(), lamports);
+  } catch (e) {
+    lastError = e;
+    console.warn("[treasury] RPC airdrop attempt failed", e instanceof Error ? e.message : e);
   }
   throw lastError ?? new Error("Funding failed");
 }
