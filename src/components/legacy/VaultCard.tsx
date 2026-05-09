@@ -9,10 +9,13 @@ function StatusPill({ status }: { status: Vault["status"] }) {
       ? { background: "var(--sage)", color: "var(--forest)" }
       : status === "Pending"
       ? { background: "var(--honey)", color: "var(--forest)" }
+      : status === "Failed" || status === "Draft"
+      ? { background: "#F4D9C4", color: "#8B3A1A" }
       : { background: "#D9D7D1", color: "var(--warm-gray)" };
+  const label = status === "Failed" || status === "Draft" ? "Incomplete" : status;
   return (
     <span style={styles} className="px-3 py-1 rounded-full text-xs font-medium">
-      {status}
+      {label}
     </span>
   );
 }
