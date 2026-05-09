@@ -25,6 +25,14 @@ function Landing() {
         <Blob className="w-[680px] h-[680px] -top-40 -right-40" color="var(--forest)" opacity={0.05} />
         <Blob className="w-[480px] h-[480px] top-40 -left-32" color="var(--sage)" opacity={0.10} />
         <div className="relative z-10 max-w-5xl mx-auto text-center">
+          <motion.span
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-block text-[11px] px-3 py-1 rounded-full font-medium uppercase tracking-[0.18em] mb-6"
+            style={{ background: "rgba(232,160,32,0.18)", color: "var(--forest)" }}
+          >
+            Built on Solana · Devnet demo live
+          </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -42,7 +50,7 @@ function Landing() {
             className="mx-auto mt-8 max-w-2xl text-lg"
             style={{ color: "var(--warm-gray)" }}
           >
-            Money where it's needed. When it's needed.
+            A digital estate vault for Canadian families. Set conditions today, your people get paid in CAD automatically — secured on-chain, no lawyers, no probate delays.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
