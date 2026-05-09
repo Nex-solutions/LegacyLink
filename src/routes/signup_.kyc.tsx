@@ -124,7 +124,6 @@ function SignupKyc() {
     }
   }, [reason]);
   const provision = useServerFn(provisionWallet);
-  const prepareBrowserFunding = useServerFn(prepareBrowserWalletFunding);
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
