@@ -33,7 +33,7 @@ export type VaultCondition =
   | { kind: "inactivity"; inactivity_days: number; last_checkin: string }
   | { kind: "manual" };
 
-export type VaultStatus = "Active" | "Released" | "Pending";
+export type VaultStatus = "Active" | "Released" | "Pending" | "Failed" | "Draft";
 
 export type Vault = {
   id: string;
