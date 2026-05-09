@@ -62,7 +62,13 @@ function Signup() {
     <AuthSplit quote="The greatest gift you leave behind is certainty.">
       <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 40, fontWeight: 600, color: "var(--forest)" }}>Create your account</h1>
       <p className="mt-2" style={{ color: "var(--warm-gray)" }}>Begin protecting what matters in under 10 minutes.</p>
-      <form onSubmit={submit} className="mt-8 space-y-4">
+      <div
+        className="mt-4 px-3 py-2 rounded-lg text-xs"
+        style={{ background: "rgba(232,160,32,0.14)", color: "var(--forest)", border: "1px solid rgba(232,160,32,0.35)" }}
+      >
+        <strong style={{ color: "var(--honey)" }}>Test mode:</strong> we pre-filled fake demo credentials so you can sign up with one click. Edit any field if you'd like.
+      </div>
+      <form onSubmit={submit} className="mt-6 space-y-4">
         <div>
           <label className="ll-label">Full Name</label>
           <input className="ll-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="James Okafor" />
