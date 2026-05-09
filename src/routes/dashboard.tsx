@@ -259,7 +259,13 @@ function Dashboard() {
                 <path d="M40 60 L100 30 L160 60" fill="var(--sage)" opacity="0.3" />
               </svg>
               <h3 className="mt-4" style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your legacy starts here.</h3>
-              <Link to="/create" className="ll-pill ll-pill-secondary mt-6">Create your first vault</Link>
+              <p className="mt-3 max-w-md mx-auto text-sm" style={{ color: "var(--warm-gray)" }}>
+                Just exploring? Load four demo vaults that show every state — time-locked, inactivity, manual release, and already released.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Link to="/create" className="ll-pill ll-pill-secondary">Create your first vault</Link>
+                <button onClick={handleResetDemo} className="ll-pill ll-pill-ghost">⚡ Load demo data</button>
+              </div>
             </div>
           ) : (
             <div className="mt-6 grid md:grid-cols-2 gap-6">
