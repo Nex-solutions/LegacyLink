@@ -74,6 +74,7 @@ function Create() {
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string } | null>(null);
 
   useEffect(() => { if (!getUser()) navigate({ to: "/login" }); }, [navigate]);
 
