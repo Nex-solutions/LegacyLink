@@ -7,6 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { submitKyc, getMyKycStatus, simulateKycApproval } from "@/lib/paytrie-onboarding.functions";
 import { provisionWallet } from "@/lib/wallet.functions";
 
+const solanaExplorerUrl = (kind: "address" | "tx", value: string) =>
+  `https://explorer.solana.com/${kind}/${value}?cluster=devnet`;
+
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
@@ -211,29 +214,29 @@ function SignupKyc() {
                 <div className="mt-2 text-xs font-mono break-all" style={{ color: "var(--warm-gray)" }}>
                   {wallet.pubkey}
                 </div>
-                <a
-                  href={`https://explorer.solana.com/address/${wallet.pubkey}?cluster=devnet`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-block mt-2 text-xs underline mr-3"
-                  style={{ color: "var(--forest)" }}
-                >
-                  View address ↗
-                </a>
                 {wallet.airdropSig && (
                   <a
-                    href={`https://explorer.solana.com/tx/${wallet.airdropSig}?cluster=devnet`}
+                    href={solanaExplorerUrl("tx", wallet.airdropSig)}
                     target="_blank"
-                    rel="noreferrer"
-                    className="inline-block mt-2 text-xs underline"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 text-xs underline mr-3"
                     style={{ color: "var(--forest)" }}
                   >
                     View funding tx ↗
                   </a>
                 )}
+                <a
+                  href={solanaExplorerUrl("address", wallet.pubkey)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs underline"
+                  style={{ color: "var(--forest)" }}
+                >
+                  View address ↗
+                </a>
                 <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>
                   {wallet.airdropSig
-                    ? "Funded with 0.005 devnet SOL from the demo treasury so the address is live on-chain. The funding tx may take ~30s to appear on devnet explorer."
+                    ? "Funded with 0.005 devnet SOL from the demo treasury. Open the funding tx first if the address page is slow to update."
                     : wallet.airdropFailed
                     ? "Address reserved — demo treasury couldn't fund this wallet right now; it will activate on your first vault transaction."
                     : "Address reserved — it will activate on your first vault transaction."}
