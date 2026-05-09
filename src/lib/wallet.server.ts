@@ -21,23 +21,34 @@ export async function ensureCustodialWallet(userId: string): Promise<{
   if (readErr) throw readErr;
   if (existing?.pubkey) {
     let airdropSig: string | undefined;
+    let airdropFailed = false;
     try {
       const { Connection, PublicKey } = await import("@solana/web3.js");
       const connection = new Connection(
         process.env.SOLANA_RPC || "https://api.devnet.solana.com",
         "confirmed",
       );
-      const sigs = await connection.getSignaturesForAddress(new PublicKey(existing.pubkey), {
-        limit: 1,
-      });
+      const pk = new PublicKey(existing.pubkey);
+      const sigs = await connection.getSignaturesForAddress(pk, { limit: 1 });
       airdropSig = sigs[0]?.signature;
+      if (!airdropSig) {
+        // Wallet exists but never funded — fund it now so the explorer shows it live.
+        try {
+          const { fundFromMaster } = await import("./treasury.server");
+          airdropSig = await fundFromMaster(existing.pubkey, 0.005);
+          console.log(`[wallet] back-funded existing wallet ${existing.pubkey} (${airdropSig})`);
+        } catch (e) {
+          airdropFailed = true;
+          console.warn("[wallet] back-fund failed", e instanceof Error ? e.message : e);
+        }
+      }
     } catch (e) {
       console.warn(
         "[wallet] couldn't read existing wallet funding tx",
         e instanceof Error ? e.message : e,
       );
     }
-    return { pubkey: existing.pubkey, airdropSig, alreadyExisted: true };
+    return { pubkey: existing.pubkey, airdropSig, airdropFailed, alreadyExisted: true };
   }
 
   const { generateWallet } = await import("./solana.server");
