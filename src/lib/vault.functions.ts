@@ -261,7 +261,7 @@ export const createVault = createServerFn({ method: "POST" })
       console.error("createVault failed", err);
       // Mark vault as failed and bump retry counter so the dashboard can
       // surface a "Continue where you left off" / "Contact support" CTA.
-      await supabase.rpc as unknown; // no-op (kept to keep diff minimal)
+      
       const { data: cur } = await supabase
         .from("vaults")
         .select("failure_count")
