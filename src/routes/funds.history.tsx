@@ -53,8 +53,32 @@ function HistoryPage() {
                 <div>Created {new Date(i.created_at).toLocaleString()}</div>
                 {i.paytrie_rmt && <div>Reference: <code>{i.paytrie_rmt}</code></div>}
                 {i.amount_usdc && <div>{Number(i.amount_usdc).toFixed(2)} USDC</div>}
-                {i.sweep_tx_signature && <div className="break-all">Sweep tx: <code>{i.sweep_tx_signature}</code></div>}
-                {i.payout_tx_signature && <div className="break-all">Payout tx: <code>{i.payout_tx_signature}</code></div>}
+                {i.sweep_tx_signature && (
+                  <div className="break-all">
+                    Sweep tx:{" "}
+                    <a
+                      href={`https://explorer.solana.com/tx/${i.sweep_tx_signature}?cluster=devnet`}
+                      target="_blank" rel="noreferrer"
+                      className="underline font-mono text-xs"
+                    >
+                      {i.sweep_tx_signature} ↗
+                    </a>
+                    <span className="ml-2 text-xs opacity-70">on Solana devnet</span>
+                  </div>
+                )}
+                {i.payout_tx_signature && (
+                  <div className="break-all">
+                    Payout tx:{" "}
+                    <a
+                      href={`https://explorer.solana.com/tx/${i.payout_tx_signature}?cluster=devnet`}
+                      target="_blank" rel="noreferrer"
+                      className="underline font-mono text-xs"
+                    >
+                      {i.payout_tx_signature} ↗
+                    </a>
+                    <span className="ml-2 text-xs opacity-70">on Solana devnet</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
