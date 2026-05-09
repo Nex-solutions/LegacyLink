@@ -188,12 +188,12 @@ async function ensureSolBalance(connection: Connection, pubkey: PublicKey): Prom
     const { LAMPORTS_PER_SOL } = await loadWeb3();
     const balance = await connection.getBalance(pubkey);
     if (balance < 0.02 * LAMPORTS_PER_SOL) {
-      console.log(`[solana] airdropping 0.05 SOL to ${pubkey.toBase58()}`);
-      const sig = await connection.requestAirdrop(pubkey, 0.05 * LAMPORTS_PER_SOL);
-      await connection.confirmTransaction(sig, "confirmed");
+      console.log(`[solana] funding 0.05 SOL to ${pubkey.toBase58()} from treasury`);
+      const { fundFromMaster } = await import("./treasury.server");
+      await fundFromMaster(pubkey.toBase58(), 0.05);
     }
   } catch (e) {
-    console.warn("[solana] airdrop failed (rate-limited?)", e instanceof Error ? e.message : e);
+    console.warn("[solana] treasury top-up failed", e instanceof Error ? e.message : e);
   }
 }
 
