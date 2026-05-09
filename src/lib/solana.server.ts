@@ -4,39 +4,39 @@
 //   program on devnet. fund/claim stay simulated until a real on/off-ramp with
 //   USDC liquidity is wired (devnet custodial wallets have no USDC).
 
-import nacl from "tweetnacl";
-import bs58 from "bs58";
-
 import { webcrypto } from "node:crypto";
-import * as solanaWeb3 from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
-import * as anchorPkg from "@coral-xyz/anchor";
-import type { Idl } from "@coral-xyz/anchor";
 import vaultIdl from "./idl/vault.json";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const anchorDefault = (anchorPkg as unknown as { default?: typeof anchorPkg }).default;
-const AnchorProvider = anchorPkg.AnchorProvider ?? anchorDefault?.AnchorProvider;
-const Program = anchorPkg.Program ?? anchorDefault?.Program;
-const BN = anchorPkg.BN ?? anchorDefault?.BN;
-const NodeWallet = anchorPkg.Wallet ?? anchorDefault?.Wallet;
-const {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  LAMPORTS_PER_SOL,
-} = solanaWeb3;
+// Lazy loaders for Node-CJS-only deps (bs58, @solana/*, @coral-xyz/anchor,
+// tweetnacl). They reference __filename at module init which the Cloudflare
+// Worker SSR runtime doesn't define — importing them at module top-level
+// crashes every page render with `ReferenceError: __filename is not defined`.
+// Loading them inside async functions defers evaluation to the actual call,
+// which only happens for server function invocations (never during SSR of an
+// unrelated page).
+
+type SolanaWeb3 = typeof import("@solana/web3.js");
+type SplToken = typeof import("@solana/spl-token");
+type AnchorMod = typeof import("@coral-xyz/anchor");
+
+let _web3: Promise<SolanaWeb3> | undefined;
+let _spl: Promise<SplToken> | undefined;
+let _anchor: Promise<AnchorMod> | undefined;
+let _bs58: Promise<typeof import("bs58").default> | undefined;
+let _nacl: Promise<typeof import("tweetnacl").default> | undefined;
+
+const loadWeb3 = () => (_web3 ??= import("@solana/web3.js"));
+const loadSpl = () => (_spl ??= import("@solana/spl-token"));
+const loadAnchor = () => (_anchor ??= import("@coral-xyz/anchor"));
+const loadBs58 = () => (_bs58 ??= import("bs58").then((m) => m.default ?? (m as unknown as typeof import("bs58").default)));
+const loadNacl = () => (_nacl ??= import("tweetnacl").then((m) => m.default ?? (m as unknown as typeof import("tweetnacl").default)));
+
 const subtle = (webcrypto as Crypto).subtle;
 
-type Connection = solanaWeb3.Connection;
-type Keypair = solanaWeb3.Keypair;
-type PublicKey = solanaWeb3.PublicKey;
+type Connection = import("@solana/web3.js").Connection;
+type Keypair = import("@solana/web3.js").Keypair;
+type PublicKey = import("@solana/web3.js").PublicKey;
 
 // ─────────────────────────────────────────────────────────────────
 // Simulated on-chain ops. Real Anchor calls slot in here later.
