@@ -185,23 +185,43 @@ function VaultDetail() {
             </div>
           )}
 
+          {/* Released — surface claim links inline so judges can self-test without a second inbox */}
+          {vault.status === "Released" && (
+            <ReleasedClaimPanel vault={vault} />
+          )}
+
           {/* Timeline */}
           <div className="ll-card p-8">
             <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600 }}>Activity</h3>
             <div className="mt-6 relative pl-8">
               <div className="absolute left-2 top-2 bottom-2 w-px" style={{ background: "rgba(26,46,26,0.15)" }} />
-              {[
-                { d: vault.created_at, label: "Vault created" },
-                { d: vault.created_at, label: `Funded with ${formatCAD(vault.amount_cad)}` },
-                ...(cond.kind === "inactivity" ? [{ d: cond.last_checkin, label: "Last check-in" }] : []),
-                ...(vault.status === "Released" ? [{ d: new Date().toISOString().slice(0, 10), label: "Released to beneficiaries" }] : []),
-              ].map((e, i) => (
-                <div key={i} className="relative mb-5">
-                  <div className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full" style={{ background: "var(--honey)" }} />
-                  <p style={{ color: "var(--forest)", fontWeight: 500 }}>{e.label}</p>
-                  <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{format(parseISO(e.d), "MMMM d, yyyy")}</p>
-                </div>
-              ))}
+              {(() => {
+                const v = vault as Vault & { tx_signature?: string | null; vault_pda?: string | null };
+                const events: { d: string; label: string; sig?: string | null }[] = [
+                  { d: vault.created_at, label: "Vault created", sig: v.tx_signature },
+                  { d: vault.created_at, label: `Funded with ${formatCAD(vault.amount_cad)}`, sig: v.tx_signature },
+                  ...(cond.kind === "inactivity" ? [{ d: cond.last_checkin, label: "Last check-in" }] : []),
+                  ...(vault.status === "Released" ? [{ d: new Date().toISOString().slice(0, 10), label: "Released to beneficiaries", sig: v.tx_signature }] : []),
+                ];
+                return events.map((e, i) => (
+                  <div key={i} className="relative mb-5">
+                    <div className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full" style={{ background: "var(--honey)" }} />
+                    <p style={{ color: "var(--forest)", fontWeight: 500 }}>{e.label}</p>
+                    <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{format(parseISO(e.d), "MMMM d, yyyy")}</p>
+                    {e.sig && (
+                      <a
+                        href={`https://explorer.solana.com/tx/${e.sig}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] mt-1 inline-flex items-center gap-1 underline"
+                        style={{ color: "var(--honey)" }}
+                      >
+                        View on Solana devnet ↗ <span className="font-mono opacity-70">{e.sig.slice(0, 8)}…{e.sig.slice(-6)}</span>
+                      </a>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>
