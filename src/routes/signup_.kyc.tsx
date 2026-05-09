@@ -30,6 +30,57 @@ const PROVINCES = [
   ["YT", "Yukon"],
 ] as const;
 
+type KycForm = {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  dob: string;
+  address1: string;
+  address2: string;
+  city: string;
+  province: string;
+  postal: string;
+  occupation: string;
+  pep: boolean;
+  tpd: boolean;
+};
+
+function pick<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomDummy(): KycForm {
+  const streets = ["Bloor", "Yonge", "King", "Queen", "Bay", "College", "Dundas", "Spadina", "Bathurst", "Robson"];
+  const suffixes = ["St", "Ave", "Rd", "Blvd"];
+  const cities = ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton", "Halifax"];
+  const provinces = ["ON", "BC", "QC", "AB", "NS"];
+  const occupations = ["Software Engineer", "Teacher", "Designer", "Nurse", "Accountant", "Architect", "Consultant", "Project Manager"];
+  const num = Math.floor(100 + Math.random() * 8900);
+  const phone = "416" + String(Math.floor(1000000 + Math.random() * 8999999));
+  const year = 1970 + Math.floor(Math.random() * 30);
+  const month = String(1 + Math.floor(Math.random() * 12)).padStart(2, "0");
+  const day = String(1 + Math.floor(Math.random() * 28)).padStart(2, "0");
+  const letters = "ABCEGHJKLMNPRSTVXY";
+  const digits = "0123456789";
+  const postal =
+    pick(letters.split("")) + pick(digits.split("")) + pick(letters.split("")) +
+    pick(digits.split("")) + pick(letters.split("")) + pick(digits.split(""));
+  return {
+    first_name: "",
+    last_name: "",
+    phone,
+    dob: `${year}-${month}-${day}`,
+    address1: `${num} ${pick(streets)} ${pick(suffixes)}`,
+    address2: "",
+    city: pick(cities),
+    province: pick(provinces),
+    postal,
+    occupation: pick(occupations),
+    pep: true,
+    tpd: true,
+  };
+}
+
 function SignupKyc() {
   const navigate = useNavigate();
   const { reason } = Route.useSearch();
@@ -47,20 +98,7 @@ function SignupKyc() {
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
-  const [form, setForm] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    dob: "",
-    address1: "",
-    address2: "",
-    city: "",
-    province: "ON",
-    postal: "",
-    occupation: "",
-    pep: false,
-    tpd: false,
-  });
+  const [form, setForm] = useState(() => randomDummy());
 
   useEffect(() => {
     (async () => {
@@ -216,6 +254,12 @@ function SignupKyc() {
       <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
         Required by Canadian regulations to fund your vault. Takes 2 minutes.
       </p>
+      <div
+        className="mt-4 px-3 py-2 rounded-lg text-xs"
+        style={{ background: "rgba(232,160,32,0.14)", color: "var(--forest)", border: "1px solid rgba(232,160,32,0.35)" }}
+      >
+        <strong style={{ color: "var(--honey)" }}>Test mode:</strong> dummy data has been pre-filled so you can breeze through. Just confirm your name and continue.
+      </div>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
         <div className="grid grid-cols-2 gap-3">
