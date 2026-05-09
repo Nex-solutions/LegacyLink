@@ -6,6 +6,11 @@ import { ensureCustodialWallet } from "./wallet.server";
 export const provisionWallet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const pubkey = await ensureCustodialWallet(context.userId);
-    return { pubkey };
+    const r = await ensureCustodialWallet(context.userId);
+    return {
+      pubkey: r.pubkey,
+      airdropSig: r.airdropSig ?? null,
+      airdropFailed: r.airdropFailed ?? false,
+      alreadyExisted: r.alreadyExisted,
+    };
   });

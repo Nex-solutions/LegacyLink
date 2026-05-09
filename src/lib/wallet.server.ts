@@ -6,7 +6,9 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export async function ensureCustodialWallet(userId: string): Promise<string> {
+export async function ensureCustodialWallet(
+  userId: string
+): Promise<{ pubkey: string; airdropSig?: string; airdropFailed?: boolean; alreadyExisted: boolean }> {
   const { data: existing, error: readErr } = await supabaseAdmin
     .from("custodial_wallets")
     .select("pubkey")
@@ -14,7 +16,7 @@ export async function ensureCustodialWallet(userId: string): Promise<string> {
     .maybeSingle();
 
   if (readErr) throw readErr;
-  if (existing?.pubkey) return existing.pubkey;
+  if (existing?.pubkey) return { pubkey: existing.pubkey, alreadyExisted: true };
 
   const { generateWallet } = await import("./solana.server");
   const wallet = await generateWallet();
@@ -34,7 +36,26 @@ export async function ensureCustodialWallet(userId: string): Promise<string> {
     .update({ solana_wallet: wallet.pubkey })
     .eq("id", userId);
 
-  return wallet.pubkey;
+  // Airdrop a small amount of devnet SOL so the address materializes on
+  // Solana Explorer immediately. Wrapped in try/catch — faucet rate-limits
+  // must never block signup.
+  let airdropSig: string | undefined;
+  let airdropFailed = false;
+  try {
+    const web3 = await import("@solana/web3.js");
+    const rpc = process.env.SOLANA_RPC || "https://api.devnet.solana.com";
+    const connection = new web3.Connection(rpc, "confirmed");
+    const pk = new web3.PublicKey(wallet.pubkey);
+    const sig = await connection.requestAirdrop(pk, 0.01 * web3.LAMPORTS_PER_SOL);
+    await connection.confirmTransaction(sig, "confirmed");
+    airdropSig = sig;
+    console.log(`[wallet] airdropped 0.01 SOL to ${wallet.pubkey} (${sig})`);
+  } catch (e) {
+    airdropFailed = true;
+    console.warn("[wallet] airdrop failed (rate-limited?)", e instanceof Error ? e.message : e);
+  }
+
+  return { pubkey: wallet.pubkey, airdropSig, airdropFailed, alreadyExisted: false };
 }
 
 export async function getUserPubkey(userId: string): Promise<string | null> {

@@ -100,7 +100,11 @@ function SignupKyc() {
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
-  const [walletPubkey, setWalletPubkey] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<{
+    pubkey: string;
+    airdropSig: string | null;
+    airdropFailed: boolean;
+  } | null>(null);
   const [form, setForm] = useState(() => randomDummy());
 
   useEffect(() => {
@@ -108,7 +112,11 @@ function SignupKyc() {
     (async () => {
       try {
         const r = await provision({ data: undefined } as never);
-        setWalletPubkey(r.pubkey);
+        setWallet({
+          pubkey: r.pubkey,
+          airdropSig: r.airdropSig,
+          airdropFailed: r.airdropFailed,
+        });
       } catch (e) {
         console.warn("wallet provisioning", e);
       }
@@ -198,20 +206,38 @@ function SignupKyc() {
               <span>🔗</span>
               <span>Demo wallet created on Solana devnet</span>
             </div>
-            {walletPubkey ? (
+            {wallet ? (
               <>
                 <div className="mt-2 text-xs font-mono break-all" style={{ color: "var(--warm-gray)" }}>
-                  {walletPubkey}
+                  {wallet.pubkey}
                 </div>
                 <a
-                  href={`https://explorer.solana.com/address/${walletPubkey}?cluster=devnet`}
+                  href={`https://explorer.solana.com/address/${wallet.pubkey}?cluster=devnet`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-block mt-2 text-xs underline"
+                  className="inline-block mt-2 text-xs underline mr-3"
                   style={{ color: "var(--forest)" }}
                 >
-                  View on Solana Explorer ↗
+                  View address ↗
                 </a>
+                {wallet.airdropSig && (
+                  <a
+                    href={`https://explorer.solana.com/tx/${wallet.airdropSig}?cluster=devnet`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block mt-2 text-xs underline"
+                    style={{ color: "var(--forest)" }}
+                  >
+                    View funding tx ↗
+                  </a>
+                )}
+                <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>
+                  {wallet.airdropSig
+                    ? "Funded with 0.01 devnet SOL so the address is live on-chain."
+                    : wallet.airdropFailed
+                    ? "Address reserved — devnet faucet is rate-limited right now; it will activate on your first vault transaction."
+                    : "Address reserved — it will activate on your first vault transaction."}
+                </div>
               </>
             ) : (
               <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>

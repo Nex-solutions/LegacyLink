@@ -189,7 +189,7 @@ export const createVault = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string }> => {
     const { supabase, userId } = context;
 
-    const ownerPubkey = await ensureCustodialWallet(userId);
+    const ownerPubkey = (await ensureCustodialWallet(userId)).pubkey;
 
     // Insert the vault row first to get an id, then write on-chain metadata.
     const { data: inserted, error: insertErr } = await supabase
@@ -291,7 +291,7 @@ export const retryVault = createServerFn({ method: "POST" })
     if (error) throw error;
     if (!row) throw new Error("Vault not found");
 
-    const ownerPubkey = await ensureCustodialWallet(userId);
+    const ownerPubkey = (await ensureCustodialWallet(userId)).pubkey;
     try {
       const init = await initVaultOnChain({
         ownerPubkey,
