@@ -57,7 +57,7 @@ function HistoryPage() {
                   <div className="break-all">
                     Sweep tx:{" "}
                     <a
-                      href={`https://explorer.solana.com/tx/${i.sweep_tx_signature}?cluster=devnet`}
+                      href={`https://solscan.io/tx/${i.sweep_tx_signature}?cluster=devnet`}
                       target="_blank" rel="noreferrer"
                       className="underline font-mono text-xs"
                     >
@@ -70,7 +70,7 @@ function HistoryPage() {
                   <div className="break-all">
                     Payout tx:{" "}
                     <a
-                      href={`https://explorer.solana.com/tx/${i.payout_tx_signature}?cluster=devnet`}
+                      href={`https://solscan.io/tx/${i.payout_tx_signature}?cluster=devnet`}
                       target="_blank" rel="noreferrer"
                       className="underline font-mono text-xs"
                     >
