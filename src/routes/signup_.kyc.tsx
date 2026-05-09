@@ -47,20 +47,7 @@ function SignupKyc() {
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
-  const [form, setForm] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    dob: "",
-    address1: "",
-    address2: "",
-    city: "",
-    province: "ON",
-    postal: "",
-    occupation: "",
-    pep: false,
-    tpd: false,
-  });
+  const [form, setForm] = useState(() => randomDummy());
 
   useEffect(() => {
     (async () => {
