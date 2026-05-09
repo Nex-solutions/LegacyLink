@@ -1,37 +1,27 @@
 ## Plan
 
-Switch wallet activation from Solana devnet faucet airdrops to a funded backend treasury wallet, so new demo wallets reliably show as live on-chain.
+1. Use Solscan for first-open reliability
+   - Replace the affected `explorer.solana.com` devnet links with Solscan devnet links.
+   - Apply this to signup wallet links, vault creation success links, vault activity links, and funds history links so the first click opens reliably.
 
-### What will change
+2. Stop creating a new wallet during vault creation
+   - Change vault creation to require the user’s existing system wallet from signup.
+   - If the user does not have that wallet yet, return a clear error directing them to finish signup/KYC wallet provisioning instead of silently generating another wallet.
+   - Display the user’s system wallet address as the vault account wallet address on the vault success screen.
 
-1. **Use treasury funding instead of faucet airdrop**
-  - Replace `requestAirdrop(...)` in the signup wallet provisioning flow with a small SOL transfer from the existing backend master wallet.
-  - Keep the same UI behavior: show the wallet address link and a funding transaction link.
-2. **Make the link open reliably**
-  - Return a real transfer signature from the backend.
-  - The explorer link will point to that confirmed transfer transaction instead of a faucet airdrop signature.
-  - Update the note to say the wallet was funded from the demo treasury and that explorer indexing can take a short moment.
-3. **Fallback safely if treasury is empty**
-  - If the backend treasury wallet has no SOL, signup will still complete.
-  - The UI will clearly say: “Address reserved — demo treasury needs devnet SOL.”
-  - No signup flow will be blocked by funding failure.
-4. **Re-use this for later gas top-ups**
-  - Update the existing internal top-up path that currently still uses faucet airdrops for vault creation.
-  - This avoids faucet failures when creating vaults too.
+3. Add a real 0.001 devnet SOL vault proof transaction
+   - During vault creation, send `0.001` devnet SOL from the user’s system wallet to the platform hot wallet.
+   - Use the user system wallet as the signer/source, so the transaction visibly proves the user wallet works end-to-end.
+   - If the user wallet is too low for the transfer plus gas, top it up from the hot wallet first, but show the user wallet → hot wallet transaction as the main vault funding/proof transaction.
 
-### Important setup needed from you
+4. Update the vault success UI
+   - Replace the misleading “Vault account” PDA display with the user’s system wallet address.
+   - Label the transaction as “Vault proof transaction” or “System wallet funding transaction.”
+   - Keep any internal vault/program address out of the main display or label it clearly as an internal vault identifier, not a wallet.
 
-The app already has a backend master wallet:
+## Technical notes
 
-```text
-5U7rQZF3aKvzcUZiqZfMLid32UqvKPSh1PQgmAurbShJ
-```
-
-Send a small amount of **devnet SOL** from your Playground wallet to that address. After that, the app can fund every newly created demo wallet from this treasury. (I have added 2 sol to it now)
-
-### Technical details
-
-- Modify `src/lib/wallet.server.ts` to send `0.005–0.01` devnet SOL using `SystemProgram.transfer` signed by the encrypted backend master wallet.
-- Reuse the existing encrypted `master_wallet` table instead of asking for your Playground wallet private key.
-- Modify `src/lib/solana.server.ts` so `ensureSolBalance` no longer calls the faucet and instead uses the existing treasury top-up helper.
-- Keep all private keys server-side only; no wallet secret is exposed to the browser.
+- Add a server-only helper to sign a SOL transfer from the user custodial wallet to the hot wallet.
+- Update `createVault` to use the existing wallet address and return `{ id, vault_wallet, tx_signature }` for the UI.
+- Update `vault-client` and `create.tsx` response types/display.
+- Add a shared Solana link helper to avoid hardcoded explorer URLs.
