@@ -186,6 +186,39 @@ function SignupKyc() {
             Your identity is verified and your vault is ready. Thank you for trusting us with what
             matters most — let's begin building your legacy.
           </p>
+          <div
+            className="mt-5 p-4 rounded-xl text-sm"
+            style={{
+              background: "rgba(212,165,116,0.10)",
+              border: "1px solid rgba(212,165,116,0.35)",
+              color: "var(--forest)",
+            }}
+          >
+            <div className="flex items-center gap-2 font-medium">
+              <span>🔗</span>
+              <span>Demo wallet created on Solana devnet</span>
+            </div>
+            {walletPubkey ? (
+              <>
+                <div className="mt-2 text-xs font-mono break-all" style={{ color: "var(--warm-gray)" }}>
+                  {walletPubkey}
+                </div>
+                <a
+                  href={`https://explorer.solana.com/address/${walletPubkey}?cluster=devnet`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block mt-2 text-xs underline"
+                  style={{ color: "var(--forest)" }}
+                >
+                  View on Solana Explorer ↗
+                </a>
+              </>
+            ) : (
+              <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>
+                Provisioning your custodial wallet…
+              </div>
+            )}
+          </div>
           <button
             disabled={loading}
             onClick={async () => {
