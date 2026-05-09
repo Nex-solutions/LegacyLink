@@ -96,10 +96,24 @@ function SignupKyc() {
       });
     }
   }, [reason]);
+  const provision = useServerFn(provisionWallet);
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
+  const [walletPubkey, setWalletPubkey] = useState<string | null>(null);
   const [form, setForm] = useState(() => randomDummy());
+
+  useEffect(() => {
+    if (!simulated) return;
+    (async () => {
+      try {
+        const r = await provision({ data: undefined } as never);
+        setWalletPubkey(r.pubkey);
+      } catch (e) {
+        console.warn("wallet provisioning", e);
+      }
+    })();
+  }, [simulated, provision]);
 
   useEffect(() => {
     (async () => {
