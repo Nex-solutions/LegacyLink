@@ -65,10 +65,15 @@ function Create() {
   const [date, setDate] = useState("");
   const [days, setDays] = useState(180);
 
-  // step 3
-  const [bens, setBens] = useState<{ name: string; email: string; pct: number }[]>([
-    { name: "", email: "", pct: 100 },
-  ]);
+  // step 3 — prefill with demo beneficiary so judges can click through
+  const demoBenefs = useMemo(() => {
+    const FIRST = ["Amara", "Tobias", "Ngozi", "Emeka", "Ada", "Chinedu", "Zara"];
+    const LAST = ["Okafor", "Adeyemi", "Eze", "Nwosu", "Achebe"];
+    const f = FIRST[Math.floor(Math.random() * FIRST.length)];
+    const l = LAST[Math.floor(Math.random() * LAST.length)];
+    return [{ name: `${f} ${l}`, email: `${f.toLowerCase()}.${l.toLowerCase()}@demo.legacylink.app`, pct: 100 }];
+  }, []);
+  const [bens, setBens] = useState<{ name: string; email: string; pct: number }[]>(demoBenefs);
   const [trustee, setTrustee] = useState<{ name: string; email: string }>({ name: "", email: "" });
 
   // step 4
