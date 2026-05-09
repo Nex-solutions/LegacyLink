@@ -17,15 +17,33 @@ export const Route = createFileRoute("/signup")({
 const FIRST = ["James", "Amara", "Noah", "Ada", "Liam", "Zara", "Ethan", "Maya", "Jordan", "Sofia", "Kai", "Naomi"];
 const LAST = ["Okafor", "Adeyemi", "Chen", "Patel", "Nguyen", "Morgan", "Rivera", "Brooks", "Hassan", "Klein"];
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+function makeFakePassword() {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%^&*?";
+  const all = upper + lower + digits + symbols;
+  const base = [
+    pick(upper.split("")),
+    pick(lower.split("")),
+    pick(lower.split("")),
+    pick(digits.split("")),
+    pick(digits.split("")),
+    pick(symbols.split("")),
+  ];
+  for (let i = 0; i < 10; i++) base.push(pick(all.split("")));
+  return base.sort(() => Math.random() - 0.5).join("");
+}
 function makeFake() {
   const first = pick(FIRST);
   const last = pick(LAST);
   const num = Math.floor(100 + Math.random() * 9000);
+  const pw = makeFakePassword();
   return {
     name: `${first} ${last}`,
     email: `${first.toLowerCase()}.${last.toLowerCase()}${num}@demo.legacylink.app`,
-    password: "demo1234!",
-    confirm: "demo1234!",
+    password: pw,
+    confirm: pw,
   };
 }
 
