@@ -210,7 +210,7 @@ function VaultDetail() {
                     <p className="text-xs" style={{ color: "var(--warm-gray)" }}>{format(parseISO(e.d), "MMMM d, yyyy")}</p>
                     {e.sig && (
                       <a
-                        href={`https://explorer.solana.com/tx/${e.sig}?cluster=devnet`}
+                        href={`https://solscan.io/tx/${e.sig}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[11px] mt-1 inline-flex items-center gap-1 underline"

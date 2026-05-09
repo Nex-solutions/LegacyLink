@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { submitKyc, getMyKycStatus, simulateKycApproval } from "@/lib/paytrie-onboarding.functions";
 import { provisionWallet } from "@/lib/wallet.functions";
 
-const solanaExplorerUrl = (kind: "address" | "tx", value: string) =>
-  `https://explorer.solana.com/${kind}/${value}?cluster=devnet`;
+import { solscanUrl } from "@/lib/solana-explorer";
+const solanaExplorerUrl = (kind: "address" | "tx", value: string) => solscanUrl(kind, value);
 
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
