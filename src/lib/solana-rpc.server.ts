@@ -53,5 +53,5 @@ export async function requestAirdropDirect(pubkey: string, lamports: number): Pr
 
 export async function getLatestSignatureForAddress(pubkey: string): Promise<string | undefined> {
   const result = await rpcRequest<Array<{ signature: string }>>("getSignaturesForAddress", [pubkey, { limit: 1 }]);
-  return result[0]?.signature;
+  return Array.isArray(result) ? result[0]?.signature : undefined;
 }
