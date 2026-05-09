@@ -1,21 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { AnchorProvider, Program, type Idl } from "@coral-xyz/anchor";
-import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import idl from "@/lib/idl/vault.json";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/devnet-test")({
+  ssr: false,
   component: DevnetTest,
 });
 
-const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID);
-
 function DevnetTest() {
-  const { connection } = useConnection();
-  const wallet = useWallet();
   const [log, setLog] = useState<string>("");
 
   const append = (msg: string) =>
@@ -23,10 +16,13 @@ function DevnetTest() {
 
   async function checkProgram() {
     try {
+      const { Connection, PublicKey } = await import("@solana/web3.js");
+      const programId = new PublicKey(import.meta.env.VITE_PROGRAM_ID);
+      const connection = new Connection(import.meta.env.VITE_SOLANA_RPC || "https://api.devnet.solana.com", "confirmed");
       append(`RPC: ${connection.rpcEndpoint}`);
-      const info = await connection.getAccountInfo(PROGRAM_ID);
+      const info = await connection.getAccountInfo(programId);
       if (!info) {
-        append(`❌ Program ${PROGRAM_ID.toBase58()} not found on this RPC.`);
+        append(`❌ Program ${programId.toBase58()} not found on this RPC.`);
         return;
       }
       append(
@@ -38,9 +34,13 @@ function DevnetTest() {
   }
 
   async function checkBalance() {
-    if (!wallet.publicKey) return append("Connect a wallet first.");
+    const { PublicKey, LAMPORTS_PER_SOL, Connection } = await import("@solana/web3.js");
+    const input = window.prompt("Wallet address to check");
+    if (!input) return append("Enter a wallet address first.");
+    const wallet = new PublicKey(input);
+    const connection = new Connection(import.meta.env.VITE_SOLANA_RPC || "https://api.devnet.solana.com", "confirmed");
     const lamports = await connection.getBalance(wallet.publicKey);
-    append(`Wallet ${wallet.publicKey.toBase58()} = ${lamports / LAMPORTS_PER_SOL} SOL`);
+    append(`Wallet ${wallet.toBase58()} = ${lamports / LAMPORTS_PER_SOL} SOL`);
   }
 
   async function listAccounts() {
