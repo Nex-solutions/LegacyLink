@@ -331,8 +331,7 @@ export const retryVault = createServerFn({ method: "POST" })
     }
   });
 
-    return { id: vaultId, vault_pda: init.vaultPda, tx_signature: fund.signature };
-  });
+
 
 // ─── Update beneficiaries ─────────────────────────────────────────────
 
