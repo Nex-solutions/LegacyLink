@@ -123,10 +123,39 @@ function Dashboard() {
     }
   }
 
+  const [retrying, setRetrying] = useState<string | null>(null);
+  const [supportFor, setSupportFor] = useState<Vault | null>(null);
+
+  async function retryVault(v: Vault) {
+    if ((v.failure_count ?? 0) >= 3) {
+      setSupportFor(v);
+      return;
+    }
+    setRetrying(v.id);
+    try {
+      await serverRetryVault(v.id);
+      setVaults(getVaults());
+      toast.success(`"${v.name}" is back online.`);
+    } catch (e) {
+      console.error(e);
+      const fresh = getVaults().find(x => x.id === v.id);
+      if (fresh && (fresh.failure_count ?? 0) >= 3) {
+        setSupportFor(fresh);
+      } else {
+        toast.error("That attempt failed. Try once more or reach support.");
+      }
+      setVaults(getVaults());
+    } finally {
+      setRetrying(null);
+    }
+  }
+
 
   if (!user) return null;
-  const total = vaults.reduce((s, v) => s + v.amount_cad, 0);
-  const beneficiaries = new Set(vaults.flatMap(v => v.beneficiaries.map(b => b.email))).size;
+  const unfinished = vaults.filter(v => v.status === "Failed" || v.status === "Draft");
+  const completed = vaults.filter(v => v.status !== "Failed" && v.status !== "Draft");
+  const total = completed.reduce((s, v) => s + v.amount_cad, 0);
+  const beneficiaries = new Set(completed.flatMap(v => v.beneficiaries.map(b => b.email))).size;
   const greeting = (() => {
     const h = new Date().getHours();
     return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
