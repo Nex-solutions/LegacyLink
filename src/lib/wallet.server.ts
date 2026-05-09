@@ -16,7 +16,18 @@ export async function ensureCustodialWallet(
     .maybeSingle();
 
   if (readErr) throw readErr;
-  if (existing?.pubkey) return { pubkey: existing.pubkey, alreadyExisted: true };
+  if (existing?.pubkey) {
+    let airdropSig: string | undefined;
+    try {
+      const { Connection, PublicKey } = await import("@solana/web3.js");
+      const connection = new Connection(process.env.SOLANA_RPC || "https://api.devnet.solana.com", "confirmed");
+      const sigs = await connection.getSignaturesForAddress(new PublicKey(existing.pubkey), { limit: 1 });
+      airdropSig = sigs[0]?.signature;
+    } catch (e) {
+      console.warn("[wallet] couldn't read existing wallet funding tx", e instanceof Error ? e.message : e);
+    }
+    return { pubkey: existing.pubkey, airdropSig, alreadyExisted: true };
+  }
 
   const { generateWallet } = await import("./solana.server");
   const wallet = await generateWallet();
