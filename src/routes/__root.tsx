@@ -128,13 +128,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ClientOnly fallback={<Outlet />}>
-        <Suspense fallback={<Outlet />}>
-          <SolanaProvider>
-            <Outlet />
-          </SolanaProvider>
-        </Suspense>
-      </ClientOnly>
+      <Outlet />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
