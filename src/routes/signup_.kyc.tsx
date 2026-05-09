@@ -54,11 +54,31 @@ function pick<T>(arr: readonly T[]): T {
 }
 
 function randomDummy(): KycForm {
-  const streets = ["Bloor", "Yonge", "King", "Queen", "Bay", "College", "Dundas", "Spadina", "Bathurst", "Robson"];
+  const streets = [
+    "Bloor",
+    "Yonge",
+    "King",
+    "Queen",
+    "Bay",
+    "College",
+    "Dundas",
+    "Spadina",
+    "Bathurst",
+    "Robson",
+  ];
   const suffixes = ["St", "Ave", "Rd", "Blvd"];
   const cities = ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton", "Halifax"];
   const provinces = ["ON", "BC", "QC", "AB", "NS"];
-  const occupations = ["Software Engineer", "Teacher", "Designer", "Nurse", "Accountant", "Architect", "Consultant", "Project Manager"];
+  const occupations = [
+    "Software Engineer",
+    "Teacher",
+    "Designer",
+    "Nurse",
+    "Accountant",
+    "Architect",
+    "Consultant",
+    "Project Manager",
+  ];
   const num = Math.floor(100 + Math.random() * 8900);
   const phone = "416" + String(Math.floor(1000000 + Math.random() * 8999999));
   const year = 1970 + Math.floor(Math.random() * 30);
@@ -67,8 +87,12 @@ function randomDummy(): KycForm {
   const letters = "ABCEGHJKLMNPRSTVXY";
   const digits = "0123456789";
   const postal =
-    pick(letters.split("")) + pick(digits.split("")) + pick(letters.split("")) +
-    pick(digits.split("")) + pick(letters.split("")) + pick(digits.split(""));
+    pick(letters.split("")) +
+    pick(digits.split("")) +
+    pick(letters.split("")) +
+    pick(digits.split("")) +
+    pick(letters.split("")) +
+    pick(digits.split(""));
   return {
     first_name: "",
     last_name: "",
@@ -211,7 +235,10 @@ function SignupKyc() {
             </div>
             {wallet ? (
               <>
-                <div className="mt-2 text-xs font-mono break-all" style={{ color: "var(--warm-gray)" }}>
+                <div
+                  className="mt-2 text-xs font-mono break-all"
+                  style={{ color: "var(--warm-gray)" }}
+                >
                   {wallet.pubkey}
                 </div>
                 {wallet.airdropSig && (
@@ -238,8 +265,8 @@ function SignupKyc() {
                   {wallet.airdropSig
                     ? "Funded with 0.005 devnet SOL from the demo treasury. Open the funding tx first if the address page is slow to update."
                     : wallet.airdropFailed
-                    ? "Address reserved — demo treasury couldn't fund this wallet right now; it will activate on your first vault transaction."
-                    : "Address reserved — it will activate on your first vault transaction."}
+                      ? "Address reserved — demo treasury couldn't fund this wallet right now; it will activate on your first vault transaction."
+                      : "Address reserved — it will activate on your first vault transaction."}
                 </div>
               </>
             ) : (
@@ -333,9 +360,14 @@ function SignupKyc() {
       </p>
       <div
         className="mt-4 px-3 py-2 rounded-lg text-xs"
-        style={{ background: "rgba(232,160,32,0.14)", color: "var(--forest)", border: "1px solid rgba(232,160,32,0.35)" }}
+        style={{
+          background: "rgba(232,160,32,0.14)",
+          color: "var(--forest)",
+          border: "1px solid rgba(232,160,32,0.35)",
+        }}
       >
-        <strong style={{ color: "var(--honey)" }}>Test mode:</strong> dummy data has been pre-filled so you can breeze through. Just confirm your name and continue.
+        <strong style={{ color: "var(--honey)" }}>Test mode:</strong> dummy data has been pre-filled
+        so you can breeze through. Just confirm your name and continue.
       </div>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
