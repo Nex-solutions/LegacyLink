@@ -65,10 +65,15 @@ function Create() {
   const [date, setDate] = useState("");
   const [days, setDays] = useState(180);
 
-  // step 3
-  const [bens, setBens] = useState<{ name: string; email: string; pct: number }[]>([
-    { name: "", email: "", pct: 100 },
-  ]);
+  // step 3 — prefill with demo beneficiary so judges can click through
+  const demoBenefs = useMemo(() => {
+    const FIRST = ["Amara", "Tobias", "Ngozi", "Emeka", "Ada", "Chinedu", "Zara"];
+    const LAST = ["Okafor", "Adeyemi", "Eze", "Nwosu", "Achebe"];
+    const f = FIRST[Math.floor(Math.random() * FIRST.length)];
+    const l = LAST[Math.floor(Math.random() * LAST.length)];
+    return [{ name: `${f} ${l}`, email: `${f.toLowerCase()}.${l.toLowerCase()}@demo.legacylink.app`, pct: 100 }];
+  }, []);
+  const [bens, setBens] = useState<{ name: string; email: string; pct: number }[]>(demoBenefs);
   const [trustee, setTrustee] = useState<{ name: string; email: string }>({ name: "", email: "" });
 
   // step 4
@@ -192,15 +197,6 @@ function Create() {
                 {chain.tx_signature} ↗
               </a>
 
-              <div className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>Vault account (program PDA)</div>
-              <a
-                href={solscanUrl("address", chain.vault_pda)}
-                target="_blank" rel="noreferrer"
-                className="text-xs font-mono break-all underline opacity-80"
-                style={{ color: "var(--forest)" }}
-              >
-                {chain.vault_pda} ↗
-              </a>
             </div>
           )}
 

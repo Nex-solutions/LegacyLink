@@ -683,3 +683,113 @@ export const ensureClaimTokens = createServerFn({ method: "POST" })
     };
   });
 
+// ─── PUBLIC: Look up a claim by token (no auth — token IS the auth) ──
+
+export const publicLookupClaim = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ vault_id: z.string().uuid(), token: z.string().min(1) }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    const { data: vault, error: vErr } = await supabaseAdmin
+      .from("vaults")
+      .select("id, name, amount_cad, status, condition_kind, unlock_date, inactivity_days, last_checkin")
+      .eq("id", data.vault_id)
+      .maybeSingle();
+    if (vErr) throw vErr;
+    if (!vault) throw new Error("Vault not found");
+
+    const { data: ben, error: bErr } = await supabaseAdmin
+      .from("beneficiaries")
+      .select("id, name, email, pct, claimed_at")
+      .eq("vault_id", data.vault_id)
+      .eq("claim_token", data.token)
+      .maybeSingle();
+    if (bErr) throw bErr;
+    if (!ben) throw new Error("Invalid claim link");
+
+    return {
+      vault: {
+        id: vault.id,
+        name: vault.name,
+        amount_cad: Number(vault.amount_cad),
+        status: statusToUi(vault.status as string),
+        condition: rowToCondition(vault as never),
+      },
+      beneficiary: {
+        id: ben.id,
+        name: ben.name,
+        email: ben.email,
+        pct: Number(ben.pct),
+        payout_cad: Number(vault.amount_cad) * Number(ben.pct) / 100,
+        claimed_at: ben.claimed_at,
+      },
+    };
+  });
+
+// ─── PUBLIC: Consume claim token (no auth) ───────────────────────────
+
+export const publicClaimByToken = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ vault_id: z.string().uuid(), token: z.string().min(1) }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    const { data: vault, error: vErr } = await supabaseAdmin
+      .from("vaults")
+      .select("id, name, amount_cad, status, vault_pda")
+      .eq("id", data.vault_id)
+      .maybeSingle();
+    if (vErr) throw vErr;
+    if (!vault) throw new Error("Vault not found");
+    if ((vault.status as string) !== "released") throw new Error("Vault not yet released");
+
+    const { data: ben, error: bErr } = await supabaseAdmin
+      .from("beneficiaries")
+      .select("id, name, email, pct, claimed_at")
+      .eq("vault_id", data.vault_id)
+      .eq("claim_token", data.token)
+      .maybeSingle();
+    if (bErr) throw bErr;
+    if (!ben) throw new Error("Invalid claim link");
+    if (ben.claimed_at) throw new Error("This share has already been claimed");
+
+    const amount_cad = Number(vault.amount_cad) * Number(ben.pct) / 100;
+
+    const sig = vault.vault_pda
+      ? (await claimOnChain({
+          vaultPda: vault.vault_pda,
+          beneficiaryEmail: ben.email,
+          amountCad: amount_cad,
+        })).signature
+      : `sim_claim_${Date.now()}`;
+
+    const { error: uErr } = await supabaseAdmin
+      .from("beneficiaries")
+      .update({ claimed_at: new Date().toISOString(), payout_tx_signature: sig })
+      .eq("id", ben.id);
+    if (uErr) throw uErr;
+
+    await supabaseAdmin.from("vault_events").insert({
+      vault_id: data.vault_id,
+      kind: "release",
+      detail: `Beneficiary claim: ${ben.email}`,
+      tx_signature: sig,
+    });
+
+    const ramp = getRampProvider();
+    const off = await ramp.offramp({
+      beneficiaryEmail: ben.email,
+      amountCad: amount_cad,
+      reference: data.vault_id,
+      payoutMethod: "interac",
+    });
+
+    return {
+      vault_name: vault.name,
+      amount_cad,
+      pct: Number(ben.pct),
+      email: ben.email,
+      tx_signature: sig,
+      offramp_ref: off.providerRef,
+    };
+  });
+
