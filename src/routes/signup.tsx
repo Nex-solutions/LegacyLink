@@ -14,10 +14,25 @@ export const Route = createFileRoute("/signup")({
   component: Signup,
 });
 
+const FIRST = ["James", "Amara", "Noah", "Ada", "Liam", "Zara", "Ethan", "Maya", "Jordan", "Sofia", "Kai", "Naomi"];
+const LAST = ["Okafor", "Adeyemi", "Chen", "Patel", "Nguyen", "Morgan", "Rivera", "Brooks", "Hassan", "Klein"];
+function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+function makeFake() {
+  const first = pick(FIRST);
+  const last = pick(LAST);
+  const num = Math.floor(100 + Math.random() * 9000);
+  return {
+    name: `${first} ${last}`,
+    email: `${first.toLowerCase()}.${last.toLowerCase()}${num}@demo.legacylink.app`,
+    password: "demo1234!",
+    confirm: "demo1234!",
+  };
+}
+
 function Signup() {
   const navigate = useNavigate();
   const provision = useServerFn(provisionWallet);
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState(() => makeFake());
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
