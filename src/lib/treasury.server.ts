@@ -28,29 +28,38 @@ async function loadMasterKeypair() {
  */
 export async function fundFromMaster(toPubkey: string, solAmount: number): Promise<string> {
   const web3 = await import("@solana/web3.js");
-  const { Connection, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, LAMPORTS_PER_SOL } = web3;
+  const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
   const connection = new Connection(getRpcUrl(), "confirmed");
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
   const recipient = new PublicKey(toPubkey);
 
-  // Try treasury transfer first; fall back to a direct devnet airdrop if the
-  // treasury is empty so demo wallets still get funded end-to-end.
+  // Build + send the master→recipient transfer WITHOUT awaiting confirmation.
+  // Cloudflare Workers kill long-running CPU loops, so the previous
+  // `sendAndConfirmTransaction` poll could be terminated before the tx landed,
+  // making it look like funding never happened. Sending raw and returning the
+  // signature immediately gives the UI a real, verifiable explorer link.
   try {
     const master = await loadMasterKeypair();
     const balance = await connection.getBalance(master.publicKey).catch(() => 0);
-    if (balance >= lamports + 5000) {
-      const tx = new Transaction().add(
-        SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
-      );
-      return await sendAndConfirmTransaction(connection, tx, [master], { commitment: "confirmed" });
+    if (balance < lamports + 5000) {
+      throw new Error(`treasury underfunded: ${balance} lamports`);
     }
-    console.warn(`[treasury] underfunded (${balance} lamports) — falling back to devnet airdrop`);
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+    const tx = new Transaction({ feePayer: master.publicKey, blockhash, lastValidBlockHeight }).add(
+      SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
+    );
+    tx.sign(master);
+    const sig = await connection.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    });
+    console.log(`[treasury] funded ${toPubkey} ${lamports} lamports (${sig})`);
+    return sig;
   } catch (e) {
-    console.warn("[treasury] master transfer failed, trying airdrop", e instanceof Error ? e.message : e);
+    console.warn("[treasury] master transfer failed, trying airdrop", e instanceof Error ? e.stack || e.message : e);
   }
 
+  // Last resort: devnet airdrop (often rate-limited but worth a shot).
   const sig = await connection.requestAirdrop(recipient, lamports);
-  const bh = await connection.getLatestBlockhash("confirmed");
-  await connection.confirmTransaction({ signature: sig, ...bh }, "confirmed");
   return sig;
 }
