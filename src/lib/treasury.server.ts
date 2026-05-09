@@ -5,8 +5,9 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
-function getRpcUrl(): string {
-  return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
+function getRpcUrls(): string[] {
+  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
+  return [...new Set(urls)];
 }
 
 async function loadMasterKeypair() {
@@ -29,7 +30,6 @@ async function loadMasterKeypair() {
 export async function fundFromMaster(toPubkey: string, solAmount: number): Promise<string> {
   const web3 = await import("@solana/web3.js");
   const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
-  const connection = new Connection(getRpcUrl(), "confirmed");
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
   const recipient = new PublicKey(toPubkey);
 
@@ -38,28 +38,47 @@ export async function fundFromMaster(toPubkey: string, solAmount: number): Promi
   // `sendAndConfirmTransaction` poll could be terminated before the tx landed,
   // making it look like funding never happened. Sending raw and returning the
   // signature immediately gives the UI a real, verifiable explorer link.
+  const master = await loadMasterKeypair();
+  let lastError: unknown;
   try {
-    const master = await loadMasterKeypair();
-    const balance = await connection.getBalance(master.publicKey).catch(() => 0);
-    if (balance < lamports + 5000) {
-      throw new Error(`treasury underfunded: ${balance} lamports`);
+    for (const rpcUrl of getRpcUrls()) {
+      const connection = new Connection(rpcUrl, "confirmed");
+      try {
+        const balance = await connection.getBalance(master.publicKey);
+        if (balance < lamports + 5000) {
+          throw new Error(`treasury underfunded: ${balance} lamports`);
+        }
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+        const tx = new Transaction({ feePayer: master.publicKey, blockhash, lastValidBlockHeight }).add(
+          SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
+        );
+        tx.sign(master);
+        const sig = await connection.sendRawTransaction(tx.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: "confirmed",
+        });
+        console.log(`[treasury] funded ${toPubkey} ${lamports} lamports (${sig})`);
+        return sig;
+      } catch (e) {
+        lastError = e;
+        console.warn("[treasury] RPC funding attempt failed", e instanceof Error ? e.message : e);
+      }
     }
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-    const tx = new Transaction({ feePayer: master.publicKey, blockhash, lastValidBlockHeight }).add(
-      SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
-    );
-    tx.sign(master);
-    const sig = await connection.sendRawTransaction(tx.serialize(), {
-      skipPreflight: false,
-      preflightCommitment: "confirmed",
-    });
-    console.log(`[treasury] funded ${toPubkey} ${lamports} lamports (${sig})`);
-    return sig;
+    throw lastError ?? new Error("No RPC endpoints available");
   } catch (e) {
     console.warn("[treasury] master transfer failed, trying airdrop", e instanceof Error ? e.stack || e.message : e);
   }
 
   // Last resort: devnet airdrop (often rate-limited but worth a shot).
-  const sig = await connection.requestAirdrop(recipient, lamports);
-  return sig;
+  for (const rpcUrl of getRpcUrls()) {
+    try {
+      const connection = new Connection(rpcUrl, "confirmed");
+      const sig = await connection.requestAirdrop(recipient, lamports);
+      return sig;
+    } catch (e) {
+      lastError = e;
+      console.warn("[treasury] RPC airdrop attempt failed", e instanceof Error ? e.message : e);
+    }
+  }
+  throw lastError ?? new Error("Funding failed");
 }
