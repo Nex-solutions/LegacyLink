@@ -1,10 +1,8 @@
 // Server-only helpers for the platform's hot wallet (singleton).
 // Stores the encrypted secret AND the encrypted BIP39 mnemonic so the operator
 // can recover access. The mnemonic is only ever returned ONCE at init time.
-import * as bip39 from "bip39";
-import { derivePath } from "ed25519-hd-key";
-import nacl from "tweetnacl";
-import bs58 from "bs58";
+// Lazy: bip39, ed25519-hd-key, tweetnacl, bs58 reference __filename at module
+// init and crash Cloudflare Worker SSR. Load inside functions only.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { encryptSecret, decryptSecret } from "./solana.server";
