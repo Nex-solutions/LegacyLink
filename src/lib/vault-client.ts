@@ -18,19 +18,38 @@ import {
   ensureClaimTokens,
   retryVault,
 } from "./vault.functions";
-import { setVaultsCache, type Vault, type VaultCondition, type Beneficiary } from "./legacy-data";
+import { setVaultsCache, getVaults, type Vault, type VaultCondition, type Beneficiary } from "./legacy-data";
+
+function isAuthResponse(e: unknown): boolean {
+  return typeof Response !== "undefined" && e instanceof Response;
+}
 
 export async function hydrateVaults(): Promise<Vault[]> {
-  const data = await listVaults();
-  // server returns same shape (id, name, amount_cad, status, condition, beneficiaries, created_at)
-  setVaultsCache(data as unknown as Vault[]);
-  return data as unknown as Vault[];
+  try {
+    const data = await listVaults();
+    setVaultsCache(data as unknown as Vault[]);
+    return data as unknown as Vault[];
+  } catch (e) {
+    if (isAuthResponse(e)) {
+      console.warn("[vault-client] hydrateVaults: not authenticated, using cache");
+      return getVaults();
+    }
+    throw e;
+  }
 }
 
 export async function evaluateAndHydrate(): Promise<{ released: string[]; vaults: Vault[] }> {
-  const { released } = await evaluateReleasesServer();
-  const vaults = await hydrateVaults();
-  return { released, vaults };
+  try {
+    const { released } = await evaluateReleasesServer();
+    const vaults = await hydrateVaults();
+    return { released, vaults };
+  } catch (e) {
+    if (isAuthResponse(e)) {
+      console.warn("[vault-client] evaluateAndHydrate: not authenticated");
+      return { released: [], vaults: getVaults() };
+    }
+    throw e;
+  }
 }
 
 export async function serverCreateVault(input: {
