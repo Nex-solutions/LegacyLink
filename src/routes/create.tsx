@@ -192,15 +192,6 @@ function Create() {
                 {chain.tx_signature} ↗
               </a>
 
-              <div className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>Vault account (program PDA)</div>
-              <a
-                href={solscanUrl("address", chain.vault_pda)}
-                target="_blank" rel="noreferrer"
-                className="text-xs font-mono break-all underline opacity-80"
-                style={{ color: "var(--forest)" }}
-              >
-                {chain.vault_pda} ↗
-              </a>
             </div>
           )}
 
