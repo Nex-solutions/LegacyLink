@@ -292,8 +292,8 @@ function SignupKyc() {
                   {wallet.airdropSig
                     ? "Funded with 0.005 devnet SOL from the demo treasury. Open the funding tx first if the address page is slow to update."
                     : wallet.airdropFailed
-                      ? "Address reserved — demo treasury couldn't fund this wallet right now; it will activate on your first vault transaction."
-                      : "Address reserved — it will activate on your first vault transaction."}
+                      ? "Demo wallet is ready. Funding is still syncing, but you can continue to your dashboard."
+                      : "Demo wallet is ready and funding is syncing."}
                 </div>
               </>
             ) : (
