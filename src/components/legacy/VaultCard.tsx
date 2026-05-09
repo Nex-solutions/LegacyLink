@@ -52,12 +52,32 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
     conditionText = "Manual release · You're in control";
   }
 
+  const incomplete = vault.status === "Failed" || vault.status === "Draft";
+
   return (
     <motion.div
       whileHover={{ y: -4, boxShadow: "0 16px 48px rgba(26,46,26,0.14)" }}
       transition={{ duration: 0.2 }}
       className="ll-card p-6 flex flex-col gap-4 relative"
+      style={
+        incomplete
+          ? {
+              borderStyle: "dashed",
+              borderWidth: 2,
+              borderColor: "#C97B4A",
+              background: "rgba(244, 217, 196, 0.18)",
+            }
+          : undefined
+      }
     >
+      {incomplete && (
+        <div
+          className="absolute -top-3 left-4 px-3 py-1 rounded-full text-xs font-semibold shadow-sm"
+          style={{ background: "#C97B4A", color: "white" }}
+        >
+          ⚠ Incomplete — Tap to resume
+        </div>
+      )}
       <div className="flex items-start justify-between">
         <h3 className="ll-display-serif text-lg font-semibold">{vault.name}</h3>
         <StatusPill status={vault.status} />
@@ -68,7 +88,7 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
         </div>
         <p className="text-sm mt-1" style={{ color: "var(--warm-gray)" }}>{conditionText}</p>
       </div>
-      {(cond.kind === "time" || cond.kind === "inactivity") && (
+      {(cond.kind === "time" || cond.kind === "inactivity") && !incomplete && (
         <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(26,46,26,0.08)" }}>
           <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: "var(--honey)" }} />
         </div>
@@ -81,13 +101,13 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
           to="/vault/$id"
           params={{ id: vault.id }}
           className="text-sm font-medium"
-          style={{ color: "var(--honey)" }}
+          style={{ color: incomplete ? "#C97B4A" : "var(--honey)" }}
         >
-          View Details →
+          {incomplete ? "Resume →" : "View Details →"}
         </Link>
       </div>
       <div className="flex flex-wrap items-center gap-2 mt-1">
-        {cond.kind === "inactivity" && onCheckIn && (
+        {cond.kind === "inactivity" && onCheckIn && !incomplete && (
           <button
             onClick={() => onCheckIn(vault.id)}
             className="ll-pill ll-pill-sage text-sm"
