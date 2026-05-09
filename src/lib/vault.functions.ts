@@ -46,6 +46,8 @@ export type Vault = {
   vault_pda?: string | null;
   tx_signature?: string | null;
   letter_message?: string | null;
+  failure_count?: number;
+  last_step?: string | null;
 };
 
 // ─── Mappers ──────────────────────────────────────────────────────────
