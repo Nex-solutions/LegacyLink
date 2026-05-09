@@ -13,7 +13,8 @@ import {
   claimOnChain,
   isSimulatedMode,
 } from "./solana.server";
-import { ensureCustodialWallet } from "./wallet.server";
+import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
+import { sendUserToHotProof } from "./proof-tx.server";
 import { getRampProvider } from "./ramps.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -186,10 +187,14 @@ const createInputSchema = z.object({
 export const createVault = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createInputSchema.parse(d))
-  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string }> => {
+  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string }> => {
     const { supabase, userId } = context;
 
-    const ownerPubkey = (await ensureCustodialWallet(userId)).pubkey;
+    // Reuse the user's signup system wallet — never generate a new one here.
+    const ownerPubkey = await getUserPubkey(userId);
+    if (!ownerPubkey) {
+      throw new Error("Your system wallet hasn't been provisioned yet. Please complete signup before creating a vault.");
+    }
 
     // Insert the vault row first to get an id, then write on-chain metadata.
     const { data: inserted, error: insertErr } = await supabase
@@ -210,10 +215,14 @@ export const createVault = createServerFn({ method: "POST" })
     const vaultId = inserted.id as string;
 
     try {
-      // On-chain init + fund (simulated unless SOLANA_PROGRAM_ID is set)
+      // On-chain init (simulated unless SOLANA_PROGRAM_ID is set)
       await supabase.from("vaults").update({ last_step: "init_chain" }).eq("id", vaultId);
       const init = await initVaultOnChain({ ownerPubkey, vaultId, amountCadCents: Math.round(data.amount_cad * 100) });
-      const fund = await fundVaultOnChain({ vaultPda: init.vaultPda, amountCad: data.amount_cad });
+
+      // Real on-chain proof: user's system wallet sends 0.001 devnet SOL to
+      // the platform hot wallet. This proves the user wallet works end-to-end.
+      const proof = await sendUserToHotProof(userId, 0.001);
+      const fund = { signature: proof.signature };
 
       // Run on-ramp to bring fiat into custodial USDC
       await supabase.from("vaults").update({ last_step: "onramp" }).eq("id", vaultId);
@@ -256,7 +265,13 @@ export const createVault = createServerFn({ method: "POST" })
       ]);
       await supabase.from("vaults").update({ last_step: null }).eq("id", vaultId);
 
-      return { id: vaultId, vault_pda: init.vaultPda, tx_signature: fund.signature };
+      return {
+        id: vaultId,
+        vault_pda: init.vaultPda,
+        tx_signature: fund.signature,
+        owner_pubkey: proof.fromPubkey,
+        hot_pubkey: proof.toPubkey,
+      };
     } catch (err) {
       console.error("createVault failed", err);
       // Mark vault as failed and bump retry counter so the dashboard can
