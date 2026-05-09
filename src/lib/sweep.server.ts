@@ -73,7 +73,8 @@ async function feeLamportsFromSig(connection: Connection, sig: string): Promise<
 
 // ──────────────── Gas top-up ────────────────
 export async function topUpUserGas(userId: string): Promise<{ topped: boolean; signature?: string }> {
-  const connection = getConnection();
+  const { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction } = await loadWeb3();
+  const connection = await getConnection();
   const { data: wallet } = await supabaseAdmin
     .from("custodial_wallets")
     .select("pubkey")
@@ -93,7 +94,7 @@ export async function topUpUserGas(userId: string): Promise<{ topped: boolean; s
       lamports: TOP_UP_LAMPORTS,
     })
   );
-  const signature = await solanaWeb3.sendAndConfirmTransaction(connection, tx, [master], {
+  const signature = await sendAndConfirmTransaction(connection, tx, [master], {
     commitment: "confirmed",
   });
   return { topped: true, signature };
@@ -104,10 +105,18 @@ export async function sweepUserToMaster(args: {
   userId: string;
   amountUsdc: number;
 }): Promise<{ signature: string; gasLamports: number }> {
-  const connection = getConnection();
+  const { Transaction, sendAndConfirmTransaction } = await loadWeb3();
+  const {
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    getAssociatedTokenAddressSync,
+    createAssociatedTokenAccountInstruction,
+    createTransferCheckedInstruction,
+  } = await loadSpl();
+  const connection = await getConnection();
   const master = await loadMaster();
   const user = await loadUserKeypair(args.userId);
-  const mint = getUsdcMint();
+  const mint = await getUsdcMint();
 
   await topUpUserGas(args.userId);
 
@@ -116,7 +125,6 @@ export async function sweepUserToMaster(args: {
 
   const tx = new Transaction();
 
-  // Ensure master ATA exists (master pays rent).
   const masterAtaInfo = await connection.getAccountInfo(masterAta);
   if (!masterAtaInfo) {
     tx.add(
@@ -143,12 +151,9 @@ export async function sweepUserToMaster(args: {
     )
   );
 
-  const signature = await solanaWeb3.sendAndConfirmTransaction(
-    connection,
-    tx,
-    [user, master],
-    { commitment: "confirmed" }
-  );
+  const signature = await sendAndConfirmTransaction(connection, tx, [user, master], {
+    commitment: "confirmed",
+  });
   const gasLamports = await feeLamportsFromSig(connection, signature);
   return { signature, gasLamports };
 }
@@ -158,9 +163,17 @@ export async function payoutFromMaster(args: {
   toAddress: string;
   amountUsdc: number;
 }): Promise<{ signature: string; gasLamports: number }> {
-  const connection = getConnection();
+  const { PublicKey, Transaction, sendAndConfirmTransaction } = await loadWeb3();
+  const {
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    getAssociatedTokenAddressSync,
+    createAssociatedTokenAccountInstruction,
+    createTransferCheckedInstruction,
+  } = await loadSpl();
+  const connection = await getConnection();
   const master = await loadMaster();
-  const mint = getUsdcMint();
+  const mint = await getUsdcMint();
   const dest = new PublicKey(args.toAddress);
 
   const masterAta = getAssociatedTokenAddressSync(mint, master.publicKey);
@@ -193,19 +206,17 @@ export async function payoutFromMaster(args: {
     )
   );
 
-  const signature = await solanaWeb3.sendAndConfirmTransaction(
-    connection,
-    tx,
-    [master],
-    { commitment: "confirmed" }
-  );
+  const signature = await sendAndConfirmTransaction(connection, tx, [master], {
+    commitment: "confirmed",
+  });
   const gasLamports = await feeLamportsFromSig(connection, signature);
   return { signature, gasLamports };
 }
 
 // ──────────────── Master SOL balance ────────────────
 export async function getMasterGasBalance(): Promise<{ lamports: number; sol: number }> {
-  const connection = getConnection();
+  const { LAMPORTS_PER_SOL } = await loadWeb3();
+  const connection = await getConnection();
   const master = await loadMaster();
   const lamports = await connection.getBalance(master.publicKey).catch(() => 0);
   return { lamports, sol: lamports / LAMPORTS_PER_SOL };
