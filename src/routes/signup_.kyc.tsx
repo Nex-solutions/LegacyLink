@@ -254,6 +254,12 @@ function SignupKyc() {
       <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
         Required by Canadian regulations to fund your vault. Takes 2 minutes.
       </p>
+      <div
+        className="mt-4 px-3 py-2 rounded-lg text-xs"
+        style={{ background: "rgba(232,160,32,0.14)", color: "var(--forest)", border: "1px solid rgba(232,160,32,0.35)" }}
+      >
+        <strong style={{ color: "var(--honey)" }}>Test mode:</strong> dummy data has been pre-filled so you can breeze through. Just confirm your name and continue.
+      </div>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
         <div className="grid grid-cols-2 gap-3">
