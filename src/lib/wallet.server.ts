@@ -5,12 +5,7 @@
 // rule on `custodial_wallets` is too permissive.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-function getRpcUrls(): string[] {
-  const urls = [process.env.SOLANA_RPC].filter(Boolean) as string[];
-  if (urls.length === 0) throw new Error("SOLANA_RPC env var not set");
-  return [...new Set(urls)];
-}
+import { getLatestSignatureForAddress } from "./solana-rpc.server";
 
 export async function ensureCustodialWallet(userId: string): Promise<{
   pubkey: string;
@@ -29,18 +24,7 @@ export async function ensureCustodialWallet(userId: string): Promise<{
     let airdropSig: string | undefined;
     let airdropFailed = false;
     try {
-      const { Connection, PublicKey } = await import("@solana/web3.js");
-      const pk = new PublicKey(existing.pubkey);
-      for (const rpcUrl of getRpcUrls()) {
-        try {
-          const connection = new Connection(rpcUrl, "confirmed");
-          const sigs = await connection.getSignaturesForAddress(pk, { limit: 1 });
-          airdropSig = sigs[0]?.signature;
-          break;
-        } catch (e) {
-          console.warn("[wallet] funding lookup RPC failed", e instanceof Error ? e.message : e);
-        }
-      }
+      airdropSig = await getLatestSignatureForAddress(existing.pubkey);
       if (!airdropSig) {
         // Wallet exists but never funded — fund it now so the explorer shows it live.
         try {

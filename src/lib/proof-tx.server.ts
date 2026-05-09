@@ -4,15 +4,39 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
+import { getBalanceLamports, getLatestBlockhashDirect, sendRawTransactionDirect } from "./solana-rpc.server";
+import type { Keypair, PublicKey } from "@solana/web3.js";
 
-function getRpcUrl(): string {
-  return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
-}
-
-async function loadKeypair(encryptedSecret: string) {
+async function loadKeypair(encryptedSecret: string): Promise<Keypair> {
   const raw = await decryptSecret(encryptedSecret);
   const { Keypair } = await import("@solana/web3.js");
   return Keypair.fromSecretKey(raw);
+}
+
+async function sendSignedTransfer(args: { from: Keypair; to: PublicKey; lamports: number }): Promise<string> {
+  const { Transaction, SystemProgram } = await import("@solana/web3.js");
+  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashDirect();
+  const tx = new Transaction({ feePayer: args.from.publicKey, blockhash, lastValidBlockHeight }).add(
+    SystemProgram.transfer({ fromPubkey: args.from.publicKey, toPubkey: args.to, lamports: args.lamports }),
+  );
+  tx.sign(args.from);
+  return sendRawTransactionDirect(tx.serialize());
+}
+
+async function sendTopUpAndProof(args: {
+  master: Keypair;
+  user: Keypair;
+  hotWallet: PublicKey;
+  topUpLamports: number;
+  proofLamports: number;
+}): Promise<string> {
+  const { Transaction, SystemProgram } = await import("@solana/web3.js");
+  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashDirect();
+  const tx = new Transaction({ feePayer: args.master.publicKey, blockhash, lastValidBlockHeight })
+    .add(SystemProgram.transfer({ fromPubkey: args.master.publicKey, toPubkey: args.user.publicKey, lamports: args.topUpLamports }))
+    .add(SystemProgram.transfer({ fromPubkey: args.user.publicKey, toPubkey: args.hotWallet, lamports: args.proofLamports }));
+  tx.sign(args.master, args.user);
+  return sendRawTransactionDirect(tx.serialize());
 }
 
 /**
@@ -27,11 +51,7 @@ export async function sendUserToHotProof(
 ): Promise<{ signature: string; fromPubkey: string; toPubkey: string }> {
   const web3 = await import("@solana/web3.js");
   const {
-    Connection,
     PublicKey,
-    Transaction,
-    SystemProgram,
-    sendAndConfirmTransaction,
     LAMPORTS_PER_SOL,
   } = web3;
 
@@ -59,36 +79,26 @@ export async function sendUserToHotProof(
   }
   const hotPubkey = new PublicKey(master.pubkey);
 
-  const connection = new Connection(getRpcUrl(), "confirmed");
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
   const feeBuffer = 10_000; // ~2x signature fee headroom
 
   // Top up the user wallet if it can't cover the transfer + fees.
-  const balance = await connection.getBalance(userKp.publicKey).catch(() => 0);
+  const balance = await getBalanceLamports(userKp.publicKey.toBase58()).catch(() => 0);
   if (balance < lamports + feeBuffer) {
     const masterKp = await loadKeypair(master.encrypted_secret);
     const needed = lamports + feeBuffer - balance + 5_000_000; // add 0.005 SOL headroom
-    const topUp = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: masterKp.publicKey,
-        toPubkey: userKp.publicKey,
-        lamports: needed,
-      }),
-    );
-    await sendAndConfirmTransaction(connection, topUp, [masterKp], { commitment: "confirmed" });
+    const signature = await sendTopUpAndProof({
+      master: masterKp,
+      user: userKp,
+      hotWallet: hotPubkey,
+      topUpLamports: needed,
+      proofLamports: lamports,
+    });
+    return { signature, fromPubkey: userKp.publicKey.toBase58(), toPubkey: hotPubkey.toBase58() };
   }
 
   // The actual proof: user wallet → hot wallet
-  const tx = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: userKp.publicKey,
-      toPubkey: hotPubkey,
-      lamports,
-    }),
-  );
-  const signature = await sendAndConfirmTransaction(connection, tx, [userKp], {
-    commitment: "confirmed",
-  });
+  const signature = await sendSignedTransfer({ from: userKp, to: hotPubkey, lamports });
 
   return {
     signature,

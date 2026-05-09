@@ -30,7 +30,7 @@ function DevnetTest() {
     try {
       const { Connection, PublicKey } = await import("@solana/web3.js");
       const programId = new PublicKey(import.meta.env.VITE_PROGRAM_ID);
-      const connection = new Connection(import.meta.env.VITE_SOLANA_RPC || "https://api.devnet.solana.com", "confirmed");
+      const connection = new Connection(import.meta.env.VITE_SOLANA_RPC, "confirmed");
       append(`RPC: ${connection.rpcEndpoint}`);
       const info = await connection.getAccountInfo(programId);
       if (!info) {
@@ -50,7 +50,7 @@ function DevnetTest() {
     const input = window.prompt("Wallet address to check");
     if (!input) return append("Enter a wallet address first.");
     const wallet = new PublicKey(input);
-    const connection = new Connection(import.meta.env.VITE_SOLANA_RPC || "https://api.devnet.solana.com", "confirmed");
+    const connection = new Connection(import.meta.env.VITE_SOLANA_RPC, "confirmed");
     const lamports = await connection.getBalance(wallet);
     append(`Wallet ${wallet.toBase58()} = ${lamports / LAMPORTS_PER_SOL} SOL`);
   }
