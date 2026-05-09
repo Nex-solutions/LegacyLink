@@ -5,8 +5,27 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
-function getRpcUrl(): string {
-  return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
+function getRpcUrls(): string[] {
+  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
+  return [...new Set(urls)];
+}
+
+async function pickWorkingConnection() {
+  const web3 = await import("@solana/web3.js");
+  let lastErr: unknown;
+  for (const url of getRpcUrls()) {
+    try {
+      const conn = new web3.Connection(url, "confirmed");
+      // Probe — some custom RPCs return malformed blockhash payloads that
+      // crash @solana/web3.js's StructError parser. Skip those.
+      await conn.getLatestBlockhash("confirmed");
+      return conn;
+    } catch (e) {
+      lastErr = e;
+      console.warn("[proof-tx] RPC unusable", url, e instanceof Error ? e.message : e);
+    }
+  }
+  throw lastErr ?? new Error("No working Solana RPC endpoint");
 }
 
 async function loadKeypair(encryptedSecret: string) {
