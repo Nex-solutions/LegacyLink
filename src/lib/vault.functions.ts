@@ -70,12 +70,16 @@ function rowToCondition(row: {
 function statusToUi(s: string): VaultStatus {
   if (s === "released") return "Released";
   if (s === "active") return "Active";
+  if (s === "failed") return "Failed";
+  if (s === "draft") return "Draft";
   return "Pending";
 }
 
-function statusToDb(s: VaultStatus): "active" | "released" | "pending" {
+function statusToDb(s: VaultStatus): "active" | "released" | "pending" | "failed" | "draft" {
   if (s === "Released") return "released";
   if (s === "Active") return "active";
+  if (s === "Failed") return "failed";
+  if (s === "Draft") return "draft";
   return "pending";
 }
 
