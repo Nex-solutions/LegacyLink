@@ -7,7 +7,6 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
-import { getSolanaRpcUrl } from "./solana-rpc.server";
 
 import type { Connection, Keypair, PublicKey } from "@solana/web3.js";
 
@@ -21,7 +20,7 @@ const MIN_USER_GAS_LAMPORTS = 1_500_000; // ~0.0015 SOL
 const TOP_UP_LAMPORTS = 5_000_000; // 0.005 SOL
 
 function getRpcUrl(): string {
-  return getSolanaRpcUrl();
+  return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
 }
 
 async function getUsdcMint(): Promise<PublicKey> {

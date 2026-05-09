@@ -1,25 +1,27 @@
-## Plan: route Solana RPC through Helius devnet
+## Plan
 
-The public `api.devnet.solana.com` endpoint is now blocking both Cloudflare Workers and end-user browsers (`403: Your IP or provider is blocked`). Switch all RPC traffic to your Helius devnet endpoint.
+1. Use Solscan for first-open reliability
+   - Replace the affected `explorer.solana.com` devnet links with Solscan devnet links.
+   - Apply this to signup wallet links, vault creation success links, vault activity links, and funds history links so the first click opens reliably.
 
-### Steps
+2. Stop creating a new wallet during vault creation
+   - Change vault creation to require the user’s existing system wallet from signup.
+   - If the user does not have that wallet yet, return a clear error directing them to finish signup/KYC wallet provisioning instead of silently generating another wallet.
+   - Display the user’s system wallet address as the vault account wallet address on the vault success screen.
 
-1. **Store the Helius URL as secrets**
-   - `SOLANA_RPC` (server, runtime) → `https://devnet.helius-rpc.com/?api-key=07334d2c-410d-4df0-af48-993874c0a500`
-   - `VITE_SOLANA_RPC` (browser, build-time) → same URL
+3. Add a real 0.001 devnet SOL vault proof transaction
+   - During vault creation, send `0.001` devnet SOL from the user’s system wallet to the platform hot wallet.
+   - Use the user system wallet as the signer/source, so the transaction visibly proves the user wallet works end-to-end.
+   - If the user wallet is too low for the transfer plus gas, top it up from the hot wallet first, but show the user wallet → hot wallet transaction as the main vault funding/proof transaction.
 
-2. **Server: drop public devnet fallback**, use only `process.env.SOLANA_RPC`:
-   - `src/lib/treasury.server.ts` — `getRpcUrls()`
-   - `src/lib/wallet.server.ts` — `getRpcUrls()`
-   - `src/lib/solana.server.ts` — `getRpcUrl()`
-   - `src/lib/sweep.server.ts`, `src/lib/proof-tx.server.ts` — same
+4. Update the vault success UI
+   - Replace the misleading “Vault account” PDA display with the user’s system wallet address.
+   - Label the transaction as “Vault proof transaction” or “System wallet funding transaction.”
+   - Keep any internal vault/program address out of the main display or label it clearly as an internal vault identifier, not a wallet.
 
-3. **Browser: use `VITE_SOLANA_RPC`** in `src/routes/signup_.kyc.tsx` line 155 instead of hard-coded `api.devnet.solana.com`. Same for `src/lib/solana/provider.tsx` (already partially does this).
+## Technical notes
 
-4. **Move blockhash fetch server-side**: update `prepareBrowserWalletFunding` in `src/lib/wallet.functions.ts` so the server fetches the blockhash, signs, and returns the tx. Browser only does `sendRawTransaction` against `VITE_SOLANA_RPC`. Removes one browser→RPC round-trip and the associated failure mode.
-
-5. **Verify**: after deploy, retry the signup → KYC → wallet flow. Funding tx should land on devnet via Helius and the "Address reserved" message should disappear.
-
-### Notes
-- Helius free tier easily handles this traffic.
-- The key is exposed to the browser via `VITE_SOLANA_RPC`. That's expected for an RPC URL but the API key will be visible in the bundle. If that's a concern, we can later proxy through a server route. OK for the demo.
+- Add a server-only helper to sign a SOL transfer from the user custodial wallet to the hot wallet.
+- Update `createVault` to use the existing wallet address and return `{ id, vault_wallet, tx_signature }` for the UI.
+- Update `vault-client` and `create.tsx` response types/display.
+- Add a shared Solana link helper to avoid hardcoded explorer URLs.

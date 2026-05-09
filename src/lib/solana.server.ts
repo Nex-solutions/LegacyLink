@@ -7,7 +7,6 @@
 import { webcrypto } from "node:crypto";
 import vaultIdl from "./idl/vault.json";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getSolanaRpcUrl } from "./solana-rpc.server";
 
 import type { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import type { Idl } from "@coral-xyz/anchor";
@@ -99,6 +98,10 @@ export function isSimulatedMode(): boolean {
   return !process.env.SOLANA_PROGRAM_ID;
 }
 
+function getRpcUrl(): string {
+  return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
+}
+
 async function getProgramId(): Promise<PublicKey> {
   const id = process.env.SOLANA_PROGRAM_ID;
   if (!id) throw new Error("SOLANA_PROGRAM_ID not set");
@@ -114,7 +117,7 @@ async function getUsdcMint(): Promise<PublicKey> {
 
 async function getConnection(): Promise<Connection> {
   const { Connection } = await loadWeb3();
-  return new Connection(getSolanaRpcUrl(), "confirmed");
+  return new Connection(getRpcUrl(), "confirmed");
 }
 
 async function loadCustodialKeypair(userId: string): Promise<Keypair> {

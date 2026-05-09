@@ -5,10 +5,17 @@ import { toast } from "sonner";
 import { AuthSplit } from "@/components/legacy/AuthSplit";
 import { supabase } from "@/integrations/supabase/client";
 import { submitKyc, getMyKycStatus, simulateKycApproval } from "@/lib/paytrie-onboarding.functions";
-import { provisionWallet } from "@/lib/wallet.functions";
+import { prepareBrowserWalletFunding, provisionWallet } from "@/lib/wallet.functions";
 
 import { solscanUrl } from "@/lib/solana-explorer";
 const solanaExplorerUrl = (kind: "address" | "tx", value: string) => solscanUrl(kind, value);
+
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
 
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
@@ -124,6 +131,7 @@ function SignupKyc() {
     }
   }, [reason]);
   const provision = useServerFn(provisionWallet);
+  const prepareBrowserFunding = useServerFn(prepareBrowserWalletFunding);
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
@@ -139,16 +147,39 @@ function SignupKyc() {
     (async () => {
       try {
         const r = await provision({ data: undefined } as never);
+        let fundingSig = r.airdropSig;
+        let fundingFailed = r.airdropFailed;
+        if (!fundingSig) {
+          try {
+            const { Connection, PublicKey } = await import("@solana/web3.js");
+            const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+            const existingTxs = await connection.getSignaturesForAddress(new PublicKey(r.pubkey), { limit: 1 });
+            fundingSig = existingTxs[0]?.signature ?? null;
+            if (!fundingSig) {
+              const { blockhash } = await connection.getLatestBlockhash("confirmed");
+              const signed = await prepareBrowserFunding({
+                data: { toPubkey: r.pubkey, recentBlockhash: blockhash },
+              });
+              fundingSig = await connection.sendRawTransaction(
+                base64ToBytes(signed.signedTransactionBase64),
+                { skipPreflight: false, preflightCommitment: "confirmed" },
+              );
+            }
+            fundingFailed = false;
+          } catch (browserFundingError) {
+            console.warn("browser wallet funding", browserFundingError);
+          }
+        }
         setWallet({
           pubkey: r.pubkey,
-          airdropSig: r.airdropSig,
-          airdropFailed: r.airdropFailed,
+          airdropSig: fundingSig,
+          airdropFailed: fundingFailed,
         });
       } catch (e) {
         console.warn("wallet provisioning", e);
       }
     })();
-  }, [simulated, provision]);
+  }, [simulated, provision, prepareBrowserFunding]);
 
   useEffect(() => {
     (async () => {
