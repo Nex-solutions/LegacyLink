@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AuthSplit } from "@/components/legacy/AuthSplit";
 import { supabase } from "@/integrations/supabase/client";
 import { submitKyc, getMyKycStatus, simulateKycApproval } from "@/lib/paytrie-onboarding.functions";
+import { provisionWallet } from "@/lib/wallet.functions";
 
 export const Route = createFileRoute("/signup_/kyc")({
   head: () => ({ meta: [{ title: "Verify your identity — LegacyLink" }] }),
