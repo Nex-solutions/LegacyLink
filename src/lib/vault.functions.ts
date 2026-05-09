@@ -291,7 +291,7 @@ export const retryVault = createServerFn({ method: "POST" })
     if (error) throw error;
     if (!row) throw new Error("Vault not found");
 
-    const ownerPubkey = await ensureCustodialWallet(userId);
+    const ownerPubkey = (await ensureCustodialWallet(userId)).pubkey;
     try {
       const init = await initVaultOnChain({
         ownerPubkey,
