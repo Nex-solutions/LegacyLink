@@ -2,22 +2,18 @@
 // All flows assume Solana cluster comes from SOLANA_RPC. On devnet, USDC mint
 // is the test mint already wired in solana.server.ts.
 
-import * as solanaWeb3 from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-  createAssociatedTokenAccountInstruction,
-  createTransferCheckedInstruction,
-} from "@solana/spl-token";
+// Lazy: @solana/web3.js + @solana/spl-token use __filename at module init,
+// which crashes Cloudflare Worker SSR. Load inside functions only.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
-const { Connection, Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } = solanaWeb3;
-type Connection = solanaWeb3.Connection;
-type Keypair = solanaWeb3.Keypair;
-type PublicKey = solanaWeb3.PublicKey;
+import type { Connection, Keypair, PublicKey } from "@solana/web3.js";
+
+let _web3: Promise<typeof import("@solana/web3.js")> | undefined;
+let _spl: Promise<typeof import("@solana/spl-token")> | undefined;
+const loadWeb3 = () => (_web3 ??= import("@solana/web3.js"));
+const loadSpl = () => (_spl ??= import("@solana/spl-token"));
 
 const USDC_DECIMALS = 6;
 const MIN_USER_GAS_LAMPORTS = 1_500_000; // ~0.0015 SOL
@@ -27,17 +23,20 @@ function getRpcUrl(): string {
   return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
 }
 
-function getUsdcMint(): PublicKey {
+async function getUsdcMint(): Promise<PublicKey> {
   const m = process.env.SOLANA_USDC_MINT || "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+  const { PublicKey } = await loadWeb3();
   return new PublicKey(m);
 }
 
-function getConnection(): Connection {
+async function getConnection(): Promise<Connection> {
+  const { Connection } = await loadWeb3();
   return new Connection(getRpcUrl(), "confirmed");
 }
 
 async function loadKeypairFromSecret(encryptedSecret: string): Promise<Keypair> {
   const raw = await decryptSecret(encryptedSecret);
+  const { Keypair } = await loadWeb3();
   return Keypair.fromSecretKey(raw);
 }
 
