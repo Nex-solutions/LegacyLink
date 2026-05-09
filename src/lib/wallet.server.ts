@@ -36,23 +36,19 @@ export async function ensureCustodialWallet(
     .update({ solana_wallet: wallet.pubkey })
     .eq("id", userId);
 
-  // Airdrop a small amount of devnet SOL so the address materializes on
-  // Solana Explorer immediately. Wrapped in try/catch — faucet rate-limits
-  // must never block signup.
+  // Fund the new wallet from the backend treasury (master_wallet) so its
+  // address shows as live on Solana Explorer. Wrapped in try/catch — a
+  // funding failure (empty treasury, RPC issue) must never block signup.
   let airdropSig: string | undefined;
   let airdropFailed = false;
   try {
-    const web3 = await import("@solana/web3.js");
-    const rpc = process.env.SOLANA_RPC || "https://api.devnet.solana.com";
-    const connection = new web3.Connection(rpc, "confirmed");
-    const pk = new web3.PublicKey(wallet.pubkey);
-    const sig = await connection.requestAirdrop(pk, 0.01 * web3.LAMPORTS_PER_SOL);
-    await connection.confirmTransaction(sig, "confirmed");
+    const { fundFromMaster } = await import("./treasury.server");
+    const sig = await fundFromMaster(wallet.pubkey, 0.005);
     airdropSig = sig;
-    console.log(`[wallet] airdropped 0.01 SOL to ${wallet.pubkey} (${sig})`);
+    console.log(`[wallet] funded 0.005 SOL to ${wallet.pubkey} from treasury (${sig})`);
   } catch (e) {
     airdropFailed = true;
-    console.warn("[wallet] airdrop failed (rate-limited?)", e instanceof Error ? e.message : e);
+    console.warn("[wallet] treasury funding failed", e instanceof Error ? e.message : e);
   }
 
   return { pubkey: wallet.pubkey, airdropSig, airdropFailed, alreadyExisted: false };
