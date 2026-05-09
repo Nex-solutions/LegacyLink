@@ -38,10 +38,10 @@ export async function serverCreateVault(input: {
   amount_cad: number;
   condition: VaultCondition;
   beneficiaries: { name: string; email: string; pct: number }[];
-}): Promise<{ id: string }> {
+}): Promise<{ id: string; vault_pda: string; tx_signature: string }> {
   const res = await createVault({ data: input });
   await hydrateVaults();
-  return { id: res.id };
+  return { id: res.id, vault_pda: res.vault_pda, tx_signature: res.tx_signature };
 }
 
 export async function serverCheckIn(vaultId: string) {
