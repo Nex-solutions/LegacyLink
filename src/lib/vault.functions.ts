@@ -189,7 +189,7 @@ export const createVault = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string }> => {
     const { supabase, userId } = context;
 
-    const ownerPubkey = await ensureCustodialWallet(userId);
+    const ownerPubkey = (await ensureCustodialWallet(userId)).pubkey;
 
     // Insert the vault row first to get an id, then write on-chain metadata.
     const { data: inserted, error: insertErr } = await supabase
