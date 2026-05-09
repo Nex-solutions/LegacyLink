@@ -25,7 +25,7 @@ async function loadMasterKeypair() {
  */
 export async function fundFromMaster(toPubkey: string, solAmount: number): Promise<string> {
   const web3 = await import("@solana/web3.js");
-  const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
+  const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
   const recipient = new PublicKey(toPubkey);
 
