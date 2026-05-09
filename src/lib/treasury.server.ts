@@ -30,20 +30,27 @@ export async function fundFromMaster(toPubkey: string, solAmount: number): Promi
   const web3 = await import("@solana/web3.js");
   const { Connection, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, LAMPORTS_PER_SOL } = web3;
   const connection = new Connection(getRpcUrl(), "confirmed");
-  const master = await loadMasterKeypair();
-
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
-  const balance = await connection.getBalance(master.publicKey).catch(() => 0);
-  if (balance < lamports + 5000) {
-    throw new Error(`treasury underfunded: ${balance} lamports`);
+  const recipient = new PublicKey(toPubkey);
+
+  // Try treasury transfer first; fall back to a direct devnet airdrop if the
+  // treasury is empty so demo wallets still get funded end-to-end.
+  try {
+    const master = await loadMasterKeypair();
+    const balance = await connection.getBalance(master.publicKey).catch(() => 0);
+    if (balance >= lamports + 5000) {
+      const tx = new Transaction().add(
+        SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
+      );
+      return await sendAndConfirmTransaction(connection, tx, [master], { commitment: "confirmed" });
+    }
+    console.warn(`[treasury] underfunded (${balance} lamports) — falling back to devnet airdrop`);
+  } catch (e) {
+    console.warn("[treasury] master transfer failed, trying airdrop", e instanceof Error ? e.message : e);
   }
 
-  const tx = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: master.publicKey,
-      toPubkey: new PublicKey(toPubkey),
-      lamports,
-    })
-  );
-  return sendAndConfirmTransaction(connection, tx, [master], { commitment: "confirmed" });
+  const sig = await connection.requestAirdrop(recipient, lamports);
+  const bh = await connection.getLatestBlockhash("confirmed");
+  await connection.confirmTransaction({ signature: sig, ...bh }, "confirmed");
+  return sig;
 }
