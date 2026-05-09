@@ -5,16 +5,19 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 import { getBalanceLamports, getLatestBlockhashDirect, getSolanaRpcUrl, sendRawTransactionDirect } from "./solana-rpc.server";
+import type { Keypair, PublicKey } from "@solana/web3.js";
 
 function getRpcUrl(): string {
   return getSolanaRpcUrl();
 }
 
-async function sendSignedTransfer(args: {
-  from: Awaited<ReturnType<typeof loadKeypair>>;
-  to: import("@solana/web3.js").PublicKey;
-  lamports: number;
-}): Promise<string> {
+async function loadKeypair(encryptedSecret: string): Promise<Keypair> {
+  const raw = await decryptSecret(encryptedSecret);
+  const { Keypair } = await import("@solana/web3.js");
+  return Keypair.fromSecretKey(raw);
+}
+
+async function sendSignedTransfer(args: { from: Keypair; to: PublicKey; lamports: number }): Promise<string> {
   const { Transaction, SystemProgram } = await import("@solana/web3.js");
   const { blockhash, lastValidBlockHeight } = await getLatestBlockhashDirect();
   const tx = new Transaction({ feePayer: args.from.publicKey, blockhash, lastValidBlockHeight }).add(
@@ -22,12 +25,6 @@ async function sendSignedTransfer(args: {
   );
   tx.sign(args.from);
   return sendRawTransactionDirect(tx.serialize());
-}
-
-async function loadKeypair(encryptedSecret: string) {
-  const raw = await decryptSecret(encryptedSecret);
-  const { Keypair } = await import("@solana/web3.js");
-  return Keypair.fromSecretKey(raw);
 }
 
 /**
@@ -42,7 +39,6 @@ export async function sendUserToHotProof(
 ): Promise<{ signature: string; fromPubkey: string; toPubkey: string }> {
   const web3 = await import("@solana/web3.js");
   const {
-    Connection,
     PublicKey,
     LAMPORTS_PER_SOL,
   } = web3;
@@ -71,7 +67,6 @@ export async function sendUserToHotProof(
   }
   const hotPubkey = new PublicKey(master.pubkey);
 
-  const connection = new Connection(getRpcUrl(), "confirmed");
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
   const feeBuffer = 10_000; // ~2x signature fee headroom
 
