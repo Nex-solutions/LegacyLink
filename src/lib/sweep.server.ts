@@ -2,22 +2,18 @@
 // All flows assume Solana cluster comes from SOLANA_RPC. On devnet, USDC mint
 // is the test mint already wired in solana.server.ts.
 
-import * as solanaWeb3 from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-  createAssociatedTokenAccountInstruction,
-  createTransferCheckedInstruction,
-} from "@solana/spl-token";
+// Lazy: @solana/web3.js + @solana/spl-token use __filename at module init,
+// which crashes Cloudflare Worker SSR. Load inside functions only.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
-const { Connection, Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } = solanaWeb3;
-type Connection = solanaWeb3.Connection;
-type Keypair = solanaWeb3.Keypair;
-type PublicKey = solanaWeb3.PublicKey;
+import type { Connection, Keypair, PublicKey } from "@solana/web3.js";
+
+let _web3: Promise<typeof import("@solana/web3.js")> | undefined;
+let _spl: Promise<typeof import("@solana/spl-token")> | undefined;
+const loadWeb3 = () => (_web3 ??= import("@solana/web3.js"));
+const loadSpl = () => (_spl ??= import("@solana/spl-token"));
 
 const USDC_DECIMALS = 6;
 const MIN_USER_GAS_LAMPORTS = 1_500_000; // ~0.0015 SOL
@@ -27,17 +23,20 @@ function getRpcUrl(): string {
   return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
 }
 
-function getUsdcMint(): PublicKey {
+async function getUsdcMint(): Promise<PublicKey> {
   const m = process.env.SOLANA_USDC_MINT || "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+  const { PublicKey } = await loadWeb3();
   return new PublicKey(m);
 }
 
-function getConnection(): Connection {
+async function getConnection(): Promise<Connection> {
+  const { Connection } = await loadWeb3();
   return new Connection(getRpcUrl(), "confirmed");
 }
 
 async function loadKeypairFromSecret(encryptedSecret: string): Promise<Keypair> {
   const raw = await decryptSecret(encryptedSecret);
+  const { Keypair } = await loadWeb3();
   return Keypair.fromSecretKey(raw);
 }
 
@@ -74,7 +73,8 @@ async function feeLamportsFromSig(connection: Connection, sig: string): Promise<
 
 // ──────────────── Gas top-up ────────────────
 export async function topUpUserGas(userId: string): Promise<{ topped: boolean; signature?: string }> {
-  const connection = getConnection();
+  const { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction } = await loadWeb3();
+  const connection = await getConnection();
   const { data: wallet } = await supabaseAdmin
     .from("custodial_wallets")
     .select("pubkey")
@@ -94,7 +94,7 @@ export async function topUpUserGas(userId: string): Promise<{ topped: boolean; s
       lamports: TOP_UP_LAMPORTS,
     })
   );
-  const signature = await solanaWeb3.sendAndConfirmTransaction(connection, tx, [master], {
+  const signature = await sendAndConfirmTransaction(connection, tx, [master], {
     commitment: "confirmed",
   });
   return { topped: true, signature };
@@ -105,10 +105,18 @@ export async function sweepUserToMaster(args: {
   userId: string;
   amountUsdc: number;
 }): Promise<{ signature: string; gasLamports: number }> {
-  const connection = getConnection();
+  const { Transaction, sendAndConfirmTransaction } = await loadWeb3();
+  const {
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    getAssociatedTokenAddressSync,
+    createAssociatedTokenAccountInstruction,
+    createTransferCheckedInstruction,
+  } = await loadSpl();
+  const connection = await getConnection();
   const master = await loadMaster();
   const user = await loadUserKeypair(args.userId);
-  const mint = getUsdcMint();
+  const mint = await getUsdcMint();
 
   await topUpUserGas(args.userId);
 
@@ -117,7 +125,6 @@ export async function sweepUserToMaster(args: {
 
   const tx = new Transaction();
 
-  // Ensure master ATA exists (master pays rent).
   const masterAtaInfo = await connection.getAccountInfo(masterAta);
   if (!masterAtaInfo) {
     tx.add(
@@ -144,12 +151,9 @@ export async function sweepUserToMaster(args: {
     )
   );
 
-  const signature = await solanaWeb3.sendAndConfirmTransaction(
-    connection,
-    tx,
-    [user, master],
-    { commitment: "confirmed" }
-  );
+  const signature = await sendAndConfirmTransaction(connection, tx, [user, master], {
+    commitment: "confirmed",
+  });
   const gasLamports = await feeLamportsFromSig(connection, signature);
   return { signature, gasLamports };
 }
@@ -159,9 +163,17 @@ export async function payoutFromMaster(args: {
   toAddress: string;
   amountUsdc: number;
 }): Promise<{ signature: string; gasLamports: number }> {
-  const connection = getConnection();
+  const { PublicKey, Transaction, sendAndConfirmTransaction } = await loadWeb3();
+  const {
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    getAssociatedTokenAddressSync,
+    createAssociatedTokenAccountInstruction,
+    createTransferCheckedInstruction,
+  } = await loadSpl();
+  const connection = await getConnection();
   const master = await loadMaster();
-  const mint = getUsdcMint();
+  const mint = await getUsdcMint();
   const dest = new PublicKey(args.toAddress);
 
   const masterAta = getAssociatedTokenAddressSync(mint, master.publicKey);
@@ -194,19 +206,17 @@ export async function payoutFromMaster(args: {
     )
   );
 
-  const signature = await solanaWeb3.sendAndConfirmTransaction(
-    connection,
-    tx,
-    [master],
-    { commitment: "confirmed" }
-  );
+  const signature = await sendAndConfirmTransaction(connection, tx, [master], {
+    commitment: "confirmed",
+  });
   const gasLamports = await feeLamportsFromSig(connection, signature);
   return { signature, gasLamports };
 }
 
 // ──────────────── Master SOL balance ────────────────
 export async function getMasterGasBalance(): Promise<{ lamports: number; sol: number }> {
-  const connection = getConnection();
+  const { LAMPORTS_PER_SOL } = await loadWeb3();
+  const connection = await getConnection();
   const master = await loadMaster();
   const lamports = await connection.getBalance(master.publicKey).catch(() => 0);
   return { lamports, sol: lamports / LAMPORTS_PER_SOL };

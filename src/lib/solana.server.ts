@@ -1,48 +1,38 @@
 // Server-only Solana helpers.
-// - Real ed25519 keypairs (tweetnacl) for custodial wallets, AES-GCM at rest.
-// - When SOLANA_PROGRAM_ID is set, init/checkin/release call the real Anchor
-//   program on devnet. fund/claim stay simulated until a real on/off-ramp with
-//   USDC liquidity is wired (devnet custodial wallets have no USDC).
-
-import nacl from "tweetnacl";
-import bs58 from "bs58";
+// All Node-CJS-only deps (bs58, @solana/*, @coral-xyz/anchor, tweetnacl)
+// are loaded lazily inside functions. They reference __filename at module
+// init which the Cloudflare Worker SSR runtime doesn't define, so any
+// top-level import here would crash every page render.
 
 import { webcrypto } from "node:crypto";
-import * as solanaWeb3 from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
-import * as anchorPkg from "@coral-xyz/anchor";
-import type { Idl } from "@coral-xyz/anchor";
 import vaultIdl from "./idl/vault.json";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const anchorDefault = (anchorPkg as unknown as { default?: typeof anchorPkg }).default;
-const AnchorProvider = anchorPkg.AnchorProvider ?? anchorDefault?.AnchorProvider;
-const Program = anchorPkg.Program ?? anchorDefault?.Program;
-const BN = anchorPkg.BN ?? anchorDefault?.BN;
-const NodeWallet = anchorPkg.Wallet ?? anchorDefault?.Wallet;
-const {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  LAMPORTS_PER_SOL,
-} = solanaWeb3;
+import type { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import type { Idl } from "@coral-xyz/anchor";
+
 const subtle = (webcrypto as Crypto).subtle;
 
-type Connection = solanaWeb3.Connection;
-type Keypair = solanaWeb3.Keypair;
-type PublicKey = solanaWeb3.PublicKey;
+// ─── Lazy module loaders ─────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────
-// Simulated on-chain ops. Real Anchor calls slot in here later.
-// Each fn returns a base58 signature-shaped string derived from
-// (kind, vault_id, payload). Deterministic so re-runs are idempotent.
-// ─────────────────────────────────────────────────────────────────
+let _web3: Promise<typeof import("@solana/web3.js")> | undefined;
+let _spl: Promise<typeof import("@solana/spl-token")> | undefined;
+let _anchor: Promise<typeof import("@coral-xyz/anchor")> | undefined;
+let _bs58: Promise<{ encode: (b: Uint8Array) => string; decode: (s: string) => Uint8Array }> | undefined;
+let _nacl: Promise<typeof import("tweetnacl")> | undefined;
+
+const loadWeb3 = () => (_web3 ??= import("@solana/web3.js"));
+const loadSpl = () => (_spl ??= import("@solana/spl-token"));
+const loadAnchor = () => (_anchor ??= import("@coral-xyz/anchor"));
+const loadBs58 = () =>
+  (_bs58 ??= import("bs58").then((m) => {
+    const def = (m as unknown as { default?: typeof m }).default;
+    return (def ?? m) as unknown as { encode: (b: Uint8Array) => string; decode: (s: string) => Uint8Array };
+  }));
+const loadNacl = () =>
+  (_nacl ??= import("tweetnacl").then((m) => (m as unknown as { default?: typeof m }).default ?? m));
+
+// ─── Encryption helpers ──────────────────────────────────────────────
 
 function b64decode(s: string): Uint8Array {
   const buf = Buffer.from(s, "base64");
@@ -90,6 +80,8 @@ export type GeneratedWallet = {
 };
 
 export async function generateWallet(): Promise<GeneratedWallet> {
+  const nacl = await loadNacl();
+  const bs58 = await loadBs58();
   const kp = nacl.sign.keyPair();
   const secret64 = new Uint8Array(64);
   secret64.set(kp.secretKey.slice(0, 32), 0);
@@ -100,9 +92,7 @@ export async function generateWallet(): Promise<GeneratedWallet> {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Anchor wiring
-// ─────────────────────────────────────────────────────────────────
+// ─── Anchor wiring ──────────────────────────────────────────────────
 
 export function isSimulatedMode(): boolean {
   return !process.env.SOLANA_PROGRAM_ID;
@@ -112,18 +102,21 @@ function getRpcUrl(): string {
   return process.env.SOLANA_RPC || "https://api.devnet.solana.com";
 }
 
-function getProgramId(): PublicKey {
+async function getProgramId(): Promise<PublicKey> {
   const id = process.env.SOLANA_PROGRAM_ID;
   if (!id) throw new Error("SOLANA_PROGRAM_ID not set");
+  const { PublicKey } = await loadWeb3();
   return new PublicKey(id);
 }
 
-function getUsdcMint(): PublicKey {
+async function getUsdcMint(): Promise<PublicKey> {
   const m = process.env.SOLANA_USDC_MINT || "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+  const { PublicKey } = await loadWeb3();
   return new PublicKey(m);
 }
 
-function getConnection(): Connection {
+async function getConnection(): Promise<Connection> {
+  const { Connection } = await loadWeb3();
   return new Connection(getRpcUrl(), "confirmed");
 }
 
@@ -136,6 +129,7 @@ async function loadCustodialKeypair(userId: string): Promise<Keypair> {
   if (error) throw error;
   if (!data?.encrypted_secret) throw new Error(`No custodial wallet for user ${userId}`);
   const secret = await decryptSecret(data.encrypted_secret);
+  const { Keypair } = await loadWeb3();
   return Keypair.fromSecretKey(secret);
 }
 
@@ -150,12 +144,18 @@ async function ownerUserIdForVaultPda(vaultPda: string): Promise<string> {
   return data.owner_id as string;
 }
 
-function buildProgram(signer: Keypair) {
-  const connection = getConnection();
+async function buildProgram(signer: Keypair) {
+  const connection = await getConnection();
+  const anchorPkg = await loadAnchor();
+  const anchorDefault = (anchorPkg as unknown as { default?: typeof anchorPkg }).default;
+  const AnchorProvider = anchorPkg.AnchorProvider ?? anchorDefault?.AnchorProvider;
+  const Program = anchorPkg.Program ?? anchorDefault?.Program;
+  const NodeWallet = anchorPkg.Wallet ?? anchorDefault?.Wallet;
+  if (!AnchorProvider || !Program || !NodeWallet) throw new Error("anchor module missing exports");
   const wallet = new NodeWallet(signer);
   const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
-  // Inject address into IDL so Program picks it up
-  const idl = { ...(vaultIdl as unknown as Idl), address: getProgramId().toBase58() } as unknown as Idl;
+  const programId = await getProgramId();
+  const idl = { ...(vaultIdl as unknown as Idl), address: programId.toBase58() } as unknown as Idl;
   return { program: new Program(idl, provider), provider, connection };
 }
 
@@ -166,22 +166,26 @@ function uuidToBytes16(uuid: string): Buffer {
 }
 
 export async function deriveVaultPda(ownerPubkey: string, vaultId: string): Promise<string> {
+  const bs58 = await loadBs58();
   if (isSimulatedMode()) {
     const data = new TextEncoder().encode(`vault|${ownerPubkey}|${vaultId}`);
     const digest = new Uint8Array(await subtle.digest("SHA-256", data as BufferSource));
     return bs58.encode(digest);
   }
+  const { PublicKey } = await loadWeb3();
   const owner = new PublicKey(ownerPubkey);
   const vaultIdBytes = uuidToBytes16(vaultId);
+  const programId = await getProgramId();
   const [pda] = PublicKey.findProgramAddressSync(
     [Buffer.from("vault"), owner.toBuffer(), vaultIdBytes],
-    getProgramId()
+    programId
   );
   return pda.toBase58();
 }
 
 async function ensureSolBalance(connection: Connection, pubkey: PublicKey): Promise<void> {
   try {
+    const { LAMPORTS_PER_SOL } = await loadWeb3();
     const balance = await connection.getBalance(pubkey);
     if (balance < 0.02 * LAMPORTS_PER_SOL) {
       console.log(`[solana] airdropping 0.05 SOL to ${pubkey.toBase58()}`);
@@ -193,25 +197,21 @@ async function ensureSolBalance(connection: Connection, pubkey: PublicKey): Prom
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Simulated fallback signature
-// ─────────────────────────────────────────────────────────────────
-
 async function fakeSig(kind: string, ...parts: string[]): Promise<string> {
+  const bs58 = await loadBs58();
   const data = new TextEncoder().encode([kind, Date.now().toString(), ...parts].join("|"));
   const digest = new Uint8Array(await subtle.digest("SHA-512", data as BufferSource));
   return bs58.encode(digest);
 }
 
-// ─────────────────────────────────────────────────────────────────
-// On-chain ops
-// ─────────────────────────────────────────────────────────────────
+// ─── On-chain ops ───────────────────────────────────────────────────
 
 export async function initVaultOnChain(args: {
   ownerPubkey: string;
   vaultId: string;
   amountCadCents?: number;
 }): Promise<{ vaultPda: string; usdcAta: string; signature: string }> {
+  const bs58 = await loadBs58();
   if (isSimulatedMode()) {
     const vaultPda = await deriveVaultPda(args.ownerPubkey, args.vaultId);
     const ataData = new TextEncoder().encode(`ata|${vaultPda}|usdc`);
@@ -220,7 +220,6 @@ export async function initVaultOnChain(args: {
   }
 
   try {
-    // Find owner userId from pubkey
     const { data: walletRow, error: wErr } = await supabaseAdmin
       .from("custodial_wallets")
       .select("user_id")
@@ -230,18 +229,23 @@ export async function initVaultOnChain(args: {
     if (!walletRow?.user_id) throw new Error(`No custodial wallet row for ${args.ownerPubkey}`);
 
     const owner = await loadCustodialKeypair(walletRow.user_id);
-    const { program, connection } = buildProgram(owner);
-
+    const { program, connection } = await buildProgram(owner);
     await ensureSolBalance(connection, owner.publicKey);
 
+    const { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } = await loadWeb3();
+    const { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } = await loadSpl();
+    const anchorPkg = await loadAnchor();
+    const BN = anchorPkg.BN ?? (anchorPkg as unknown as { default?: typeof anchorPkg }).default?.BN;
+    if (!BN) throw new Error("anchor BN missing");
+
     const vaultIdBytes = uuidToBytes16(args.vaultId);
-    const usdcMint = getUsdcMint();
+    const usdcMint = await getUsdcMint();
+    const programId = await getProgramId();
     const [vaultPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("vault"), owner.publicKey.toBuffer(), vaultIdBytes],
-      getProgramId()
+      programId
     );
     const vaultUsdcAta = getAssociatedTokenAddressSync(usdcMint, vaultPda, true);
-
     const amountCents = new BN(Math.round((args.amountCadCents ?? 0)));
 
     const signature = await program.methods
@@ -268,8 +272,6 @@ export async function initVaultOnChain(args: {
   }
 }
 
-// Fund stays simulated: devnet custodial wallets have no USDC.
-// In production the on-ramp deposits USDC directly into the vault ATA.
 export async function fundVaultOnChain(args: {
   vaultPda: string;
   amountCad: number;
@@ -283,7 +285,8 @@ export async function checkInOnChain(args: { vaultPda: string }): Promise<{ sign
   try {
     const userId = await ownerUserIdForVaultPda(args.vaultPda);
     const owner = await loadCustodialKeypair(userId);
-    const { program } = buildProgram(owner);
+    const { program } = await buildProgram(owner);
+    const { PublicKey } = await loadWeb3();
 
     const signature = await program.methods
       .checkIn()
@@ -301,11 +304,9 @@ export async function releaseVaultOnChain(args: { vaultPda: string }): Promise<{
 
   const userId = await ownerUserIdForVaultPda(args.vaultPda);
   const owner = await loadCustodialKeypair(userId);
-  const { program } = buildProgram(owner);
+  const { program } = await buildProgram(owner);
+  const { PublicKey } = await loadWeb3();
 
-  // NOTE: program requires status==funded. Fund stays simulated, so this
-  // will currently revert with NotFunded on-chain. Catch and fall back to
-  // simulated so audit trail still records a signature shape.
   try {
     const signature = await program.methods
       .releaseVault()
@@ -318,8 +319,6 @@ export async function releaseVaultOnChain(args: { vaultPda: string }): Promise<{
   }
 }
 
-// Claim stays simulated: needs a beneficiary USDC ATA we don't have on devnet.
-// In production the off-ramp pulls USDC from the vault ATA to a treasury.
 export async function claimOnChain(args: {
   vaultPda: string;
   beneficiaryEmail: string;

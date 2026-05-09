@@ -1,10 +1,8 @@
 // Server-only helpers for the platform's hot wallet (singleton).
 // Stores the encrypted secret AND the encrypted BIP39 mnemonic so the operator
 // can recover access. The mnemonic is only ever returned ONCE at init time.
-import * as bip39 from "bip39";
-import { derivePath } from "ed25519-hd-key";
-import nacl from "tweetnacl";
-import bs58 from "bs58";
+// Lazy: bip39, ed25519-hd-key, tweetnacl, bs58 reference __filename at module
+// init and crash Cloudflare Worker SSR. Load inside functions only.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { encryptSecret, decryptSecret } from "./solana.server";
@@ -41,6 +39,13 @@ export async function initMasterWallet(createdBy: string | null): Promise<Master
   if (existing) {
     throw new Error("Master wallet already initialised");
   }
+
+  const bip39 = await import("bip39");
+  const { derivePath } = await import("ed25519-hd-key");
+  const naclMod = await import("tweetnacl");
+  const nacl = (naclMod as unknown as { default?: typeof naclMod }).default ?? naclMod;
+  const bs58Mod = await import("bs58");
+  const bs58 = ((bs58Mod as unknown as { default?: typeof bs58Mod }).default ?? bs58Mod) as unknown as { encode: (b: Uint8Array) => string };
 
   const mnemonic = bip39.generateMnemonic(256); // 24 words
   const seed = await bip39.mnemonicToSeed(mnemonic);
