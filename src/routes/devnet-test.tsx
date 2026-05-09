@@ -1,10 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import idl from "@/lib/idl/vault.json";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/devnet-test")({
   ssr: false,
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw redirect({ to: "/login" });
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+    if (!roles?.some((r) => r.role === "admin")) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: DevnetTest,
 });
 
