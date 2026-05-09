@@ -40,6 +40,13 @@ export async function initMasterWallet(createdBy: string | null): Promise<Master
     throw new Error("Master wallet already initialised");
   }
 
+  const bip39 = await import("bip39");
+  const { derivePath } = await import("ed25519-hd-key");
+  const naclMod = await import("tweetnacl");
+  const nacl = (naclMod as unknown as { default?: typeof naclMod }).default ?? naclMod;
+  const bs58Mod = await import("bs58");
+  const bs58 = ((bs58Mod as unknown as { default?: typeof bs58Mod }).default ?? bs58Mod) as unknown as { encode: (b: Uint8Array) => string };
+
   const mnemonic = bip39.generateMnemonic(256); // 24 words
   const seed = await bip39.mnemonicToSeed(mnemonic);
   const { key } = derivePath(SOLANA_DERIVATION_PATH, seed.toString("hex"));
