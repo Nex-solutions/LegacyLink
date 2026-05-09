@@ -25,17 +25,35 @@ function AdvisorSignup() {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    firm: "",
-    advisorType: "Financial Advisor",
-    license: "",
-    province: "Ontario",
-    password: "",
-    confirm: "",
-    agree: false,
+  const [form, setForm] = useState(() => {
+    const FIRST = ["Élise", "Marcus", "Priya", "Daniel", "Sofia", "James"];
+    const LAST = ["Tremblay", "Bell", "Nair", "Chen", "Morgan", "Patel"];
+    const FIRMS = ["Boréal Wealth", "Pine Ridge Advisors", "Aster Private Wealth", "Northstar Capital"];
+    const f = FIRST[Math.floor(Math.random() * FIRST.length)];
+    const l = LAST[Math.floor(Math.random() * LAST.length)];
+    const firm = FIRMS[Math.floor(Math.random() * FIRMS.length)];
+    const slug = firm.toLowerCase().replace(/[^a-z]/g, "");
+    const num = Math.floor(100 + Math.random() * 900);
+    const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lower = "abcdefghijkmnpqrstuvwxyz";
+    const digits = "23456789";
+    const symbols = "!@#$%^&*?";
+    const all = upper + lower + digits + symbols;
+    const pwArr = [upper, lower, lower, digits, digits, symbols].map((s) => s[Math.floor(Math.random() * s.length)]);
+    for (let i = 0; i < 10; i++) pwArr.push(all[Math.floor(Math.random() * all.length)]);
+    const pw = pwArr.sort(() => Math.random() - 0.5).join("");
+    return {
+      firstName: f,
+      lastName: l,
+      email: `${f.toLowerCase().replace(/[^a-z]/g, "")}.${l.toLowerCase()}${num}@${slug}.ca`,
+      firm,
+      advisorType: "Financial Advisor",
+      license: `CFP-${10000 + Math.floor(Math.random() * 89999)}`,
+      province: "Ontario",
+      password: pw,
+      confirm: pw,
+      agree: true,
+    };
   });
 
   function update<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
