@@ -100,7 +100,11 @@ function SignupKyc() {
   const [loading, setLoading] = useState(false);
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [simulated, setSimulated] = useState(false);
-  const [walletPubkey, setWalletPubkey] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<{
+    pubkey: string;
+    airdropSig: string | null;
+    airdropFailed: boolean;
+  } | null>(null);
   const [form, setForm] = useState(() => randomDummy());
 
   useEffect(() => {
@@ -108,7 +112,11 @@ function SignupKyc() {
     (async () => {
       try {
         const r = await provision({ data: undefined } as never);
-        setWalletPubkey(r.pubkey);
+        setWallet({
+          pubkey: r.pubkey,
+          airdropSig: r.airdropSig,
+          airdropFailed: r.airdropFailed,
+        });
       } catch (e) {
         console.warn("wallet provisioning", e);
       }
