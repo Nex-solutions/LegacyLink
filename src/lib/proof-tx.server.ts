@@ -4,12 +4,8 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
-import { getBalanceLamports, getLatestBlockhashDirect, getSolanaRpcUrl, sendRawTransactionDirect } from "./solana-rpc.server";
+import { getBalanceLamports, getLatestBlockhashDirect, sendRawTransactionDirect } from "./solana-rpc.server";
 import type { Keypair, PublicKey } from "@solana/web3.js";
-
-function getRpcUrl(): string {
-  return getSolanaRpcUrl();
-}
 
 async function loadKeypair(encryptedSecret: string): Promise<Keypair> {
   const raw = await decryptSecret(encryptedSecret);
