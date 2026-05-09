@@ -147,39 +147,16 @@ function SignupKyc() {
     (async () => {
       try {
         const r = await provision({ data: undefined } as never);
-        let fundingSig = r.airdropSig;
-        let fundingFailed = r.airdropFailed;
-        if (!fundingSig) {
-          try {
-            const { Connection, PublicKey } = await import("@solana/web3.js");
-            const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-            const existingTxs = await connection.getSignaturesForAddress(new PublicKey(r.pubkey), { limit: 1 });
-            fundingSig = existingTxs[0]?.signature ?? null;
-            if (!fundingSig) {
-              const { blockhash } = await connection.getLatestBlockhash("confirmed");
-              const signed = await prepareBrowserFunding({
-                data: { toPubkey: r.pubkey, recentBlockhash: blockhash },
-              });
-              fundingSig = await connection.sendRawTransaction(
-                base64ToBytes(signed.signedTransactionBase64),
-                { skipPreflight: false, preflightCommitment: "confirmed" },
-              );
-            }
-            fundingFailed = false;
-          } catch (browserFundingError) {
-            console.warn("browser wallet funding", browserFundingError);
-          }
-        }
         setWallet({
           pubkey: r.pubkey,
-          airdropSig: fundingSig,
-          airdropFailed: fundingFailed,
+          airdropSig: r.airdropSig,
+          airdropFailed: r.airdropFailed,
         });
       } catch (e) {
         console.warn("wallet provisioning", e);
       }
     })();
-  }, [simulated, provision, prepareBrowserFunding]);
+  }, [simulated, provision]);
 
   useEffect(() => {
     (async () => {
