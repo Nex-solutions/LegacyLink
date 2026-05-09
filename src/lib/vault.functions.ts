@@ -209,47 +209,127 @@ export const createVault = createServerFn({ method: "POST" })
     if (insertErr) throw insertErr;
     const vaultId = inserted.id as string;
 
-    // On-chain init + fund (simulated unless SOLANA_PROGRAM_ID is set)
-    const init = await initVaultOnChain({ ownerPubkey, vaultId, amountCadCents: Math.round(data.amount_cad * 100) });
-    const fund = await fundVaultOnChain({ vaultPda: init.vaultPda, amountCad: data.amount_cad });
+    try {
+      // On-chain init + fund (simulated unless SOLANA_PROGRAM_ID is set)
+      await supabase.from("vaults").update({ last_step: "init_chain" }).eq("id", vaultId);
+      const init = await initVaultOnChain({ ownerPubkey, vaultId, amountCadCents: Math.round(data.amount_cad * 100) });
+      const fund = await fundVaultOnChain({ vaultPda: init.vaultPda, amountCad: data.amount_cad });
 
-    // Run on-ramp to bring fiat into custodial USDC
-    const ramp = getRampProvider();
-    const onramp = await ramp.onramp({
-      userPubkey: ownerPubkey,
-      amountCad: data.amount_cad,
-      reference: vaultId,
-    });
+      // Run on-ramp to bring fiat into custodial USDC
+      await supabase.from("vaults").update({ last_step: "onramp" }).eq("id", vaultId);
+      const ramp = getRampProvider();
+      const onramp = await ramp.onramp({
+        userPubkey: ownerPubkey,
+        amountCad: data.amount_cad,
+        reference: vaultId,
+      });
 
-    // Persist on-chain metadata
-    await supabase
-      .from("vaults")
-      .update({
-        vault_pda: init.vaultPda,
-        usdc_ata: init.usdcAta,
-        init_tx: init.signature,
-        tx_signature: fund.signature,
-        solana_pubkey: ownerPubkey,
-      })
-      .eq("id", vaultId);
+      // Persist on-chain metadata
+      await supabase
+        .from("vaults")
+        .update({
+          vault_pda: init.vaultPda,
+          usdc_ata: init.usdcAta,
+          init_tx: init.signature,
+          tx_signature: fund.signature,
+          solana_pubkey: ownerPubkey,
+          last_step: "beneficiaries",
+        })
+        .eq("id", vaultId);
 
-    // Beneficiaries
-    if (data.beneficiaries.length) {
-      const { error: benErr } = await supabase
-        .from("beneficiaries")
-        .insert(data.beneficiaries.map((b) => ({
-          vault_id: vaultId,
-          name: b.name,
-          email: b.email,
-          pct: b.pct,
-        })));
-      if (benErr) throw benErr;
+      // Beneficiaries
+      if (data.beneficiaries.length) {
+        const { error: benErr } = await supabase
+          .from("beneficiaries")
+          .insert(data.beneficiaries.map((b) => ({
+            vault_id: vaultId,
+            name: b.name,
+            email: b.email,
+            pct: b.pct,
+          })));
+        if (benErr) throw benErr;
+      }
+
+      // Audit trail + mark complete
+      await supabase.from("vault_events").insert([
+        { vault_id: vaultId, actor_id: userId, kind: "fund", detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`, tx_signature: fund.signature },
+      ]);
+      await supabase.from("vaults").update({ last_step: null }).eq("id", vaultId);
+
+      return { id: vaultId, vault_pda: init.vaultPda, tx_signature: fund.signature };
+    } catch (err) {
+      console.error("createVault failed", err);
+      // Mark vault as failed and bump retry counter so the dashboard can
+      // surface a "Continue where you left off" / "Contact support" CTA.
+      await supabase.rpc as unknown; // no-op (kept to keep diff minimal)
+      const { data: cur } = await supabase
+        .from("vaults")
+        .select("failure_count")
+        .eq("id", vaultId)
+        .maybeSingle();
+      const next = ((cur as { failure_count?: number } | null)?.failure_count ?? 0) + 1;
+      await supabase
+        .from("vaults")
+        .update({ status: "failed", failure_count: next })
+        .eq("id", vaultId);
+      throw err;
     }
+  });
 
-    // Audit trail
-    await supabase.from("vault_events").insert([
-      { vault_id: vaultId, actor_id: userId, kind: "fund", detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`, tx_signature: fund.signature },
-    ]);
+// ─── Retry a failed vault ─────────────────────────────────────────────
+
+export const retryVault = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ vault_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("vaults")
+      .select("id, name, amount_cad, condition_kind, unlock_date, inactivity_days, last_checkin")
+      .eq("id", data.vault_id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row) throw new Error("Vault not found");
+
+    const ownerPubkey = await ensureCustodialWallet(userId);
+    try {
+      const init = await initVaultOnChain({
+        ownerPubkey,
+        vaultId: row.id as string,
+        amountCadCents: Math.round(Number(row.amount_cad) * 100),
+      });
+      const fund = await fundVaultOnChain({ vaultPda: init.vaultPda, amountCad: Number(row.amount_cad) });
+      await supabase
+        .from("vaults")
+        .update({
+          vault_pda: init.vaultPda,
+          usdc_ata: init.usdcAta,
+          init_tx: init.signature,
+          tx_signature: fund.signature,
+          solana_pubkey: ownerPubkey,
+          status: "active",
+          last_step: null,
+        })
+        .eq("id", row.id);
+      await supabase.from("vault_events").insert([
+        { vault_id: row.id, actor_id: userId, kind: "fund", detail: `Vault retry succeeded · CA$${row.amount_cad}`, tx_signature: fund.signature },
+      ]);
+      return { id: row.id as string, ok: true as const };
+    } catch (err) {
+      console.error("retryVault failed", err);
+      const { data: cur } = await supabase
+        .from("vaults")
+        .select("failure_count")
+        .eq("id", row.id)
+        .maybeSingle();
+      const next = ((cur as { failure_count?: number } | null)?.failure_count ?? 0) + 1;
+      await supabase
+        .from("vaults")
+        .update({ status: "failed", failure_count: next })
+        .eq("id", row.id);
+      throw err;
+    }
+  });
 
     return { id: vaultId, vault_pda: init.vaultPda, tx_signature: fund.signature };
   });
