@@ -44,7 +44,17 @@ export function AppHeader() {
   const signedIn = !!user || !!advisor;
   return (
     <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between">
-      <Logo />
+      <div className="flex items-center gap-3">
+        <Logo />
+        <span
+          title="This is a hackathon devnet build. Funds shown are simulated USDC on Solana devnet — no real CAD moves."
+          className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full"
+          style={{ background: "rgba(232,160,32,0.16)", color: "var(--honey)", border: "1px solid rgba(232,160,32,0.35)" }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
+          Devnet · test mode
+        </span>
+      </div>
       <nav className="flex items-center gap-3 lg:gap-5">
         {!signedIn && (
           <>
