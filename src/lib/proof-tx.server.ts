@@ -78,7 +78,8 @@ export async function sendUserToHotProof(
   }
   const hotPubkey = new PublicKey(master.pubkey);
 
-  const connection = new Connection(getRpcUrl(), "confirmed");
+  const connection = await pickWorkingConnection();
+  void Connection;
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
   const feeBuffer = 10_000; // ~2x signature fee headroom
 
