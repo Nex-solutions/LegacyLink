@@ -481,6 +481,43 @@ function Dashboard() {
         >
           <span aria-hidden>↻</span> Reset demo
         </button>
+
+        {/* Customer support modal — appears after 3 failed retries */}
+        {supportFor && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(26,46,26,0.55)", backdropFilter: "blur(4px)" }}
+            onClick={() => setSupportFor(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22 }}
+              className="w-full max-w-md rounded-2xl p-7"
+              style={{ background: "var(--cream)", boxShadow: "0 24px 60px rgba(0,0,0,0.25)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>
+                Let's get this sorted together
+              </h3>
+              <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
+                "{supportFor.name}" hasn't been able to finish setup after {supportFor.failure_count ?? 0} attempts.
+                Our team can complete it for you in minutes.
+              </p>
+              <div className="mt-5 rounded-xl p-4" style={{ background: "rgba(127,168,130,0.12)" }}>
+                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Vault reference</p>
+                <code className="text-xs">{supportFor.id}</code>
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2 justify-end">
+                <button onClick={() => setSupportFor(null)} className="ll-pill ll-pill-ghost text-sm">Not now</button>
+                <a
+                  href={`mailto:support@legacylink.app?subject=${encodeURIComponent(`Help finishing vault ${supportFor.name}`)}&body=${encodeURIComponent(`Hi LegacyLink team,\n\nMy vault "${supportFor.name}" (id ${supportFor.id}) has failed to set up ${supportFor.failure_count ?? 0} times. Can you help me finish it?\n\nThanks.`)}`}
+                  className="ll-pill ll-pill-primary text-sm"
+                >Email support</a>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </PageShell>
   );
