@@ -23,6 +23,22 @@ async function sendSignedTransfer(args: { from: Keypair; to: PublicKey; lamports
   return sendRawTransactionDirect(tx.serialize());
 }
 
+async function sendTopUpAndProof(args: {
+  master: Keypair;
+  user: Keypair;
+  hotWallet: PublicKey;
+  topUpLamports: number;
+  proofLamports: number;
+}): Promise<string> {
+  const { Transaction, SystemProgram } = await import("@solana/web3.js");
+  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashDirect();
+  const tx = new Transaction({ feePayer: args.master.publicKey, blockhash, lastValidBlockHeight })
+    .add(SystemProgram.transfer({ fromPubkey: args.master.publicKey, toPubkey: args.user.publicKey, lamports: args.topUpLamports }))
+    .add(SystemProgram.transfer({ fromPubkey: args.user.publicKey, toPubkey: args.hotWallet, lamports: args.proofLamports }));
+  tx.sign(args.master, args.user);
+  return sendRawTransactionDirect(tx.serialize());
+}
+
 /**
  * Send `solAmount` SOL from the user's custodial wallet to the platform hot
  * (master) wallet. If the user wallet doesn't have enough lamports for the
@@ -71,7 +87,14 @@ export async function sendUserToHotProof(
   if (balance < lamports + feeBuffer) {
     const masterKp = await loadKeypair(master.encrypted_secret);
     const needed = lamports + feeBuffer - balance + 5_000_000; // add 0.005 SOL headroom
-    await sendSignedTransfer({ from: masterKp, to: userKp.publicKey, lamports: needed });
+    const signature = await sendTopUpAndProof({
+      master: masterKp,
+      user: userKp,
+      hotWallet: hotPubkey,
+      topUpLamports: needed,
+      proofLamports: lamports,
+    });
+    return { signature, fromPubkey: userKp.publicKey.toBase58(), toPubkey: hotPubkey.toBase58() };
   }
 
   // The actual proof: user wallet → hot wallet
