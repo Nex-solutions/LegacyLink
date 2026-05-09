@@ -82,3 +82,24 @@ export async function fundFromMaster(toPubkey: string, solAmount: number): Promi
   }
   throw lastError ?? new Error("Funding failed");
 }
+
+export async function signMasterFundingTransaction(args: {
+  toPubkey: string;
+  solAmount: number;
+  recentBlockhash: string;
+}): Promise<{ signedTransactionBase64: string; signature: string }> {
+  const web3 = await import("@solana/web3.js");
+  const bs58 = await import("bs58").then((m) => m.default ?? m);
+  const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
+  const master = await loadMasterKeypair();
+  const lamports = Math.round(args.solAmount * LAMPORTS_PER_SOL);
+  const tx = new Transaction({ feePayer: master.publicKey, recentBlockhash: args.recentBlockhash }).add(
+    SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: new PublicKey(args.toPubkey), lamports }),
+  );
+  tx.sign(master);
+  const signature = tx.signature ? bs58.encode(tx.signature) : "";
+  return {
+    signedTransactionBase64: Buffer.from(tx.serialize()).toString("base64"),
+    signature,
+  };
+}
