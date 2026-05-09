@@ -6,9 +6,12 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export async function ensureCustodialWallet(
-  userId: string
-): Promise<{ pubkey: string; airdropSig?: string; airdropFailed?: boolean; alreadyExisted: boolean }> {
+export async function ensureCustodialWallet(userId: string): Promise<{
+  pubkey: string;
+  airdropSig?: string;
+  airdropFailed?: boolean;
+  alreadyExisted: boolean;
+}> {
   const { data: existing, error: readErr } = await supabaseAdmin
     .from("custodial_wallets")
     .select("pubkey")
@@ -16,7 +19,26 @@ export async function ensureCustodialWallet(
     .maybeSingle();
 
   if (readErr) throw readErr;
-  if (existing?.pubkey) return { pubkey: existing.pubkey, alreadyExisted: true };
+  if (existing?.pubkey) {
+    let airdropSig: string | undefined;
+    try {
+      const { Connection, PublicKey } = await import("@solana/web3.js");
+      const connection = new Connection(
+        process.env.SOLANA_RPC || "https://api.devnet.solana.com",
+        "confirmed",
+      );
+      const sigs = await connection.getSignaturesForAddress(new PublicKey(existing.pubkey), {
+        limit: 1,
+      });
+      airdropSig = sigs[0]?.signature;
+    } catch (e) {
+      console.warn(
+        "[wallet] couldn't read existing wallet funding tx",
+        e instanceof Error ? e.message : e,
+      );
+    }
+    return { pubkey: existing.pubkey, airdropSig, alreadyExisted: true };
+  }
 
   const { generateWallet } = await import("./solana.server");
   const wallet = await generateWallet();
@@ -31,10 +53,7 @@ export async function ensureCustodialWallet(
     .insert({ user_id: userId, encrypted_secret: wallet.encryptedSecret });
   if (secErr) throw secErr;
 
-  await supabaseAdmin
-    .from("profiles")
-    .update({ solana_wallet: wallet.pubkey })
-    .eq("id", userId);
+  await supabaseAdmin.from("profiles").update({ solana_wallet: wallet.pubkey }).eq("id", userId);
 
   // Fund the new wallet from the backend treasury (master_wallet) so its
   // address shows as live on Solana Explorer. Wrapped in try/catch — a
