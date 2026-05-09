@@ -57,10 +57,16 @@ export async function serverCreateVault(input: {
   amount_cad: number;
   condition: VaultCondition;
   beneficiaries: { name: string; email: string; pct: number }[];
-}): Promise<{ id: string; vault_pda: string; tx_signature: string }> {
+}): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string }> {
   const res = await createVault({ data: input });
   await hydrateVaults();
-  return { id: res.id, vault_pda: res.vault_pda, tx_signature: res.tx_signature };
+  return {
+    id: res.id,
+    vault_pda: res.vault_pda,
+    tx_signature: res.tx_signature,
+    owner_pubkey: res.owner_pubkey,
+    hot_pubkey: res.hot_pubkey,
+  };
 }
 
 export async function serverCheckIn(vaultId: string) {

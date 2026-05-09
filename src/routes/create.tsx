@@ -7,6 +7,7 @@ import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { formatCAD, type VaultCondition } from "@/lib/legacy-data";
 import { serverCreateVault } from "@/lib/vault-client";
 import { getUser } from "@/lib/legacy-auth";
+import { solscanUrl } from "@/lib/solana-explorer";
 
 
 export const Route = createFileRoute("/create")({
@@ -74,7 +75,7 @@ function Create() {
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string } | null>(null);
+  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string } | null>(null);
 
   useEffect(() => { if (!getUser()) navigate({ to: "/login" }); }, [navigate]);
 
@@ -168,23 +169,37 @@ function Create() {
               <div className="font-medium flex items-center gap-2">
                 <span>🔗</span><span>Recorded on Solana devnet</span>
               </div>
-              <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>Vault account</div>
+
+              <div className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>Your system wallet</div>
               <a
-                href={`https://explorer.solana.com/address/${chain.vault_pda}?cluster=devnet`}
+                href={solscanUrl("address", chain.owner_pubkey)}
                 target="_blank" rel="noreferrer"
                 className="text-xs font-mono break-all underline"
                 style={{ color: "var(--forest)" }}
               >
-                {chain.vault_pda} ↗
+                {chain.owner_pubkey} ↗
               </a>
-              <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>Funding transaction</div>
+
+              <div className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>
+                Vault proof transaction · 0.001 SOL → platform hot wallet
+              </div>
               <a
-                href={`https://explorer.solana.com/tx/${chain.tx_signature}?cluster=devnet`}
+                href={solscanUrl("tx", chain.tx_signature)}
                 target="_blank" rel="noreferrer"
                 className="text-xs font-mono break-all underline"
                 style={{ color: "var(--forest)" }}
               >
                 {chain.tx_signature} ↗
+              </a>
+
+              <div className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>Vault account (program PDA)</div>
+              <a
+                href={solscanUrl("address", chain.vault_pda)}
+                target="_blank" rel="noreferrer"
+                className="text-xs font-mono break-all underline opacity-80"
+                style={{ color: "var(--forest)" }}
+              >
+                {chain.vault_pda} ↗
               </a>
             </div>
           )}
