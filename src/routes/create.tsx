@@ -155,7 +155,40 @@ function Create() {
           </motion.h1>
           <p className="mt-4" style={{ color: "var(--warm-gray)" }}>Vault ID</p>
           <p className="mt-1" style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 20, letterSpacing: "0.08em" }}>{success}</p>
-          
+
+          {chain && (
+            <div
+              className="mt-6 mx-auto max-w-md p-4 rounded-xl text-left text-sm"
+              style={{
+                background: "rgba(212,165,116,0.10)",
+                border: "1px solid rgba(212,165,116,0.35)",
+                color: "var(--forest)",
+              }}
+            >
+              <div className="font-medium flex items-center gap-2">
+                <span>🔗</span><span>Recorded on Solana devnet</span>
+              </div>
+              <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>Vault account</div>
+              <a
+                href={`https://explorer.solana.com/address/${chain.vault_pda}?cluster=devnet`}
+                target="_blank" rel="noreferrer"
+                className="text-xs font-mono break-all underline"
+                style={{ color: "var(--forest)" }}
+              >
+                {chain.vault_pda} ↗
+              </a>
+              <div className="mt-2 text-xs" style={{ color: "var(--warm-gray)" }}>Funding transaction</div>
+              <a
+                href={`https://explorer.solana.com/tx/${chain.tx_signature}?cluster=devnet`}
+                target="_blank" rel="noreferrer"
+                className="text-xs font-mono break-all underline"
+                style={{ color: "var(--forest)" }}
+              >
+                {chain.tx_signature} ↗
+              </a>
+            </div>
+          )}
+
           <button onClick={() => navigate({ to: "/dashboard" })} className="ll-pill ll-pill-primary mt-8">Go to Dashboard</button>
         </div>
       </PageShell>
