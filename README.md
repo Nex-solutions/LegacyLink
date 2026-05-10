@@ -101,7 +101,7 @@ LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ra
 
 ### Step-by-step
 
-1. **Sign up + KYC.** Email + password (managed Postgres auth (Supabase-compatible)) and a lightweight KYC step — required because we move Canadian dollars on the user's behalf.
+1. **Sign up + KYC.** Email + password (managed Postgres + Auth backend) and a lightweight KYC step — required because we move Canadian dollars on the user's behalf.
 2. **Custodial wallet provisioned.** A Solana keypair is generated server-side, the secret is encrypted at rest, and a small **proof-of-life transfer (`0.001 SOL`)** is broadcast as the user's first verifiable on-chain artifact.
 3. **Owner funds the vault in CAD.** The owner pays via Interac e-Transfer or card. **Paytrie on-ramps the CAD into USDC** and that USDC lands directly in the owner's custodial wallet on Solana.
 4. **Sweep into the hot wallet.** As soon as the on-ramp settles, the platform **sweeps the USDC from the user's custodial wallet into the system hot wallet** (a single, well-monitored treasury account). This consolidates funds for vault accounting, gas efficiency, and clean off-ramp routing.
