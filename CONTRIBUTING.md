@@ -39,7 +39,7 @@ docs(readme): clarify devnet setup
 - [ ] `bun run build` succeeds
 - [ ] New code has types (no `any` unless justified)
 - [ ] UI changes include screenshots or a short recording
-- [ ] DB changes ship as a migration in `supabase/migrations/`
+- [ ] DB changes ship as a SQL migration in `db/migrations/`
 - [ ] Sensitive logic stays server-side (`*.server.ts` / `createServerFn`)
 - [ ] RLS policies updated for any new tables
 
