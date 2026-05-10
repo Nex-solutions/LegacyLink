@@ -11,7 +11,7 @@ Set conditions today, your people get paid in CAD automatically. No lawyers, no 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 
-[Live demo](https://ember-trust.lovable.app) · [Report a bug](../../issues) · [Request a feature](../../issues)
+[Live demo](https://ember-trust.lovable.app) <sub>(hosted preview)</sub> · [Report a bug](../../issues) · [Request a feature](../../issues)
 
 </div>
 
@@ -63,7 +63,7 @@ Traditional estate planning is expensive, slow, and inaccessible. LegacyLink com
 LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ramp them to USDC into the owner's custodial wallet, **sweep that USDC into the system hot wallet, lock it in a programmable Solana vault**, then on payout the system triggers an off-ramp through Paytrie that pays each beneficiary in CAD via Interac. The owner never sees crypto. The beneficiaries never see crypto. The chain is the receipt.
 
 ```text
-  Owner                Lovable platform                   Solana (devnet)            Beneficiary
+  Owner                LegacyLink backend                    Solana (devnet)            Beneficiary
   ─────                ────────────────                   ───────────────            ───────────
    │  1. Sign up + KYC      │                                   │                         │
    │ ─────────────────────► │  Provision custodial wallet       │                         │
@@ -101,7 +101,7 @@ LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ra
 
 ### Step-by-step
 
-1. **Sign up + KYC.** Email + password (Lovable Cloud auth) and a lightweight KYC step — required because we move Canadian dollars on the user's behalf.
+1. **Sign up + KYC.** Email + password (managed Postgres auth (Supabase-compatible)) and a lightweight KYC step — required because we move Canadian dollars on the user's behalf.
 2. **Custodial wallet provisioned.** A Solana keypair is generated server-side, the secret is encrypted at rest, and a small **proof-of-life transfer (`0.001 SOL`)** is broadcast as the user's first verifiable on-chain artifact.
 3. **Owner funds the vault in CAD.** The owner pays via Interac e-Transfer or card. **Paytrie on-ramps the CAD into USDC** and that USDC lands directly in the owner's custodial wallet on Solana.
 4. **Sweep into the hot wallet.** As soon as the on-ramp settles, the platform **sweeps the USDC from the user's custodial wallet into the system hot wallet** (a single, well-monitored treasury account). This consolidates funds for vault accounting, gas efficiency, and clean off-ramp routing.
@@ -128,7 +128,7 @@ Operational guidelines for forkers:
 
 - Generate a new keypair (`solana-keygen new --outfile hot.json`, then export the base58 secret) — **never reuse the demo key**.
 - Keep enough SOL for transaction fees + a buffer for sweeps (≥ 0.1 SOL on devnet for testing).
-- Store the secret in Lovable Cloud → Secrets, or your hosting provider's secret manager. Never commit it.
+- Store the secret in your secrets manager, or your hosting provider's secret manager. Never commit it.
 - For production, split responsibilities: hot wallet for active sweeps/payouts, cold wallet for reserves, and consider a multisig (e.g. Squads) on the hot wallet itself.
 - Rotate by minting a fresh keypair, draining the old one, and updating `MASTER_WALLET_SECRET`. Vault PDAs created under the previous key must be settled or migrated before rotation.
 
@@ -153,7 +153,7 @@ Operational guidelines for forkers:
              │                                │
              ▼                                ▼
    ┌──────────────────┐            ┌────────────────────────┐
-   │  Lovable Cloud    │            │  Solana (devnet)       │
+   │  managed backend    │            │  Solana (devnet)       │
    │  (Postgres + RLS) │            │  Anchor vault program  │
    │  Auth · Storage   │            │  Helius RPC            │
    └──────────────────┘            └────────────────────────┘
@@ -166,7 +166,7 @@ Operational guidelines for forkers:
 | Framework    | [TanStack Start v1](https://tanstack.com/start) (React 19, Vite 7)  |
 | Runtime      | Cloudflare Workers (edge) via `@cloudflare/vite-plugin`             |
 | Styling      | Tailwind CSS v4 + shadcn/ui + Framer Motion                         |
-| Backend      | Lovable Cloud (managed Postgres + Auth + Storage, RLS-first)        |
+| Backend      | Managed Postgres + Auth + Storage (Supabase-compatible), RLS-first        |
 | Chain        | Solana **devnet** · Anchor program · `@solana/web3.js`              |
 | RPC          | Helius                                                              |
 | Off-ramp     | Paytrie (CAD ⇄ stablecoin)                                          |
@@ -205,7 +205,7 @@ supabase/                    # Cloud config + migrations
 ### Prerequisites
 
 - [Bun](https://bun.sh) ≥ 1.1 (or Node 20 + npm if you prefer)
-- A Lovable Cloud project (or self-hosted Supabase) for backend
+- A Supabase (or compatible) project for backend
 - A Helius (or any) Solana **devnet** RPC URL
 - A funded **devnet** master wallet (≥ 0.1 SOL) for sweeps
 
@@ -223,7 +223,7 @@ The app boots at `http://localhost:5173`.
 
 ## Environment variables
 
-The `.env` file is auto-managed when running on Lovable. For local/self-hosted deployments, populate the following:
+Populate the following in your environment (or `.env` for local development):
 
 | Variable                       | Required | Purpose                                                      |
 | ------------------------------ | :------: | ------------------------------------------------------------ |
@@ -236,11 +236,11 @@ The `.env` file is auto-managed when running on Lovable. For local/self-hosted d
 | `PAYTRIE_API_KEY`              |    ⚠️    | Required only if you enable the CAD off-ramp                 |
 | `PAYTRIE_WEBHOOK_SECRET`       |    ⚠️    | HMAC secret for the `/api/public/paytrie-webhook` endpoint   |
 
-> ⚠️ Never commit secrets. `.env` is git-ignored. Use Lovable Cloud → Secrets, or your hosting provider's secret manager.
+> ⚠️ Never commit secrets. `.env` is git-ignored. Use your secrets manager, or your hosting provider's secret manager.
 
 ## Database & migrations
 
-The schema lives in `supabase/` and is applied automatically when running on Lovable Cloud. Key tables:
+The schema lives in `supabase/` and is applied via standard Supabase migrations. Key tables:
 
 - `profiles` — user profile (NOT used for roles).
 - `user_roles` — RLS-friendly role table (`admin`, `advisor`, `user`).
@@ -287,7 +287,7 @@ bun run format       # Prettier
 
 LegacyLink is built for the edge (Cloudflare Workers) and ships as a single Vite build.
 
-- **Lovable**: click **Publish** in the editor — handled end-to-end.
+- **One-click hosting**: any TanStack Start–compatible PaaS (e.g. Cloudflare Pages/Workers, Vercel) — connect the repo and ship.
 - **Self-host**: deploy the Vite build to Cloudflare Workers, Vercel Edge, or any TanStack Start–compatible runtime. See [`wrangler.jsonc`](wrangler.jsonc) for the Worker config.
 
 ## Security
