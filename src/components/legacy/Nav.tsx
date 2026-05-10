@@ -60,11 +60,14 @@ export function AppHeader() {
           <>
             <Link
               to="/advisor"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm tracking-tight rounded-full px-3 py-1.5 transition-colors"
-              style={{ color: "var(--forest)", background: "rgba(232,160,32,0.14)" }}
+              title="Open the advisor portal"
+              aria-label="Open the advisor portal"
+              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold tracking-tight rounded-full px-3.5 py-1.5 border transition-all hover:shadow-sm hover:-translate-y-px"
+              style={{ color: "var(--forest)", background: "rgba(232,160,32,0.18)", borderColor: "rgba(232,160,32,0.55)" }}
             >
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
               For Advisors
+              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
             </Link>
             <span className="hidden sm:inline-block h-4 w-px" style={{ background: "rgba(26,46,26,0.14)" }} />
           </>
