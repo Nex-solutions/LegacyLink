@@ -246,7 +246,7 @@ Populate the following in your environment (or `.env` for local development):
 
 ## Database & migrations
 
-The schema lives in `supabase/` and is applied via standard Supabase migrations. Key tables:
+The schema lives in `db/migrations/` and is applied via standard SQL migrations. Key tables:
 
 - `profiles` — user profile (NOT used for roles).
 - `user_roles` — RLS-friendly role table (`admin`, `advisor`, `user`).
