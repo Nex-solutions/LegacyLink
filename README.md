@@ -197,9 +197,10 @@ src/
 ├── components/
 │   ├── legacy/              # Brand components (Nav, PageShell, VaultCard)
 │   └── ui/                  # shadcn/ui primitives
-├── integrations/supabase/   # Auto-generated client + types (DO NOT EDIT)
+├── integrations/db/         # Auto-generated backend client + types (DO NOT EDIT)
 └── styles.css               # Tailwind v4 tokens
-supabase/                    # Cloud config + migrations
+db/                          # Backend config + SQL migrations
+
 ```
 
 ## Getting started
