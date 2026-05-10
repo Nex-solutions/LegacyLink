@@ -230,18 +230,19 @@ The app boots at `http://localhost:5173`.
 
 Populate the following in your environment (or `.env` for local development):
 
-| Variable                       | Required | Purpose                                                      |
-| ------------------------------ | :------: | ------------------------------------------------------------ |
-| `VITE_SUPABASE_URL`            |    ✅    | Backend URL                                                  |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`|    ✅    | Public/anon key                                              |
-| `VITE_SUPABASE_PROJECT_ID`     |    ✅    | Project ref                                                  |
-| `SUPABASE_SERVICE_ROLE_KEY`    |    ✅    | Server-side privileged operations                            |
-| `SOLANA_RPC_URL`               |    ✅    | Helius (or any) Solana **devnet** endpoint                   |
-| `MASTER_WALLET_SECRET`         |    ✅    | base58 secret for the treasury keypair                       |
-| `PAYTRIE_API_KEY`              |    ⚠️    | Required only if you enable the CAD off-ramp                 |
-| `PAYTRIE_WEBHOOK_SECRET`       |    ⚠️    | HMAC secret for the `/api/public/paytrie-webhook` endpoint   |
+| Variable                       | Required | Purpose                                                              |
+| ------------------------------ | :------: | -------------------------------------------------------------------- |
+| `BACKEND_URL`                  |    ✅    | Your backend (managed Postgres + Auth) base URL                      |
+| `BACKEND_PUBLISHABLE_KEY`      |    ✅    | Public/anon key for browser-side calls                               |
+| `BACKEND_PROJECT_ID`           |    ✅    | Backend project identifier                                           |
+| `BACKEND_SERVICE_ROLE_KEY`     |    ✅    | Server-side privileged key (never ship to the browser)               |
+| `SOLANA_RPC_URL`               |    ✅    | Helius (or any) Solana **devnet** endpoint                           |
+| `MASTER_WALLET_SECRET`         |    ✅    | base58 secret for **your** hot wallet keypair                        |
+| `PAYTRIE_API_KEY`              |    ✅    | Required for CAD ↔ USDC on/off-ramp                                  |
+| `PAYTRIE_WEBHOOK_SECRET`       |    ✅    | HMAC secret for the `/api/public/paytrie-webhook` endpoint           |
 
-> ⚠️ Never commit secrets. `.env` is git-ignored. Use your secrets manager, or your hosting provider's secret manager.
+> ⚠️ Never commit secrets. `.env` is git-ignored. Use your hosting provider's secret manager.
+
 
 ## Database & migrations
 
