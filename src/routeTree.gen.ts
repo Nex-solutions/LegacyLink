@@ -18,6 +18,7 @@ import { Route as DevnetTestRouteImport } from './routes/devnet-test'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as ClaimRouteImport } from './routes/claim'
+import { Route as BusinessPlanRouteImport } from './routes/business-plan'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdvisorIndexRouteImport } from './routes/advisor.index'
 import { Route as VaultIdRouteImport } from './routes/vault.$id'
@@ -78,6 +79,11 @@ const CreateRoute = CreateRouteImport.update({
 const ClaimRoute = ClaimRouteImport.update({
   id: '/claim',
   path: '/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessPlanRoute = BusinessPlanRouteImport.update({
+  id: '/business-plan',
+  path: '/business-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -164,6 +170,7 @@ const AdvisorClientsClientIdVaultVaultIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/business-plan': typeof BusinessPlanRoute
   '/claim': typeof ClaimRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/business-plan': typeof BusinessPlanRoute
   '/claim': typeof ClaimRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/business-plan': typeof BusinessPlanRoute
   '/claim': typeof ClaimRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/business-plan'
     | '/claim'
     | '/create'
     | '/dashboard'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/business-plan'
     | '/claim'
     | '/create'
     | '/dashboard'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/business-plan'
     | '/claim'
     | '/create'
     | '/dashboard'
@@ -330,6 +342,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BusinessPlanRoute: typeof BusinessPlanRoute
   ClaimRoute: typeof ClaimRoute
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       path: '/claim'
       fullPath: '/claim'
       preLoaderRoute: typeof ClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business-plan': {
+      id: '/business-plan'
+      path: '/business-plan'
+      fullPath: '/business-plan'
+      preLoaderRoute: typeof BusinessPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -552,6 +572,7 @@ const AdvisorClientsClientIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BusinessPlanRoute: BusinessPlanRoute,
   ClaimRoute: ClaimRoute,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
