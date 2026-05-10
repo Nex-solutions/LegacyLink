@@ -21,6 +21,6 @@ jobs:
       - name: Build
         run: bun run build
         env:
-          VITE_SUPABASE_URL: https://example.supabase.co
-          VITE_SUPABASE_PUBLISHABLE_KEY: placeholder
-          VITE_SUPABASE_PROJECT_ID: placeholder
+          BACKEND_URL: https://example.test
+          BACKEND_PUBLISHABLE_KEY: placeholder
+          BACKEND_PROJECT_ID: placeholder

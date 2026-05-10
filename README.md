@@ -101,7 +101,7 @@ LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ra
 
 ### Step-by-step
 
-1. **Sign up + KYC.** Email + password (managed Postgres auth (Supabase-compatible)) and a lightweight KYC step — required because we move Canadian dollars on the user's behalf.
+1. **Sign up + KYC.** Email + password (managed Postgres + Auth backend) and a lightweight KYC step — required because we move Canadian dollars on the user's behalf.
 2. **Custodial wallet provisioned.** A Solana keypair is generated server-side, the secret is encrypted at rest, and a small **proof-of-life transfer (`0.001 SOL`)** is broadcast as the user's first verifiable on-chain artifact.
 3. **Owner funds the vault in CAD.** The owner pays via Interac e-Transfer or card. **Paytrie on-ramps the CAD into USDC** and that USDC lands directly in the owner's custodial wallet on Solana.
 4. **Sweep into the hot wallet.** As soon as the on-ramp settles, the platform **sweeps the USDC from the user's custodial wallet into the system hot wallet** (a single, well-monitored treasury account). This consolidates funds for vault accounting, gas efficiency, and clean off-ramp routing.
@@ -161,18 +161,20 @@ Operational guidelines for forkers:
 
 ## Tech stack
 
-| Layer        | Choice                                                              |
-| ------------ | ------------------------------------------------------------------- |
-| Framework    | [TanStack Start v1](https://tanstack.com/start) (React 19, Vite 7)  |
-| Runtime      | Cloudflare Workers (edge) via `@cloudflare/vite-plugin`             |
-| Styling      | Tailwind CSS v4 + shadcn/ui + Framer Motion                         |
-| Backend      | Managed Postgres + Auth + Storage (Supabase-compatible), RLS-first        |
-| Chain        | Solana **devnet** · Anchor program · `@solana/web3.js`              |
-| RPC          | Helius                                                              |
-| Off-ramp     | Paytrie (CAD ⇄ stablecoin)                                          |
-| Validation   | Zod                                                                 |
-| Forms        | React Hook Form                                                     |
-| Tooling      | TypeScript (strict), ESLint, Prettier, Bun                          |
+| Layer        | Choice                                                                            |
+| ------------ | --------------------------------------------------------------------------------- |
+| Framework    | [TanStack Start v1](https://tanstack.com/start) (React 19, Vite 7)                |
+| Runtime      | Cloudflare Workers (edge) via `@cloudflare/vite-plugin`                           |
+| Styling      | Tailwind CSS v4 + shadcn/ui + Framer Motion                                       |
+| Backend      | Managed Postgres + Auth + Storage, RLS-first                                      |
+| Chain        | Solana **devnet** · Anchor program · `@solana/web3.js`                            |
+| RPC          | Helius                                                                            |
+| Fiat ↔ USDC  | **Paytrie** — handles **both CAD → USDC on-ramp and USDC → CAD off-ramp**         |
+| Payouts      | Interac e-Transfer (via Paytrie)                                                  |
+| Validation   | Zod                                                                               |
+| Forms        | React Hook Form                                                                   |
+| Tooling      | TypeScript (strict), ESLint, Prettier, Bun                                        |
+
 
 ## Project structure
 
@@ -195,9 +197,10 @@ src/
 ├── components/
 │   ├── legacy/              # Brand components (Nav, PageShell, VaultCard)
 │   └── ui/                  # shadcn/ui primitives
-├── integrations/supabase/   # Auto-generated client + types (DO NOT EDIT)
+├── integrations/db/         # Auto-generated backend client + types (DO NOT EDIT)
 └── styles.css               # Tailwind v4 tokens
-supabase/                    # Cloud config + migrations
+db/                          # Backend config + SQL migrations
+
 ```
 
 ## Getting started
@@ -205,9 +208,11 @@ supabase/                    # Cloud config + migrations
 ### Prerequisites
 
 - [Bun](https://bun.sh) ≥ 1.1 (or Node 20 + npm if you prefer)
-- A Supabase (or compatible) project for backend
+- A managed Postgres backend (any provider — bring your own connection string)
 - A Helius (or any) Solana **devnet** RPC URL
-- A funded **devnet** master wallet (≥ 0.1 SOL) for sweeps
+- A funded **devnet** hot wallet (≥ 0.1 SOL) for sweeps and payouts
+- A [Paytrie](https://paytrie.com) merchant account for the CAD ↔ USDC rails
+
 
 ### Install & run
 
@@ -225,22 +230,23 @@ The app boots at `http://localhost:5173`.
 
 Populate the following in your environment (or `.env` for local development):
 
-| Variable                       | Required | Purpose                                                      |
-| ------------------------------ | :------: | ------------------------------------------------------------ |
-| `VITE_SUPABASE_URL`            |    ✅    | Backend URL                                                  |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`|    ✅    | Public/anon key                                              |
-| `VITE_SUPABASE_PROJECT_ID`     |    ✅    | Project ref                                                  |
-| `SUPABASE_SERVICE_ROLE_KEY`    |    ✅    | Server-side privileged operations                            |
-| `SOLANA_RPC_URL`               |    ✅    | Helius (or any) Solana **devnet** endpoint                   |
-| `MASTER_WALLET_SECRET`         |    ✅    | base58 secret for the treasury keypair                       |
-| `PAYTRIE_API_KEY`              |    ⚠️    | Required only if you enable the CAD off-ramp                 |
-| `PAYTRIE_WEBHOOK_SECRET`       |    ⚠️    | HMAC secret for the `/api/public/paytrie-webhook` endpoint   |
+| Variable                       | Required | Purpose                                                              |
+| ------------------------------ | :------: | -------------------------------------------------------------------- |
+| `BACKEND_URL`                  |    ✅    | Your backend (managed Postgres + Auth) base URL                      |
+| `BACKEND_PUBLISHABLE_KEY`      |    ✅    | Public/anon key for browser-side calls                               |
+| `BACKEND_PROJECT_ID`           |    ✅    | Backend project identifier                                           |
+| `BACKEND_SERVICE_ROLE_KEY`     |    ✅    | Server-side privileged key (never ship to the browser)               |
+| `SOLANA_RPC_URL`               |    ✅    | Helius (or any) Solana **devnet** endpoint                           |
+| `MASTER_WALLET_SECRET`         |    ✅    | base58 secret for **your** hot wallet keypair                        |
+| `PAYTRIE_API_KEY`              |    ✅    | Required for CAD ↔ USDC on/off-ramp                                  |
+| `PAYTRIE_WEBHOOK_SECRET`       |    ✅    | HMAC secret for the `/api/public/paytrie-webhook` endpoint           |
 
-> ⚠️ Never commit secrets. `.env` is git-ignored. Use your secrets manager, or your hosting provider's secret manager.
+> ⚠️ Never commit secrets. `.env` is git-ignored. Use your hosting provider's secret manager.
+
 
 ## Database & migrations
 
-The schema lives in `supabase/` and is applied via standard Supabase migrations. Key tables:
+The schema lives in `db/migrations/` and is applied via standard SQL migrations. Key tables:
 
 - `profiles` — user profile (NOT used for roles).
 - `user_roles` — RLS-friendly role table (`admin`, `advisor`, `user`).
