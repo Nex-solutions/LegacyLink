@@ -208,9 +208,11 @@ db/                          # Backend config + SQL migrations
 ### Prerequisites
 
 - [Bun](https://bun.sh) ≥ 1.1 (or Node 20 + npm if you prefer)
-- A Supabase (or compatible) project for backend
+- A managed Postgres backend (any provider — bring your own connection string)
 - A Helius (or any) Solana **devnet** RPC URL
-- A funded **devnet** master wallet (≥ 0.1 SOL) for sweeps
+- A funded **devnet** hot wallet (≥ 0.1 SOL) for sweeps and payouts
+- A [Paytrie](https://paytrie.com) merchant account for the CAD ↔ USDC rails
+
 
 ### Install & run
 
