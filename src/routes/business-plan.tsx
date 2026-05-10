@@ -200,19 +200,27 @@ function BusinessPlan() {
         </div>
       </Section>
 
-      <Section label="05 · Business model" title="Three revenue streams. One platform.">
+      <Section label="05 · Business model" title="Four revenue streams. One platform.">
         <ul className="space-y-3">
           <li>
-            <strong style={{ color: "var(--forest)" }}>Subscription</strong> — $9/mo or
-            $89/yr per vault owner. Covers up to 5 active vaults + advisor seat.
+            <strong style={{ color: "var(--forest)" }}>Transaction fees</strong> — 0.50%
+            on every CAD → vault deposit and vault → CAD payout, capped at $250. Revenue
+            scales with money actually moving.
           </li>
           <li>
-            <strong style={{ color: "var(--forest)" }}>Transaction fee</strong> — 0.50%
-            on every payout, capped at $250. Aligns revenue with money actually moving.
+            <strong style={{ color: "var(--forest)" }}>Float &amp; yield on locked funds</strong>
+            — locked USDC sits in vetted, low-risk on-chain yield (T-bill-backed
+            stablecoin strategies). We share the spread and keep a managed cut.
           </li>
           <li>
-            <strong style={{ color: "var(--forest)" }}>Advisor SaaS</strong> — $49/seat/mo
-            for financial planners managing client books. White-label option at scale.
+            <strong style={{ color: "var(--forest)" }}>Beneficiary premium</strong> —
+            optional $5/mo per claimant for instant payouts, multi-recipient splits,
+            tax-ready statements, and concierge claim support.
+          </li>
+          <li>
+            <strong style={{ color: "var(--forest)" }}>Advisor SaaS</strong> —
+            $49/seat/mo for financial planners managing client books, with white-label
+            tier for credit unions and wealth desks.
           </li>
         </ul>
       </Section>
@@ -300,19 +308,19 @@ function BusinessPlan() {
         </p>
       </Section>
 
-      <Section label="12 · Ask" title="Pre-seed: $750K CAD on a SAFE.">
+      <Section label="12 · Milestones" title="What we ship over the next 12 months.">
         <ul className="space-y-3">
           <li>
-            <strong style={{ color: "var(--forest)" }}>Use of funds:</strong>
-            45% engineering · 25% audit + compliance · 20% advisor GTM · 10% reserves.
+            <strong style={{ color: "var(--forest)" }}>Engineering:</strong> third-party
+            Anchor audit, mainnet vault program, multi-sig advisor co-approval.
           </li>
           <li>
-            <strong style={{ color: "var(--forest)" }}>12-month milestones:</strong>
-            mainnet, 1,000 funded vaults, $1M AUM, profitability on unit economics.
+            <strong style={{ color: "var(--forest)" }}>Distribution:</strong> 10 advisor
+            firm pilots, 2 credit-union onboarding integrations, 1,000 funded vaults.
           </li>
           <li>
-            <strong style={{ color: "var(--forest)" }}>What we want from partners:</strong>
-            warm intros to Canadian credit unions and CFP networks.
+            <strong style={{ color: "var(--forest)" }}>Unit economics:</strong> $1M AUM
+            under management, profitable on transaction + float revenue alone.
           </li>
         </ul>
       </Section>
@@ -329,15 +337,13 @@ function BusinessPlan() {
               color: "var(--forest)",
             }}
           >
-            Want to back the rail Canadian families inherit on?
+            The rail Canadian families will inherit on.
           </h2>
           <p className="mt-4" style={{ color: "var(--warm-gray)" }}>
-            Reach the founders directly to discuss the round, the architecture, or both.
+            Try the live devnet demo, or head back to the product to explore the flow end-to-end.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a href="mailto:founders@legacylink.app" className="ll-pill ll-pill-primary">
-              Email the founders
-            </a>
+            <Link to="/signup" className="ll-pill ll-pill-primary">Try the demo</Link>
             <Link to="/" className="ll-pill ll-pill-ghost">See the product</Link>
           </div>
         </div>

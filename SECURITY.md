@@ -13,7 +13,7 @@ LegacyLink is in active development on **Solana devnet**. Only the `main` branch
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-Instead, email **security@legacylink.app** (or open a private GitHub Security Advisory) with:
+Instead, email **security@legacylink.dev** (or open a private GitHub Security Advisory) with:
 
 - A description of the issue and its potential impact
 - Steps to reproduce (proof-of-concept welcome)
