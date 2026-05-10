@@ -11,7 +11,7 @@ Set conditions today, your people get paid in CAD automatically. No lawyers, no 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 
-[Live demo](https://ember-trust.lovable.app) · [Report a bug](../../issues) · [Request a feature](../../issues)
+[Live demo](https://ember-trust.lovable.app) <sub>(hosted preview)</sub> · [Report a bug](../../issues) · [Request a feature](../../issues)
 
 </div>
 
@@ -287,7 +287,7 @@ bun run format       # Prettier
 
 LegacyLink is built for the edge (Cloudflare Workers) and ships as a single Vite build.
 
-- **Lovable**: click **Publish** in the editor — handled end-to-end.
+- **One-click hosting**: any TanStack Start–compatible PaaS (e.g. Cloudflare Pages/Workers, Vercel) — connect the repo and ship.
 - **Self-host**: deploy the Vite build to Cloudflare Workers, Vercel Edge, or any TanStack Start–compatible runtime. See [`wrangler.jsonc`](wrangler.jsonc) for the Worker config.
 
 ## Security
