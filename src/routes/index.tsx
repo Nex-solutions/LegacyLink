@@ -50,7 +50,7 @@ function Landing() {
             className="mx-auto mt-8 max-w-2xl text-lg"
             style={{ color: "var(--warm-gray)" }}
           >
-            A digital estate vault for Canadian families. Set conditions today, your people get paid in CAD automatically — secured on-chain, no lawyers, no probate delays.
+            Only for Canadians. A digital estate vault built exclusively for Canadian families — set conditions today, your people get paid in CAD automatically, no lawyers, no probate delays.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
