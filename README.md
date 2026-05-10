@@ -161,18 +161,20 @@ Operational guidelines for forkers:
 
 ## Tech stack
 
-| Layer        | Choice                                                              |
-| ------------ | ------------------------------------------------------------------- |
-| Framework    | [TanStack Start v1](https://tanstack.com/start) (React 19, Vite 7)  |
-| Runtime      | Cloudflare Workers (edge) via `@cloudflare/vite-plugin`             |
-| Styling      | Tailwind CSS v4 + shadcn/ui + Framer Motion                         |
-| Backend      | Managed Postgres + Auth + Storage (Supabase-compatible), RLS-first        |
-| Chain        | Solana **devnet** · Anchor program · `@solana/web3.js`              |
-| RPC          | Helius                                                              |
-| Off-ramp     | Paytrie (CAD ⇄ stablecoin)                                          |
-| Validation   | Zod                                                                 |
-| Forms        | React Hook Form                                                     |
-| Tooling      | TypeScript (strict), ESLint, Prettier, Bun                          |
+| Layer        | Choice                                                                            |
+| ------------ | --------------------------------------------------------------------------------- |
+| Framework    | [TanStack Start v1](https://tanstack.com/start) (React 19, Vite 7)                |
+| Runtime      | Cloudflare Workers (edge) via `@cloudflare/vite-plugin`                           |
+| Styling      | Tailwind CSS v4 + shadcn/ui + Framer Motion                                       |
+| Backend      | Managed Postgres + Auth + Storage, RLS-first                                      |
+| Chain        | Solana **devnet** · Anchor program · `@solana/web3.js`                            |
+| RPC          | Helius                                                                            |
+| Fiat ↔ USDC  | **Paytrie** — handles **both CAD → USDC on-ramp and USDC → CAD off-ramp**         |
+| Payouts      | Interac e-Transfer (via Paytrie)                                                  |
+| Validation   | Zod                                                                               |
+| Forms        | React Hook Form                                                                   |
+| Tooling      | TypeScript (strict), ESLint, Prettier, Bun                                        |
+
 
 ## Project structure
 
