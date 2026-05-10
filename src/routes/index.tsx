@@ -198,6 +198,7 @@ function Landing() {
             <a href="#how" className="text-sm">How it works</a>
             <Link to="/claim" className="text-sm">Claim a vault</Link>
             <Link to="/advisor" className="text-sm">For Advisors</Link>
+            <Link to="/business-plan" className="text-sm">Business plan</Link>
             <a href="#" className="text-sm">Privacy</a>
           </div>
         </div>

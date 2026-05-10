@@ -11,7 +11,7 @@ Set conditions today, your people get paid in CAD automatically. No lawyers, no 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 
-[Live demo](https://ember-trust.lovable.app) <sub>(hosted preview)</sub> · [Report a bug](../../issues) · [Request a feature](../../issues)
+[Live site](https://legacylink.dev) · [Report a bug](../../issues) · [Request a feature](../../issues)
 
 </div>
 
