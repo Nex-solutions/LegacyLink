@@ -60,20 +60,58 @@ Traditional estate planning is expensive, slow, and inaccessible. LegacyLink com
 
 ## How it works
 
+LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ramp them to a stablecoin under the hood, lock them in a programmable Solana vault, then off-ramp back to CAD when the release conditions trigger. Beneficiaries never touch crypto, never open a wallet, and never wait on probate.
+
 ```text
- ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
- │   Sign up    │ →  │  KYC + custodial │ →  │  Fund + create   │ →  │  Conditions met  │
- │ (email/pwd)  │    │  Solana wallet   │    │  vault on-chain  │    │  → CAD payout    │
- └──────────────┘    └──────────────────┘    └──────────────────┘    └──────────────────┘
-       Auth                  KMS                 Anchor program            Off-ramp
+  Owner                Lovable platform                  Solana (devnet)            Beneficiary
+  ─────                ────────────────                  ───────────────            ───────────
+   │  1. Sign up + KYC      │                                  │                         │
+   │ ─────────────────────► │  Provision custodial wallet      │                         │
+   │                        │ ───────────────────────────────► │                         │
+   │                        │  Proof-of-life tx (0.001 SOL)    │                         │
+   │                        │ ───────────────────────────────► │                         │
+   │                                                                                     │
+   │  2. Fund vault in CAD  │                                  │                         │
+   │   (Interac / card)     │                                  │                         │
+   │ ─────────────────────► │  CAD → USDC on-ramp (Paytrie)    │                         │
+   │                        │ ───────────────────────────────► │                         │
+   │                        │  Initialize vault (Anchor)       │                         │
+   │                        │ ───────────────────────────────► │                         │
+   │                        │ ◄─────────────────────────────── │  init_tx, tx_signature  │
+   │                                                                                     │
+   │  3. Set conditions     │                                                            │
+   │   • date / inactivity  │                                                            │
+   │   • beneficiary split  │                                                            │
+   │ ─────────────────────► │                                                            │
+   │                                                                                     │
+   │            ⏳ Time passes — owner checks in, or doesn't ⏳                          │
+   │                                                                                     │
+   │  4. Trigger fires      │  Sweep vault → treasury          │                         │
+   │                        │ ───────────────────────────────► │                         │
+   │                        │  USDC → CAD off-ramp (Paytrie)                             │
+   │                        │  Pay each beneficiary in CAD via Interac e-Transfer        │
+   │                        │ ─────────────────────────────────────────────────────────► │
+   │                                                                                     │
+   │  Every step writes a vault_event row + (where applicable) a public Solana tx link.  │
 ```
 
-1. **Sign up** with email + password (Lovable Cloud auth).
-2. A **custodial Solana wallet** is provisioned for the user. A small proof-of-life transfer (`0.001 SOL`) is broadcast from the signup → hot wallet, recorded as the user's first on-chain artifact.
-3. The user **funds a vault**, picks beneficiaries, and selects release conditions.
-4. The vault is initialized on-chain (Solana devnet today), with `init_tx` + `tx_signature` stored against the row in the database.
-5. When conditions trigger (time, inactivity, or manual release), funds sweep through the master/treasury wallet and are paid out in **CAD via the Interac off-ramp**.
-6. Every state change emits a `vault_event` row and (where applicable) a Solana transaction with a public explorer link.
+### Step-by-step
+
+1. **Sign up + KYC.** Email + password (Lovable Cloud auth) and a lightweight KYC step — required because we move Canadian dollars on the user's behalf.
+2. **Custodial wallet provisioned.** A Solana keypair is generated server-side, the secret is encrypted at rest, and a small **proof-of-life transfer (`0.001 SOL`)** is broadcast as the user's first verifiable on-chain artifact.
+3. **Owner funds the vault in CAD.** The owner pays via Interac e-Transfer or card. Paytrie **on-ramps the CAD into USDC** (a regulated Canadian fiat ↔ stablecoin rail) and the USDC lands in the user's custodial wallet.
+4. **Vault initialized on-chain.** Our Anchor program creates a vault PDA, locks the USDC, and stores the beneficiaries + release conditions. The `init_tx` + `tx_signature` are persisted against the row in Postgres for audit.
+5. **Conditions set.** The owner picks any combination of:
+   - **Date** — release on a specific calendar date.
+   - **Inactivity ("dead-man switch")** — release if the owner doesn't check in for N days.
+   - **Manual** — owner-triggered release, useful for living gifts.
+6. **Trigger fires.** A scheduled job evaluates conditions. When one matches, the vault is swept to the treasury wallet on-chain.
+7. **Off-ramp + payout.** Paytrie **converts USDC → CAD** and the platform sends each beneficiary their share via **Interac e-Transfer**. Beneficiaries receive plain Canadian dollars in their bank account — no wallet, no seed phrase, no crypto knowledge required.
+8. **Audit trail.** Every state change emits a `vault_event` row, and every on-chain action exposes a public **Solana Explorer** link from the UI.
+
+> 💡 **Why on-chain at all?** The chain is the source of truth nobody — including us — can quietly rewrite. The fiat rails handle UX; Solana handles guarantees.
+
+
 
 ## Architecture
 
