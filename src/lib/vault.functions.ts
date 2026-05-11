@@ -599,12 +599,13 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
 
     const { data: pendingBen, error: pendingErr } = await supabaseAdmin
       .from("beneficiaries")
-      .select("id")
+      .select("id, claimed_at")
       .eq("vault_id", data.vault_id)
       .eq("claim_token", data.claim_token)
       .maybeSingle();
     if (pendingErr) throw pendingErr;
     if (!pendingBen?.id) throw new Error("Invalid claim link");
+    if (pendingBen.claimed_at) throw new Error("This share has already been claimed");
 
     // On-chain claim proof: platform hot wallet → beneficiary claim wallet.
     const payout = await sendHotToBeneficiaryClaim(pendingBen.id, 0.001);
