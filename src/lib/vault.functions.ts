@@ -792,7 +792,7 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
     await supabaseAdmin.from("vault_events").insert({
       vault_id: data.vault_id,
       kind: "release",
-      detail: `Beneficiary claim: ${ben.email} · 0.001 SOL hot wallet → claim wallet`,
+      detail: `Beneficiary claim: ${ben.email} · 0.001 SOL hot wallet → user system wallet`,
       tx_signature: sig,
     });
 
