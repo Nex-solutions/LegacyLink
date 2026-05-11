@@ -125,14 +125,15 @@ function Create() {
   async function submit() {
     setSubmitting(true);
     try {
-      const { id, vault_pda, tx_signature, owner_pubkey, hot_pubkey, claim_demo } = await serverCreateVault({
+      const { id, vault_pda, tx_signature, owner_pubkey, hot_pubkey, letter_tx_signature, claim_demo } = await serverCreateVault({
         name: name || "Untitled Vault",
         amount_cad: amountNum,
         condition: getCondition(),
         beneficiaries: bens.map((b) => ({ name: b.name.trim(), email: b.email.trim().toLowerCase(), pct: Number(b.pct) })),
+        letter_message: letter.trim() || null,
       });
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
-      setChain({ vault_pda, tx_signature, owner_pubkey, hot_pubkey, claim_demo });
+      setChain({ vault_pda, tx_signature, owner_pubkey, hot_pubkey, letter_tx_signature, claim_demo });
       setSuccess(id);
     } catch (e) {
       console.error(e);
