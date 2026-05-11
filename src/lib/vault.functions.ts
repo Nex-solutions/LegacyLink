@@ -13,7 +13,7 @@ import {
   isSimulatedMode,
 } from "./solana.server";
 import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
-import { sendHotToBeneficiaryClaim, sendUserToHotProof } from "./proof-tx.server";
+import { sendHotToUserSystemWallet, sendUserToHotProof } from "./proof-tx.server";
 import { getRampProvider } from "./ramps.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -596,10 +596,10 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    // Fetch vault for pda + amount
+    // Fetch vault for owner wallet + amount
     const { data: v } = await supabase
       .from("vaults")
-      .select("id, name, vault_pda, amount_cad")
+      .select("id, name, owner_id, amount_cad")
       .eq("id", data.vault_id)
       .maybeSingle();
     if (!v) throw new Error("Vault not found or not visible");
@@ -614,8 +614,8 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
     if (!pendingBen?.id) throw new Error("Invalid claim link");
     if (pendingBen.claimed_at) throw new Error("This share has already been claimed");
 
-    // On-chain claim proof: platform hot wallet → beneficiary claim wallet.
-    const payout = await sendHotToBeneficiaryClaim(pendingBen.id, 0.001);
+    // On-chain claim proof: platform hot wallet → owner's existing system wallet.
+    const payout = await sendHotToUserSystemWallet(v.owner_id, 0.001);
     const sig = payout.signature;
 
     // Atomically consume the token and emit audit event
@@ -759,7 +759,7 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: vault, error: vErr } = await supabaseAdmin
       .from("vaults")
-      .select("id, name, amount_cad, status, vault_pda")
+      .select("id, name, amount_cad, status, owner_id")
       .eq("id", data.vault_id)
       .maybeSingle();
     if (vErr) throw vErr;
@@ -778,9 +778,9 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
 
     const amount_cad = Number(vault.amount_cad) * Number(ben.pct) / 100;
 
-    // Demo on-chain payout: platform hot wallet → beneficiary claim wallet.
-    // Vault creation is the opposite direction (user wallet → hot wallet).
-    const payout = await sendHotToBeneficiaryClaim(ben.id, 0.001);
+    // Demo on-chain payout: platform hot wallet → owner's existing system wallet.
+    // Vault creation is the opposite direction (user system wallet → hot wallet).
+    const payout = await sendHotToUserSystemWallet(vault.owner_id, 0.001);
     const sig = payout.signature;
 
     const { error: uErr } = await supabaseAdmin
