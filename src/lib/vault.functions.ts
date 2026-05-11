@@ -213,6 +213,7 @@ export const createVault = createServerFn({ method: "POST" })
         unlock_date: data.condition.kind === "time" ? data.condition.unlock_date : null,
         inactivity_days: data.condition.kind === "inactivity" ? data.condition.inactivity_days : null,
         last_checkin: data.condition.kind === "inactivity" ? data.condition.last_checkin : null,
+        letter_message: data.letter_message?.trim() || null,
       })
       .select("id")
       .single();
