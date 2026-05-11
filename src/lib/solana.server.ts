@@ -197,6 +197,29 @@ async function ensureSolBalance(connection: Connection, pubkey: PublicKey): Prom
   }
 }
 
+async function sendWithBlockhashRetry(
+  fn: () => Promise<string>,
+  label: string,
+  attempts = 4,
+): Promise<string> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      const transient =
+        /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503/i.test(msg);
+      if (!transient) throw e;
+      const wait = 400 * Math.pow(2, i);
+      console.warn(`[solana] ${label} transient (attempt ${i + 1}/${attempts}): ${msg}. retrying in ${wait}ms`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
 async function fakeSig(kind: string, ...parts: string[]): Promise<string> {
   const bs58 = await loadBs58();
   const data = new TextEncoder().encode([kind, Date.now().toString(), ...parts].join("|"));
