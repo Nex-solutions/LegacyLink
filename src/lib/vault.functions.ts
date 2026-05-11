@@ -739,7 +739,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: vault, error: vErr } = await supabaseAdmin
       .from("vaults")
-      .select("id, name, amount_cad, status, condition_kind, unlock_date, inactivity_days, last_checkin")
+      .select("id, name, amount_cad, status, condition_kind, unlock_date, inactivity_days, last_checkin, letter_message, letter_tx_signature, owner_id")
       .eq("id", data.vault_id)
       .maybeSingle();
     if (vErr) throw vErr;
@@ -754,6 +754,19 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
     if (bErr) throw bErr;
     if (!ben) throw new Error("Invalid claim link");
 
+    // Best-effort owner display name (RLS bypassed via admin client).
+    let ownerName: string | null = null;
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name, first_name, last_name")
+      .eq("id", vault.owner_id)
+      .maybeSingle();
+    if (prof) {
+      ownerName = (prof.display_name as string | null)
+        ?? [prof.first_name, prof.last_name].filter(Boolean).join(" ").trim()
+        || null;
+    }
+
     return {
       vault: {
         id: vault.id,
@@ -761,6 +774,9 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
         amount_cad: Number(vault.amount_cad),
         status: statusToUi(vault.status as string),
         condition: rowToCondition(vault as never),
+        letter_message: (vault as { letter_message?: string | null }).letter_message ?? null,
+        letter_tx_signature: (vault as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
+        owner_name: ownerName,
       },
       beneficiary: {
         id: ben.id,
