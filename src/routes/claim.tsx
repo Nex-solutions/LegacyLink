@@ -151,6 +151,17 @@ function Claim() {
               ) : (
                 <>
                   <p className="mt-5 text-xs" style={{ color: "var(--warm-gray)" }}>Funds are paid via Interac e-Transfer to {tokenView.beneficiary.email}.</p>
+                  {tokenView.vault.letter_message && (
+                    <div className="mt-4 p-3 rounded-lg flex items-center gap-2 text-xs" style={{ background: "rgba(127,168,130,0.12)", border: "1px dashed rgba(127,168,130,0.45)", color: "var(--forest)" }}>
+                      <span>✉️</span>
+                      <span>A sealed letter from {tokenView.vault.owner_name ?? "the vault owner"} unlocks after you confirm.</span>
+                      {tokenView.vault.letter_tx_signature && (
+                        <a href={solscanUrl("tx", tokenView.vault.letter_tx_signature)} target="_blank" rel="noreferrer" className="ml-auto underline" style={{ color: "var(--honey)" }}>
+                          On-chain ↗
+                        </a>
+                      )}
+                    </div>
+                  )}
                   <button onClick={tokenClaim} disabled={tokenClaiming} className="ll-pill ll-pill-primary w-full mt-5" style={{ opacity: tokenClaiming ? 0.6 : 1 }}>
                     {tokenClaiming ? "Processing claim…" : "Confirm & receive funds"}
                   </button>

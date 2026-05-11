@@ -78,7 +78,10 @@ function Create() {
 
   // step 4
   const [agree, setAgree] = useState(false);
-  const [letter, setLetter] = useState("");
+  const [letter, setLetter] = useState(() => {
+    const who = demoBenefs[0]?.name?.split(" ")[0] ?? "my dear";
+    return `${who}, if you're reading this, know that you were always on my mind. This is for the next chapter — use it well, and remember that love outlasts everything. — Always yours.`.slice(0, 280);
+  });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; letter_tx_signature: string | null; claim_demo: { name: string; email: string; token: string } | null } | null>(null);
