@@ -13,7 +13,7 @@ import {
   isSimulatedMode,
 } from "./solana.server";
 import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
-import { sendHotToUserSystemWallet, sendUserToHotProof } from "./proof-tx.server";
+import { sendHotToUserSystemWallet, sendUserToHotProof, anchorLetterMessage } from "./proof-tx.server";
 import { getRampProvider } from "./ramps.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
