@@ -98,7 +98,7 @@ export const listVaults = createServerFn({ method: "GET" })
         unlock_date, inactivity_days, last_checkin,
         created_at, vault_pda, tx_signature, letter_message,
         failure_count, last_step,
-        beneficiaries ( id, name, email, pct, claimed_at, claim_token )
+        beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
       `)
       .order("created_at", { ascending: false });
 
@@ -116,6 +116,7 @@ export const listVaults = createServerFn({ method: "GET" })
         pct: Number(b.pct),
         claimed_at: b.claimed_at,
         claim_token: b.claim_token,
+        payout_tx_signature: b.payout_tx_signature,
       })),
       created_at: (row.created_at as string).slice(0, 10),
       vault_pda: row.vault_pda,
@@ -139,7 +140,7 @@ export const getVaultById = createServerFn({ method: "GET" })
         id, name, amount_cad, status, condition_kind,
         unlock_date, inactivity_days, last_checkin,
         created_at, vault_pda, tx_signature, letter_message,
-        beneficiaries ( id, name, email, pct, claimed_at, claim_token )
+        beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
       `)
       .eq("id", data.id)
       .maybeSingle();
@@ -153,7 +154,7 @@ export const getVaultById = createServerFn({ method: "GET" })
       condition: rowToCondition(row as never),
       beneficiaries: (row.beneficiaries ?? []).map((b) => ({
         id: b.id, name: b.name, email: b.email, pct: Number(b.pct),
-        claimed_at: b.claimed_at, claim_token: b.claim_token,
+        claimed_at: b.claimed_at, claim_token: b.claim_token, payout_tx_signature: b.payout_tx_signature,
       })),
       created_at: (row.created_at as string).slice(0, 10),
       vault_pda: row.vault_pda,
