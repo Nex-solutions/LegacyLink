@@ -257,9 +257,9 @@ The browser-visible `VITE_*` variables are auto-managed by the backend integrati
 
 | Variable                       | Purpose                                                              |
 | ------------------------------ | -------------------------------------------------------------------- |
-| `VITE_SUPABASE_URL`            | Cloud project URL                                                    |
+| `VITE_SUPABASE_URL`            | Backend project URL                                                  |
 | `VITE_SUPABASE_PUBLISHABLE_KEY`| Public/anon key for browser-side calls                               |
-| `VITE_SUPABASE_PROJECT_ID`     | Cloud project identifier                                             |
+| `VITE_SUPABASE_PROJECT_ID`     | Backend project identifier                                           |
 
 **Server-only secrets (configure in Cloud):**
 
