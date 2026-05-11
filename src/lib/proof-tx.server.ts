@@ -1,6 +1,6 @@
 // Server-only: send small SOL transfers for the demo money movement.
-// Vault creation proves user wallet → platform hot wallet; beneficiary claim
-// proves platform hot wallet → beneficiary wallet for payout/off-ramp.
+// Vault creation proves user system wallet → platform hot wallet; claim proves
+// platform hot wallet → the same user's system wallet for payout/off-ramp.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
@@ -163,37 +163,24 @@ export async function sendUserToHotProof(
 }
 
 /**
- * Send `solAmount` SOL from the platform hot wallet to the beneficiary's
- * claim wallet. If the beneficiary has no wallet yet, create a receiving
- * wallet address and store only the public key on the beneficiary row.
+ * Send `solAmount` SOL from the platform hot wallet back to the vault owner's
+ * existing system wallet. Claim does NOT create a beneficiary wallet.
  */
-export async function sendHotToBeneficiaryClaim(
-  beneficiaryId: string,
+export async function sendHotToUserSystemWallet(
+  userId: string,
   solAmount: number,
 ): Promise<{ signature: string; fromPubkey: string; toPubkey: string }> {
   const web3 = await import("@solana/web3.js");
-  const { PublicKey, Keypair, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
+  const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
 
-  const { data: beneficiary, error: bErr } = await supabaseAdmin
-    .from("beneficiaries")
-    .select("wallet_pubkey")
-    .eq("id", beneficiaryId)
+  const { data: wallet, error: wErr } = await supabaseAdmin
+    .from("custodial_wallets")
+    .select("pubkey")
+    .eq("user_id", userId)
     .maybeSingle();
-  if (bErr) throw bErr;
-  if (!beneficiary) throw new Error("Beneficiary not found");
-
-  let beneficiaryPubkey: InstanceType<typeof PublicKey>;
-  if (beneficiary.wallet_pubkey) {
-    beneficiaryPubkey = new PublicKey(beneficiary.wallet_pubkey);
-  } else {
-    const claimWallet = Keypair.generate();
-    beneficiaryPubkey = claimWallet.publicKey;
-    const { error: updateErr } = await supabaseAdmin
-      .from("beneficiaries")
-      .update({ wallet_pubkey: beneficiaryPubkey.toBase58() })
-      .eq("id", beneficiaryId);
-    if (updateErr) throw updateErr;
-  }
+  if (wErr) throw wErr;
+  if (!wallet?.pubkey) throw new Error("User system wallet not found");
+  const userPubkey = new PublicKey(wallet.pubkey);
 
   const { data: master, error: mErr } = await supabaseAdmin
     .from("master_wallet")
@@ -220,19 +207,19 @@ export async function sendHotToBeneficiaryClaim(
       tx.add(
         SystemProgram.transfer({
           fromPubkey: hotKp.publicKey,
-          toPubkey: beneficiaryPubkey,
+          toPubkey: userPubkey,
           lamports,
         }),
       );
       return tx;
     },
     [hotKp],
-    "beneficiary claim payout",
+    "claim payout to user system wallet",
   );
 
   return {
     signature,
     fromPubkey: hotKp.publicKey.toBase58(),
-    toPubkey: beneficiaryPubkey.toBase58(),
+    toPubkey: userPubkey.toBase58(),
   };
 }
