@@ -5,7 +5,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
-import type { Connection, Signer, Transaction } from "@solana/web3.js";
+import type { Signer, Transaction } from "@solana/web3.js";
 
 function getRpcUrls(): string[] {
   const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
@@ -36,25 +36,8 @@ async function loadKeypair(encryptedSecret: string) {
   return Keypair.fromSecretKey(raw);
 }
 
-function isTransientSolanaError(error: unknown): boolean {
-  const msg = error instanceof Error ? error.message : String(error);
-  return /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503|rate limit|fetch failed|network/i.test(msg);
-}
-
-async function waitForSignature(connection: Connection, signature: string, label: string, timeoutMs = 10_000): Promise<void> {
-  const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    const { value } = await connection.getSignatureStatuses([signature]);
-    const status = value[0];
-    if (status?.err) throw new Error(`${label} failed: ${JSON.stringify(status.err)}`);
-    if (status?.confirmationStatus === "confirmed" || status?.confirmationStatus === "finalized") return;
-    await new Promise((resolve) => setTimeout(resolve, 750));
-  }
-  console.warn(`[proof-tx] ${label} sent; confirmation still pending (${signature})`);
-}
-
 async function sendWithFreshBlockhash(
-  connection: Connection,
+  connection: Awaited<ReturnType<typeof pickWorkingConnection>>,
   buildTx: (fresh: { blockhash: string; lastValidBlockHeight: number }) => Transaction,
   signers: Signer[],
   label: string,
@@ -71,13 +54,14 @@ async function sendWithFreshBlockhash(
         preflightCommitment: "confirmed",
         maxRetries: 3,
       });
-      await waitForSignature(connection, signature, label);
       return signature;
     } catch (error) {
       lastError = error;
-      if (!isTransientSolanaError(error)) throw error;
+      const msg = error instanceof Error ? error.message : String(error);
+      const transient = /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503|rate limit|fetch failed|network/i.test(msg);
+      if (!transient) throw error;
       const delay = 350 * Math.pow(2, i);
-      console.warn(`[proof-tx] ${label} transient retry ${i + 1}/${attempts}`, error instanceof Error ? error.message : error);
+      console.warn(`[proof-tx] ${label} transient retry ${i + 1}/${attempts}`, msg);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
