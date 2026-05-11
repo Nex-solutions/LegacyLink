@@ -312,7 +312,8 @@ export const retryVault = createServerFn({ method: "POST" })
         vaultId: row.id as string,
         amountCadCents: Math.round(Number(row.amount_cad) * 100),
       });
-      const fund = await fundVaultOnChain({ vaultPda: init.vaultPda, amountCad: Number(row.amount_cad) });
+      const proof = await sendUserToHotProof(userId, 0.001);
+      const fund = { signature: proof.signature };
       await supabase
         .from("vaults")
         .update({
