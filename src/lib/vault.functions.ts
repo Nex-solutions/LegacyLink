@@ -192,7 +192,7 @@ const createInputSchema = z.object({
 export const createVault = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createInputSchema.parse(d))
-  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null }> => {
+  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; letter_tx_signature: string | null; claim_demo: { name: string; email: string; token: string } | null }> => {
     const { supabase, userId } = context;
 
     // Reuse the user's signup system wallet — never generate a new one here.
