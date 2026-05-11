@@ -259,7 +259,7 @@ export async function initVaultOnChain(args: {
 
     const owner = await loadCustodialKeypair(walletRow.user_id);
     const { program, connection } = await buildProgram(owner);
-    await ensureSolBalance(connection, owner.publicKey);
+    void connection;
 
     const { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } = await loadWeb3();
     const { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } = await loadSpl();

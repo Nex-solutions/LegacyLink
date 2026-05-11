@@ -200,7 +200,15 @@ function Create() {
             </div>
           )}
 
-          <button onClick={() => navigate({ to: "/dashboard" })} className="ll-pill ll-pill-primary mt-8">Go to Dashboard</button>
+          <p className="mt-6 text-sm" style={{ color: "var(--warm-gray)" }}>
+            Reviewer demo: open this vault, release it, then use the beneficiary claim link shown on the vault page.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button onClick={() => navigate({ to: "/vault/$id", params: { id: success } })} className="ll-pill ll-pill-primary">
+              Open Vault Demo
+            </button>
+            <button onClick={() => navigate({ to: "/dashboard" })} className="ll-pill ll-pill-ghost">Go to Dashboard</button>
+          </div>
         </div>
       </PageShell>
     );

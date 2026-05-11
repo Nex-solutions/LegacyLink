@@ -8,6 +8,7 @@ import { formatCAD, getVault, type Vault } from "@/lib/legacy-data";
 import { evaluateAndHydrate, serverClaimByEmail } from "@/lib/vault-client";
 import { publicLookupClaim, publicClaimByToken } from "@/lib/vault.functions";
 import { conditionSummary } from "@/lib/vault-release";
+import { solscanUrl } from "@/lib/solana-explorer";
 
 type Search = { vault?: string; token?: string };
 
@@ -61,6 +62,7 @@ function Claim() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<Step>("lookup");
   const [vault, setVaultState] = useState<Vault | null>(null);
+  const [legacyClaimTx, setLegacyClaimTx] = useState<string | null>(null);
 
   const myShare = useMemo(() => {
     if (!vault) return null;
@@ -88,6 +90,7 @@ function Claim() {
     if (!vault || !myShare) return;
     try {
       const res = await serverClaimByEmail(vault.id, email);
+      setLegacyClaimTx(res.tx_signature);
       setStep("claimed");
       toast.success(`${formatCAD(res.amount_cad)} on its way to ${email}`);
     } catch (e) {
@@ -156,7 +159,15 @@ function Claim() {
               <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
                 {formatCAD(tokenClaimed.amount_cad)} is on its way to {tokenClaimed.email} via Interac e-Transfer.
               </p>
-              <p className="mt-2 text-xs font-mono break-all" style={{ color: "var(--warm-gray)" }}>tx · {tokenClaimed.tx_signature}</p>
+              <a
+                href={solscanUrl("tx", tokenClaimed.tx_signature)}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-block text-xs font-mono break-all underline"
+                style={{ color: "var(--honey)" }}
+              >
+                View hot wallet → claim wallet payout on Solscan ↗ {tokenClaimed.tx_signature}
+              </a>
               <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
             </motion.div>
           )}
@@ -209,6 +220,17 @@ function Claim() {
               <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl" style={{ background: "var(--sage)", color: "var(--forest)" }}>✓</div>
               <h2 className="mt-5" style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600 }}>Claim complete.</h2>
               <p className="mt-3" style={{ color: "var(--warm-gray)" }}>{formatCAD(myShare.payout)} from <strong>{vault.name}</strong> is on its way to {email}.</p>
+              {legacyClaimTx && (
+                <a
+                  href={solscanUrl("tx", legacyClaimTx)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-block text-xs font-mono break-all underline"
+                  style={{ color: "var(--honey)" }}
+                >
+                  View hot wallet → claim wallet payout on Solscan ↗ {legacyClaimTx}
+                </a>
+              )}
               <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
             </motion.div>
           )}

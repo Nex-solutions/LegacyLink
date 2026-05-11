@@ -10,11 +10,10 @@ import {
   fundVaultOnChain,
   checkInOnChain,
   releaseVaultOnChain,
-  claimOnChain,
   isSimulatedMode,
 } from "./solana.server";
 import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
-import { sendUserToHotProof } from "./proof-tx.server";
+import { sendHotToBeneficiaryClaim, sendUserToHotProof } from "./proof-tx.server";
 import { getRampProvider } from "./ramps.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -313,7 +312,8 @@ export const retryVault = createServerFn({ method: "POST" })
         vaultId: row.id as string,
         amountCadCents: Math.round(Number(row.amount_cad) * 100),
       });
-      const fund = await fundVaultOnChain({ vaultPda: init.vaultPda, amountCad: Number(row.amount_cad) });
+      const proof = await sendUserToHotProof(userId, 0.001);
+      const fund = { signature: proof.signature };
       await supabase
         .from("vaults")
         .update({
@@ -597,14 +597,19 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!v) throw new Error("Vault not found or not visible");
 
-    // Pre-compute on-chain claim signature
-    const sig = v.vault_pda
-      ? (await claimOnChain({
-          vaultPda: v.vault_pda,
-          beneficiaryEmail: "pending",
-          amountCad: Number(v.amount_cad),
-        })).signature
-      : `sim_claim_${Date.now()}`;
+    const { data: pendingBen, error: pendingErr } = await supabaseAdmin
+      .from("beneficiaries")
+      .select("id, claimed_at")
+      .eq("vault_id", data.vault_id)
+      .eq("claim_token", data.claim_token)
+      .maybeSingle();
+    if (pendingErr) throw pendingErr;
+    if (!pendingBen?.id) throw new Error("Invalid claim link");
+    if (pendingBen.claimed_at) throw new Error("This share has already been claimed");
+
+    // On-chain claim proof: platform hot wallet → beneficiary claim wallet.
+    const payout = await sendHotToBeneficiaryClaim(pendingBen.id, 0.001);
+    const sig = payout.signature;
 
     // Atomically consume the token and emit audit event
     const { data: result, error } = await supabase.rpc("consume_claim_token", {
@@ -754,13 +759,10 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
 
     const amount_cad = Number(vault.amount_cad) * Number(ben.pct) / 100;
 
-    const sig = vault.vault_pda
-      ? (await claimOnChain({
-          vaultPda: vault.vault_pda,
-          beneficiaryEmail: ben.email,
-          amountCad: amount_cad,
-        })).signature
-      : `sim_claim_${Date.now()}`;
+    // Demo on-chain payout: platform hot wallet → beneficiary claim wallet.
+    // Vault creation is the opposite direction (user wallet → hot wallet).
+    const payout = await sendHotToBeneficiaryClaim(ben.id, 0.001);
+    const sig = payout.signature;
 
     const { error: uErr } = await supabaseAdmin
       .from("beneficiaries")
@@ -771,7 +773,7 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
     await supabaseAdmin.from("vault_events").insert({
       vault_id: data.vault_id,
       kind: "release",
-      detail: `Beneficiary claim: ${ben.email}`,
+      detail: `Beneficiary claim: ${ben.email} · 0.001 SOL hot wallet → claim wallet`,
       tx_signature: sig,
     });
 

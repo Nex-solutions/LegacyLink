@@ -1,6 +1,6 @@
-// Server-only: send a small SOL transfer from a user's custodial wallet to the
-// platform hot wallet. Used as a real on-chain proof that the user's signup
-// wallet works end-to-end during vault creation.
+// Server-only: send small SOL transfers for the demo money movement.
+// Vault creation proves user wallet → platform hot wallet; beneficiary claim
+// proves platform hot wallet → beneficiary wallet for payout/off-ramp.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
@@ -159,5 +159,80 @@ export async function sendUserToHotProof(
     signature,
     fromPubkey: userKp.publicKey.toBase58(),
     toPubkey: hotPubkey.toBase58(),
+  };
+}
+
+/**
+ * Send `solAmount` SOL from the platform hot wallet to the beneficiary's
+ * claim wallet. If the beneficiary has no wallet yet, create a receiving
+ * wallet address and store only the public key on the beneficiary row.
+ */
+export async function sendHotToBeneficiaryClaim(
+  beneficiaryId: string,
+  solAmount: number,
+): Promise<{ signature: string; fromPubkey: string; toPubkey: string }> {
+  const web3 = await import("@solana/web3.js");
+  const { PublicKey, Keypair, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
+
+  const { data: beneficiary, error: bErr } = await supabaseAdmin
+    .from("beneficiaries")
+    .select("wallet_pubkey")
+    .eq("id", beneficiaryId)
+    .maybeSingle();
+  if (bErr) throw bErr;
+  if (!beneficiary) throw new Error("Beneficiary not found");
+
+  let beneficiaryPubkey: InstanceType<typeof PublicKey>;
+  if (beneficiary.wallet_pubkey) {
+    beneficiaryPubkey = new PublicKey(beneficiary.wallet_pubkey);
+  } else {
+    const claimWallet = Keypair.generate();
+    beneficiaryPubkey = claimWallet.publicKey;
+    const { error: updateErr } = await supabaseAdmin
+      .from("beneficiaries")
+      .update({ wallet_pubkey: beneficiaryPubkey.toBase58() })
+      .eq("id", beneficiaryId);
+    if (updateErr) throw updateErr;
+  }
+
+  const { data: master, error: mErr } = await supabaseAdmin
+    .from("master_wallet")
+    .select("encrypted_secret")
+    .eq("id", true)
+    .maybeSingle();
+  if (mErr) throw mErr;
+  if (!master?.encrypted_secret) {
+    throw new Error("Platform hot wallet not initialised");
+  }
+
+  const hotKp = await loadKeypair(master.encrypted_secret);
+  const connection = await pickWorkingConnection();
+  const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
+  const hotBalance = await connection.getBalance(hotKp.publicKey).catch(() => 0);
+  if (hotBalance < lamports + 10_000) {
+    throw new Error("Platform hot wallet has insufficient devnet SOL for claim payout");
+  }
+
+  const signature = await sendWithFreshBlockhash(
+    connection,
+    ({ blockhash, lastValidBlockHeight }) => {
+      const tx = new Transaction({ feePayer: hotKp.publicKey, blockhash, lastValidBlockHeight });
+      tx.add(
+        SystemProgram.transfer({
+          fromPubkey: hotKp.publicKey,
+          toPubkey: beneficiaryPubkey,
+          lamports,
+        }),
+      );
+      return tx;
+    },
+    [hotKp],
+    "beneficiary claim payout",
+  );
+
+  return {
+    signature,
+    fromPubkey: hotKp.publicKey.toBase58(),
+    toPubkey: beneficiaryPubkey.toBase58(),
   };
 }
