@@ -57,16 +57,7 @@ function Dashboard() {
     })();
   }, [navigate]);
 
-  async function handleResetDemo() {
-    try {
-      await serverResetDemo();
-      setVaults(getVaults());
-      toast.success("Demo data reset. Four vaults loaded for the live walkthrough.");
-    } catch (e) {
-      console.error(e);
-      toast.error("Couldn't reset demo");
-    }
-  }
+
 
   function handleInviteExternal(e: React.FormEvent) {
     e.preventDefault();
