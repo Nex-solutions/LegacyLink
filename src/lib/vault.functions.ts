@@ -711,7 +711,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
 
     const { data: ben, error: bErr } = await supabaseAdmin
       .from("beneficiaries")
-      .select("id, name, email, pct, claimed_at")
+      .select("id, name, email, pct, claimed_at, payout_tx_signature")
       .eq("vault_id", data.vault_id)
       .eq("claim_token", data.token)
       .maybeSingle();
@@ -733,6 +733,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
         pct: Number(ben.pct),
         payout_cad: Number(vault.amount_cad) * Number(ben.pct) / 100,
         claimed_at: ben.claimed_at,
+        payout_tx_signature: ben.payout_tx_signature,
       },
     };
   });
