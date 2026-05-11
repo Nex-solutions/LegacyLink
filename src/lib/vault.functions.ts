@@ -26,6 +26,7 @@ export type Beneficiary = {
   pct: number;
   claimed_at?: string | null;
   claim_token?: string | null;
+  payout_tx_signature?: string | null;
 };
 
 export type VaultCondition =
