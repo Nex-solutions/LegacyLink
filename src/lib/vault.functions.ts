@@ -267,6 +267,24 @@ export const createVault = createServerFn({ method: "POST" })
         if (benErr) throw benErr;
       }
 
+      // Anchor the optional letter on-chain via SPL Memo (non-critical).
+      let letterTx: string | null = null;
+      const letterText = data.letter_message?.trim();
+      if (letterText) {
+        const anchored = await anchorLetterMessage(userId, vaultId, letterText);
+        if (anchored?.signature) {
+          letterTx = anchored.signature;
+          await supabase.from("vaults").update({ letter_tx_signature: letterTx }).eq("id", vaultId);
+          await supabase.from("vault_events").insert({
+            vault_id: vaultId,
+            actor_id: userId,
+            kind: "fund",
+            detail: "Letter to beneficiary anchored on-chain (SPL Memo)",
+            tx_signature: letterTx,
+          });
+        }
+      }
+
       // Audit trail + mark complete
       await supabase.from("vault_events").insert([
         { vault_id: vaultId, actor_id: userId, kind: "fund", detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`, tx_signature: fund.signature },
@@ -279,6 +297,7 @@ export const createVault = createServerFn({ method: "POST" })
         tx_signature: fund.signature,
         owner_pubkey: proof.fromPubkey,
         hot_pubkey: proof.toPubkey,
+        letter_tx_signature: letterTx,
         claim_demo: beneficiaryRows[0]
           ? { name: beneficiaryRows[0].name, email: beneficiaryRows[0].email, token: beneficiaryRows[0].claim_token }
           : null,
