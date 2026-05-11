@@ -10,11 +10,10 @@ import {
   fundVaultOnChain,
   checkInOnChain,
   releaseVaultOnChain,
-  claimOnChain,
   isSimulatedMode,
 } from "./solana.server";
 import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
-import { sendUserToHotProof } from "./proof-tx.server";
+import { sendHotToBeneficiaryClaim, sendUserToHotProof } from "./proof-tx.server";
 import { getRampProvider } from "./ramps.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -754,13 +753,10 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
 
     const amount_cad = Number(vault.amount_cad) * Number(ben.pct) / 100;
 
-    const sig = vault.vault_pda
-      ? (await claimOnChain({
-          vaultPda: vault.vault_pda,
-          beneficiaryEmail: ben.email,
-          amountCad: amount_cad,
-        })).signature
-      : `sim_claim_${Date.now()}`;
+    // Demo on-chain payout: platform hot wallet → beneficiary claim wallet.
+    // Vault creation is the opposite direction (user wallet → hot wallet).
+    const payout = await sendHotToBeneficiaryClaim(ben.id, 0.001);
+    const sig = payout.signature;
 
     const { error: uErr } = await supabaseAdmin
       .from("beneficiaries")
@@ -771,7 +767,7 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
     await supabaseAdmin.from("vault_events").insert({
       vault_id: data.vault_id,
       kind: "release",
-      detail: `Beneficiary claim: ${ben.email}`,
+      detail: `Beneficiary claim: ${ben.email} · 0.001 SOL hot wallet → claim wallet`,
       tx_signature: sig,
     });
 
