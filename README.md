@@ -273,7 +273,7 @@ The browser-visible `VITE_*` variables are auto-managed by the backend integrati
 | `MASTER_WALLET_SECRET`         |    ✅    | base58 secret for **your** hot wallet keypair                        |
 | `PAYTRIE_API_KEY`              |    ✅    | Required for CAD ↔ USDC on/off-ramp                                  |
 | `PAYTRIE_WEBHOOK_SECRET`       |    ✅    | HMAC secret for the `/api/public/paytrie-webhook` endpoint           |
-| `LOVABLE_API_KEY`              |    ✅    | Lovable AI Gateway key (used by AI-assisted flows)                   |
+| `LOVABLE_API_KEY`              |    ✅    | AI gateway key (used by AI-assisted flows)                           |
 
 > ⚠️ Never commit secrets. `.env` is git-ignored. Use your hosting provider's secret manager.
 
