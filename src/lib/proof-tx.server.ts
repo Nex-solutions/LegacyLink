@@ -182,7 +182,7 @@ export async function sendHotToBeneficiaryClaim(
   if (bErr) throw bErr;
   if (!beneficiary) throw new Error("Beneficiary not found");
 
-  let beneficiaryPubkey: PublicKey;
+  let beneficiaryPubkey: InstanceType<typeof PublicKey>;
   if (beneficiary.wallet_pubkey) {
     beneficiaryPubkey = new PublicKey(beneficiary.wallet_pubkey);
   } else {
