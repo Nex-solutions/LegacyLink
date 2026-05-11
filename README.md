@@ -251,7 +251,7 @@ The app boots at `http://localhost:5173`.
 
 ## Environment variables
 
-The browser-visible `VITE_*` variables are auto-managed by Lovable Cloud (do not edit `.env` manually). Server-only secrets are configured in **Cloud → Settings → Secrets**.
+The browser-visible `VITE_*` variables are auto-managed by the backend integration (do not edit `.env` manually). Server-only secrets are configured in your hosting provider's secret manager.
 
 **Browser (auto-managed):**
 
