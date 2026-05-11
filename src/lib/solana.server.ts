@@ -197,6 +197,29 @@ async function ensureSolBalance(connection: Connection, pubkey: PublicKey): Prom
   }
 }
 
+async function sendWithBlockhashRetry(
+  fn: () => Promise<string>,
+  label: string,
+  attempts = 4,
+): Promise<string> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      const transient =
+        /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503/i.test(msg);
+      if (!transient) throw e;
+      const wait = 400 * Math.pow(2, i);
+      console.warn(`[solana] ${label} transient (attempt ${i + 1}/${attempts}): ${msg}. retrying in ${wait}ms`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
 async function fakeSig(kind: string, ...parts: string[]): Promise<string> {
   const bs58 = await loadBs58();
   const data = new TextEncoder().encode([kind, Date.now().toString(), ...parts].join("|"));
@@ -248,19 +271,22 @@ export async function initVaultOnChain(args: {
     const vaultUsdcAta = getAssociatedTokenAddressSync(usdcMint, vaultPda, true);
     const amountCents = new BN(Math.round((args.amountCadCents ?? 0)));
 
-    const signature = await program.methods
-      .initializeVault(Array.from(vaultIdBytes) as never, amountCents)
-      .accounts({
-        vault: vaultPda,
-        vaultUsdcAta,
-        owner: owner.publicKey,
-        usdcMint,
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
-      } as never)
-      .rpc();
+    const buildRpc = () =>
+      program.methods
+        .initializeVault(Array.from(vaultIdBytes) as never, amountCents)
+        .accounts({
+          vault: vaultPda,
+          vaultUsdcAta,
+          owner: owner.publicKey,
+          usdcMint,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+        } as never)
+        .rpc({ commitment: "confirmed", skipPreflight: false, maxRetries: 5 });
+
+    const signature = await sendWithBlockhashRetry(buildRpc, "init_vault");
 
     return { vaultPda: vaultPda.toBase58(), usdcAta: vaultUsdcAta.toBase58(), signature };
   } catch (e) {
