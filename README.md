@@ -232,7 +232,7 @@ supabase/                    # Backend config + SQL migrations
 ### Prerequisites
 
 - [Bun](https://bun.sh) ≥ 1.1 (or Node 20 + npm if you prefer)
-- A [Lovable Cloud](https://lovable.dev) project (managed Postgres + Auth + Storage) — auto-provisioned when you fork on Lovable
+- A managed Postgres + Auth + Storage backend (any provider — bring your own connection string)
 - A Helius (or any) Solana **devnet** RPC URL
 - A funded **devnet** hot wallet (≥ 0.1 SOL) for proof tx, sweeps, and claim payouts
 - A [Paytrie](https://paytrie.com) merchant account for the CAD ↔ USDC rails
