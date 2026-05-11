@@ -13,7 +13,7 @@ import {
   isSimulatedMode,
 } from "./solana.server";
 import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
-import { sendHotToUserSystemWallet, sendUserToHotProof } from "./proof-tx.server";
+import { sendHotToUserSystemWallet, sendUserToHotProof, anchorLetterMessage } from "./proof-tx.server";
 import { getRampProvider } from "./ramps.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -47,6 +47,7 @@ export type Vault = {
   vault_pda?: string | null;
   tx_signature?: string | null;
   letter_message?: string | null;
+  letter_tx_signature?: string | null;
   failure_count?: number;
   last_step?: string | null;
 };
@@ -97,7 +98,7 @@ export const listVaults = createServerFn({ method: "GET" })
       .select(`
         id, name, amount_cad, status, condition_kind,
         unlock_date, inactivity_days, last_checkin,
-        created_at, vault_pda, tx_signature, letter_message,
+        created_at, vault_pda, tx_signature, letter_message, letter_tx_signature,
         failure_count, last_step,
         beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
       `)
@@ -123,6 +124,7 @@ export const listVaults = createServerFn({ method: "GET" })
       vault_pda: row.vault_pda,
       tx_signature: row.tx_signature,
       letter_message: row.letter_message,
+      letter_tx_signature: (row as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
       failure_count: (row as { failure_count?: number }).failure_count ?? 0,
       last_step: (row as { last_step?: string | null }).last_step ?? null,
     }));
@@ -140,7 +142,7 @@ export const getVaultById = createServerFn({ method: "GET" })
       .select(`
         id, name, amount_cad, status, condition_kind,
         unlock_date, inactivity_days, last_checkin,
-        created_at, vault_pda, tx_signature, letter_message,
+        created_at, vault_pda, tx_signature, letter_message, letter_tx_signature,
         beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
       `)
       .eq("id", data.id)
@@ -161,6 +163,7 @@ export const getVaultById = createServerFn({ method: "GET" })
       vault_pda: row.vault_pda,
       tx_signature: row.tx_signature,
       letter_message: row.letter_message,
+      letter_tx_signature: (row as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
     };
   });
 
@@ -183,12 +186,13 @@ const createInputSchema = z.object({
   amount_cad: z.number().positive(),
   condition: conditionSchema,
   beneficiaries: z.array(beneficiaryInputSchema).min(1),
+  letter_message: z.string().max(280).optional().nullable(),
 });
 
 export const createVault = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createInputSchema.parse(d))
-  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null }> => {
+  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; letter_tx_signature: string | null; claim_demo: { name: string; email: string; token: string } | null }> => {
     const { supabase, userId } = context;
 
     // Reuse the user's signup system wallet — never generate a new one here.
@@ -209,6 +213,7 @@ export const createVault = createServerFn({ method: "POST" })
         unlock_date: data.condition.kind === "time" ? data.condition.unlock_date : null,
         inactivity_days: data.condition.kind === "inactivity" ? data.condition.inactivity_days : null,
         last_checkin: data.condition.kind === "inactivity" ? data.condition.last_checkin : null,
+        letter_message: data.letter_message?.trim() || null,
       })
       .select("id")
       .single();
@@ -262,6 +267,24 @@ export const createVault = createServerFn({ method: "POST" })
         if (benErr) throw benErr;
       }
 
+      // Anchor the optional letter on-chain via SPL Memo (non-critical).
+      let letterTx: string | null = null;
+      const letterText = data.letter_message?.trim();
+      if (letterText) {
+        const anchored = await anchorLetterMessage(userId, vaultId, letterText);
+        if (anchored?.signature) {
+          letterTx = anchored.signature;
+          await supabase.from("vaults").update({ letter_tx_signature: letterTx }).eq("id", vaultId);
+          await supabase.from("vault_events").insert({
+            vault_id: vaultId,
+            actor_id: userId,
+            kind: "fund",
+            detail: "Letter to beneficiary anchored on-chain (SPL Memo)",
+            tx_signature: letterTx,
+          });
+        }
+      }
+
       // Audit trail + mark complete
       await supabase.from("vault_events").insert([
         { vault_id: vaultId, actor_id: userId, kind: "fund", detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`, tx_signature: fund.signature },
@@ -274,6 +297,7 @@ export const createVault = createServerFn({ method: "POST" })
         tx_signature: fund.signature,
         owner_pubkey: proof.fromPubkey,
         hot_pubkey: proof.toPubkey,
+        letter_tx_signature: letterTx,
         claim_demo: beneficiaryRows[0]
           ? { name: beneficiaryRows[0].name, email: beneficiaryRows[0].email, token: beneficiaryRows[0].claim_token }
           : null,
@@ -715,7 +739,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: vault, error: vErr } = await supabaseAdmin
       .from("vaults")
-      .select("id, name, amount_cad, status, condition_kind, unlock_date, inactivity_days, last_checkin")
+      .select("id, name, amount_cad, status, condition_kind, unlock_date, inactivity_days, last_checkin, letter_message, letter_tx_signature, owner_id")
       .eq("id", data.vault_id)
       .maybeSingle();
     if (vErr) throw vErr;
@@ -730,6 +754,19 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
     if (bErr) throw bErr;
     if (!ben) throw new Error("Invalid claim link");
 
+    // Best-effort owner display name (RLS bypassed via admin client).
+    let ownerName: string | null = null;
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name, first_name, last_name")
+      .eq("id", vault.owner_id)
+      .maybeSingle();
+    if (prof) {
+      const dn = prof.display_name as string | null;
+      const full = [prof.first_name, prof.last_name].filter(Boolean).join(" ").trim();
+      ownerName = dn ?? (full || null);
+    }
+
     return {
       vault: {
         id: vault.id,
@@ -737,6 +774,9 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
         amount_cad: Number(vault.amount_cad),
         status: statusToUi(vault.status as string),
         condition: rowToCondition(vault as never),
+        letter_message: (vault as { letter_message?: string | null }).letter_message ?? null,
+        letter_tx_signature: (vault as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
+        owner_name: ownerName,
       },
       beneficiary: {
         id: ben.id,

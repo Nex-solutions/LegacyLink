@@ -78,9 +78,10 @@ function Create() {
 
   // step 4
   const [agree, setAgree] = useState(false);
+  const [letter, setLetter] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null } | null>(null);
+  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; letter_tx_signature: string | null; claim_demo: { name: string; email: string; token: string } | null } | null>(null);
 
   useEffect(() => { if (!getUser()) navigate({ to: "/login" }); }, [navigate]);
 
@@ -124,14 +125,15 @@ function Create() {
   async function submit() {
     setSubmitting(true);
     try {
-      const { id, vault_pda, tx_signature, owner_pubkey, hot_pubkey, claim_demo } = await serverCreateVault({
+      const { id, vault_pda, tx_signature, owner_pubkey, hot_pubkey, letter_tx_signature, claim_demo } = await serverCreateVault({
         name: name || "Untitled Vault",
         amount_cad: amountNum,
         condition: getCondition(),
         beneficiaries: bens.map((b) => ({ name: b.name.trim(), email: b.email.trim().toLowerCase(), pct: Number(b.pct) })),
+        letter_message: letter.trim() || null,
       });
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
-      setChain({ vault_pda, tx_signature, owner_pubkey, hot_pubkey, claim_demo });
+      setChain({ vault_pda, tx_signature, owner_pubkey, hot_pubkey, letter_tx_signature, claim_demo });
       setSuccess(id);
     } catch (e) {
       console.error(e);
@@ -196,6 +198,22 @@ function Create() {
               >
                 {chain.tx_signature} ↗
               </a>
+
+              {chain.letter_tx_signature && (
+                <>
+                  <div className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>
+                    Letter to beneficiary · anchored via SPL Memo from your system wallet
+                  </div>
+                  <a
+                    href={solscanUrl("tx", chain.letter_tx_signature)}
+                    target="_blank" rel="noreferrer"
+                    className="text-xs font-mono break-all underline"
+                    style={{ color: "var(--forest)" }}
+                  >
+                    {chain.letter_tx_signature} ↗
+                  </a>
+                </>
+              )}
 
             </div>
           )}
@@ -525,6 +543,23 @@ function Create() {
 
                 {/* Advisors are linked at the account level — they see all your trusts read-only. Manage from the dashboard. */}
 
+                <div className="mt-8">
+                  <label className="ll-label flex items-center justify-between">
+                    <span>A letter to your beneficiary <span style={{ color: "var(--warm-gray)" }}>(optional)</span></span>
+                    <span className="text-xs" style={{ color: "var(--warm-gray)" }}>{letter.length}/280 · anchored on Solana</span>
+                  </label>
+                  <textarea
+                    value={letter}
+                    onChange={(e) => setLetter(e.target.value.slice(0, 280))}
+                    placeholder="A few words you want them to read the day they receive this…"
+                    rows={4}
+                    className="ll-input"
+                    style={{ resize: "vertical", fontFamily: "var(--font-serif)" }}
+                  />
+                  <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>
+                    Stored on-chain via SPL Memo from your system wallet. Revealed to the beneficiary on claim.
+                  </p>
+                </div>
 
                 <label className="flex items-start gap-3 mt-6 cursor-pointer">
                   <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1" style={{ accentColor: "var(--honey)" }} />

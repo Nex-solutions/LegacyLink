@@ -223,3 +223,93 @@ export async function sendHotToUserSystemWallet(
     toPubkey: userPubkey.toBase58(),
   };
 }
+
+// SPL Memo program v2 — anchors arbitrary UTF-8 data on Solana.
+const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
+
+/**
+ * Anchor a vault owner's letter to their beneficiary on Solana devnet via an
+ * SPL Memo instruction signed by the user's own system wallet, so the memo
+ * lives "in" the user's wallet history. Non-critical: returns null on failure
+ * so vault creation can still complete.
+ */
+export async function anchorLetterMessage(
+  userId: string,
+  vaultId: string,
+  message: string,
+): Promise<{ signature: string } | null> {
+  try {
+    const trimmed = message.trim();
+    if (!trimmed) return null;
+
+    const web3 = await import("@solana/web3.js");
+    const { PublicKey, Transaction, TransactionInstruction } = web3;
+
+    const { data: secretRow, error: sErr } = await supabaseAdmin
+      .from("custodial_wallet_secrets")
+      .select("encrypted_secret")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (sErr) throw sErr;
+    if (!secretRow?.encrypted_secret) return null;
+    const userKp = await loadKeypair(secretRow.encrypted_secret);
+
+    const connection = await pickWorkingConnection();
+
+    // Cap memo payload — SPL memo is fine up to ~566 bytes per tx but we
+    // keep it tight so the tx stays cheap and renders nicely on Solscan.
+    const safe = trimmed.slice(0, 280);
+    const payload = JSON.stringify({ v: vaultId.slice(0, 8), m: safe, app: "LegacyLink" });
+
+    const memoIx = new TransactionInstruction({
+      keys: [{ pubkey: userKp.publicKey, isSigner: true, isWritable: false }],
+      programId: new PublicKey(MEMO_PROGRAM_ID),
+      data: Buffer.from(payload, "utf8"),
+    });
+
+    // Make sure the user wallet can pay fees; top up from master if not.
+    const balance = await connection.getBalance(userKp.publicKey).catch(() => 0);
+    if (balance < 10_000) {
+      const { data: master } = await supabaseAdmin
+        .from("master_wallet")
+        .select("encrypted_secret")
+        .eq("id", true)
+        .maybeSingle();
+      if (master?.encrypted_secret) {
+        const masterKp = await loadKeypair(master.encrypted_secret);
+        const { SystemProgram } = web3;
+        await sendWithFreshBlockhash(
+          connection,
+          ({ blockhash, lastValidBlockHeight }) => {
+            const tx = new Transaction({ feePayer: masterKp.publicKey, blockhash, lastValidBlockHeight });
+            tx.add(SystemProgram.transfer({
+              fromPubkey: masterKp.publicKey,
+              toPubkey: userKp.publicKey,
+              lamports: 20_000,
+            }));
+            return tx;
+          },
+          [masterKp],
+          "letter memo top-up",
+        );
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+    }
+
+    const signature = await sendWithFreshBlockhash(
+      connection,
+      ({ blockhash, lastValidBlockHeight }) => {
+        const tx = new Transaction({ feePayer: userKp.publicKey, blockhash, lastValidBlockHeight });
+        tx.add(memoIx);
+        return tx;
+      },
+      [userKp],
+      "letter memo anchor",
+    );
+
+    return { signature };
+  } catch (err) {
+    console.error("[proof-tx] anchorLetterMessage failed", err);
+    return null;
+  }
+}
