@@ -21,8 +21,9 @@ Set conditions today, your people get paid in CAD automatically. No lawyers, no 
 
 - [What is LegacyLink?](#what-is-legacylink)
 - [Why it exists](#why-it-exists)
+- [Key features](#key-features)
 - [How it works](#how-it-works)
-- [Architecture](#architecture)
+- [Letter to beneficiary (on-chain)](#letter-to-beneficiary-on-chain)
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
@@ -48,7 +49,7 @@ LegacyLink is an **estate-as-a-service** platform that lets a Canadian adult loc
 - **Inactivity-based** — release if the owner doesn't check in for N days ("dead-man switch").
 - **Manual** — owner-triggered release.
 
-Beneficiaries receive funds in **Canadian dollars** via Interac e-Transfer (off-ramp), while the source-of-truth lives **on Solana** as a verifiable, tamper-evident record.
+Beneficiaries receive funds in **Canadian dollars** via Interac e-Transfer (off-ramp), while the source-of-truth lives **on Solana** as a verifiable, tamper-evident record. Owners can also attach a short **letter to the beneficiary** that is anchored on-chain via SPL Memo and revealed at claim time.
 
 ## Why it exists
 
@@ -57,6 +58,17 @@ Beneficiaries receive funds in **Canadian dollars** via Interac e-Transfer (off-
 - Probate currently takes an average of **8 months** in Canada.
 
 Traditional estate planning is expensive, slow, and inaccessible. LegacyLink compresses it into ten minutes, with cryptographic guarantees that survive the user.
+
+## Key features
+
+- 🔒 **Programmable vaults** — time, inactivity, or manual release conditions.
+- 💸 **CAD in, CAD out** — Paytrie on/off-ramp; beneficiaries never touch crypto.
+- ⛓️ **On-chain proof at every step** — wallet provisioning, vault creation, letter, and claim payouts each emit a public Solana devnet signature.
+- ✉️ **Letter to beneficiary** — short message anchored via SPL Memo from the owner's system wallet, revealed to the beneficiary on successful claim with a Solscan verify link.
+- 🪪 **Token claim links** — each beneficiary gets a single-use, public claim URL (no sign-in required) so heirs can claim without onboarding.
+- 👨‍💼 **Advisor workspace** — read-only client overview for advisors linked at the account level.
+- 🛡️ **RLS-first backend** — every user-scoped table protected by row-level security and a `SECURITY DEFINER` role function.
+
 
 ## How it works
 
@@ -88,15 +100,16 @@ LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ra
    │                                                                                      │
    │            ⏳ Time passes — owner checks in, or doesn't ⏳                           │
    │                                                                                      │
-   │  4. Trigger fires      │  Unlock vault → HOT WALLET        │                         │
+   │  4. Beneficiary claims │  Sweep HOT WALLET → user system   │                         │
+   │                        │  wallet (on-chain payout proof)   │                         │
    │                        │ ────────────────────────────────► │                         │
-   │                        │  Hot wallet → Paytrie payout addr │                         │
-   │                        │ ────────────────────────────────► │                         │
-   │                        │  Paytrie: USDC → CAD                                        │
+   │                        │  Off-ramp via Paytrie: USDC → CAD                           │
    │                        │  Pay each beneficiary in CAD via Interac e-Transfer         │
    │                        │ ──────────────────────────────────────────────────────────► │
+   │                        │  Reveal owner's on-chain letter to the beneficiary          │
+   │                        │ ──────────────────────────────────────────────────────────► │
    │                                                                                      │
-   │  Every step writes a vault_event row + (where applicable) a public Solana tx link.   │
+   │  Every step writes a vault_event row + a public Solana tx link (Solscan devnet).     │
 ```
 
 ### Step-by-step
@@ -106,15 +119,27 @@ LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ra
 3. **Owner funds the vault in CAD.** The owner pays via Interac e-Transfer or card. **Paytrie on-ramps the CAD into USDC** and that USDC lands directly in the owner's custodial wallet on Solana.
 4. **Sweep into the hot wallet.** As soon as the on-ramp settles, the platform **sweeps the USDC from the user's custodial wallet into the system hot wallet** (a single, well-monitored treasury account). This consolidates funds for vault accounting, gas efficiency, and clean off-ramp routing.
 5. **Lock in the vault.** Our **Anchor program** initializes a vault PDA owned by the hot wallet, **locks the USDC** against it, and writes the beneficiaries + release conditions. The `init_tx` + `tx_signature` are persisted against the row in Postgres for audit.
-6. **Conditions set.** The owner picks any combination of:
+6. **Optional letter.** If the owner wrote a message, the platform anchors it on Solana via **SPL Memo** from the owner's system wallet and stores the resulting `letter_tx_signature` against the vault. The letter stays sealed until claim.
+7. **Conditions set.** The owner picks any combination of:
    - **Date** — release on a specific calendar date.
    - **Inactivity ("dead-man switch")** — release if the owner doesn't check in for N days.
    - **Manual** — owner-triggered release, useful for living gifts.
-7. **Trigger fires.** A scheduled job evaluates conditions. When one matches, the vault PDA is **unlocked back to the hot wallet** on-chain.
-8. **Payout → off-ramp.** The platform **triggers a payout from the hot wallet to Paytrie's deposit address**, Paytrie **off-ramps USDC → CAD**, and each beneficiary receives their share via **Interac e-Transfer**. Beneficiaries get plain Canadian dollars in their bank account — no wallet, no seed phrase, no crypto knowledge required.
-9. **Audit trail.** Every state change emits a `vault_event` row, and every on-chain action exposes a public **Solana Explorer** link from the UI.
+8. **Trigger fires.** A scheduled job evaluates conditions. When one matches, the vault is marked released and beneficiary claim links go live.
+9. **Beneficiary claim.** The beneficiary opens their token claim link (no sign-in needed) and confirms. The platform **sweeps SOL/USDC from the hot wallet back to the user's system wallet** — that on-chain transfer is the cryptographic payout receipt — and **Paytrie off-ramps USDC → CAD** to deliver Interac e-Transfer to the beneficiary. The sealed letter is revealed alongside a Solscan verify link for both the payout tx and the letter tx.
+10. **Audit trail.** Every state change emits a `vault_event` row, and every on-chain action exposes a public **Solscan (devnet)** link from the UI.
 
 > 💡 **Why on-chain at all?** The chain is the source of truth nobody — including us — can quietly rewrite. The fiat rails handle UX; Solana handles guarantees.
+
+## Letter to beneficiary (on-chain)
+
+When creating a vault, the owner can attach a short message (up to 280 chars) for the beneficiary. The platform:
+
+1. Anchors the message on Solana via the **SPL Memo program** (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`), signed by the owner's system wallet.
+2. Persists the resulting transaction signature on the `vaults.letter_tx_signature` column.
+3. Keeps the message sealed in the UI until the beneficiary completes a claim.
+4. On successful claim, reveals the message in a serif card alongside a **"Verify letter on Solana"** link to Solscan devnet.
+
+Letter anchoring is **non-critical**: if the memo tx fails, vault creation still succeeds and the claim screen falls back to displaying the letter without the on-chain link.
 
 ### The hot wallet (forker note)
 
@@ -197,10 +222,9 @@ src/
 ├── components/
 │   ├── legacy/              # Brand components (Nav, PageShell, VaultCard)
 │   └── ui/                  # shadcn/ui primitives
-├── integrations/db/         # Auto-generated backend client + types (DO NOT EDIT)
+├── integrations/supabase/   # Auto-generated Lovable Cloud client + types (DO NOT EDIT)
 └── styles.css               # Tailwind v4 tokens
-db/                          # Backend config + SQL migrations
-
+supabase/                    # Cloud config + SQL migrations
 ```
 
 ## Getting started
@@ -208,11 +232,10 @@ db/                          # Backend config + SQL migrations
 ### Prerequisites
 
 - [Bun](https://bun.sh) ≥ 1.1 (or Node 20 + npm if you prefer)
-- A managed Postgres backend (any provider — bring your own connection string)
+- A [Lovable Cloud](https://lovable.dev) project (managed Postgres + Auth + Storage) — auto-provisioned when you fork on Lovable
 - A Helius (or any) Solana **devnet** RPC URL
-- A funded **devnet** hot wallet (≥ 0.1 SOL) for sweeps and payouts
+- A funded **devnet** hot wallet (≥ 0.1 SOL) for proof tx, sweeps, and claim payouts
 - A [Paytrie](https://paytrie.com) merchant account for the CAD ↔ USDC rails
-
 
 ### Install & run
 
@@ -228,53 +251,73 @@ The app boots at `http://localhost:5173`.
 
 ## Environment variables
 
-Populate the following in your environment (or `.env` for local development):
+The browser-visible `VITE_*` variables are auto-managed by Lovable Cloud (do not edit `.env` manually). Server-only secrets are configured in **Cloud → Settings → Secrets**.
+
+**Browser (auto-managed):**
+
+| Variable                       | Purpose                                                              |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`            | Cloud project URL                                                    |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`| Public/anon key for browser-side calls                               |
+| `VITE_SUPABASE_PROJECT_ID`     | Cloud project identifier                                             |
+
+**Server-only secrets (configure in Cloud):**
 
 | Variable                       | Required | Purpose                                                              |
 | ------------------------------ | :------: | -------------------------------------------------------------------- |
-| `BACKEND_URL`                  |    ✅    | Your backend (managed Postgres + Auth) base URL                      |
-| `BACKEND_PUBLISHABLE_KEY`      |    ✅    | Public/anon key for browser-side calls                               |
-| `BACKEND_PROJECT_ID`           |    ✅    | Backend project identifier                                           |
-| `BACKEND_SERVICE_ROLE_KEY`     |    ✅    | Server-side privileged key (never ship to the browser)               |
-| `SOLANA_RPC_URL`               |    ✅    | Helius (or any) Solana **devnet** endpoint                           |
+| `SUPABASE_SERVICE_ROLE_KEY`    |    ✅    | Privileged server key (never ship to the browser)                    |
+| `SOLANA_RPC`                   |    ✅    | Helius (or any) Solana **devnet** endpoint                           |
+| `SOLANA_USDC_MINT`             |    ✅    | USDC mint address on the target cluster                              |
+| `SOLANA_PROGRAM_ID`            |    ✅    | Anchor vault program ID (devnet)                                     |
+| `WALLET_ENCRYPTION_KEY`        |    ✅    | AES key used to encrypt custodial wallet secrets at rest             |
 | `MASTER_WALLET_SECRET`         |    ✅    | base58 secret for **your** hot wallet keypair                        |
 | `PAYTRIE_API_KEY`              |    ✅    | Required for CAD ↔ USDC on/off-ramp                                  |
 | `PAYTRIE_WEBHOOK_SECRET`       |    ✅    | HMAC secret for the `/api/public/paytrie-webhook` endpoint           |
+| `LOVABLE_API_KEY`              |    ✅    | Lovable AI Gateway key (used by AI-assisted flows)                   |
 
 > ⚠️ Never commit secrets. `.env` is git-ignored. Use your hosting provider's secret manager.
 
-
 ## Database & migrations
 
-The schema lives in `db/migrations/` and is applied via standard SQL migrations. Key tables:
+The schema lives in `supabase/migrations/` and is applied via standard SQL migrations. Key tables:
 
-- `profiles` — user profile (NOT used for roles).
-- `user_roles` — RLS-friendly role table (`admin`, `advisor`, `user`).
-- `wallets` — custodial wallet metadata (public key, encrypted secret ref).
-- `vaults` — vault config + on-chain references (`init_tx`, `tx_signature`, `status`).
-- `beneficiaries` — payout splits + contact info.
-- `vault_events` — append-only audit log.
-- `ledger_entries` — internal accounting.
+- `profiles` — user profile + KYC fields (NOT used for roles).
+- `user_roles` — RLS-friendly role table (`admin`, `advisor`, `family`, `individual`).
+- `custodial_wallets` / `custodial_wallet_secrets` — custodial wallet pubkey + encrypted secret (split tables for least-privilege RLS).
+- `master_wallet` — singleton row holding the encrypted hot wallet secret.
+- `vaults` — vault config + on-chain references (`init_tx`, `tx_signature`, `vault_pda`, `usdc_ata`, `letter_message`, `letter_tx_signature`, `status`).
+- `beneficiaries` — payout splits, contact info, single-use `claim_token`, `claimed_at`, `payout_tx_signature`.
+- `vault_events` — append-only audit log with linked Solana tx signatures.
+- `ledger_accounts` / `ledger_transactions` / `ledger_entries` — double-entry internal accounting.
+- `ramp_intents` — Paytrie on/off-ramp lifecycle + webhook payloads.
+- `advisor_clients` — many-to-many advisor ↔ client links for read-only access.
 
-Every table ships with **Row-Level Security** policies. Roles are checked via a `SECURITY DEFINER` function — never via client storage.
+Every user-scoped table ships with **Row-Level Security** policies. Roles are resolved via a `SECURITY DEFINER` function (`public.has_role`) — never via client storage.
 
 ## Solana / on-chain proof
 
 - Network: **devnet** (mainnet planned post-audit — see [Roadmap](#roadmap)).
-- Each signup broadcasts a verifiable proof transfer.
-- Each vault initialization is an on-chain transaction with a publicly linkable signature.
-- Helpers: `src/lib/solana.server.ts`, `src/lib/vault-client.ts`, `src/lib/proof-tx.server.ts`.
+- Each signup broadcasts a verifiable proof transfer (user system wallet → hot wallet, 0.001 SOL).
+- Each vault initialization is an on-chain Anchor transaction with a publicly linkable signature.
+- Each optional letter to beneficiary is anchored via **SPL Memo** from the owner's system wallet.
+- Each beneficiary claim broadcasts a hot-wallet → user-system-wallet sweep tx as the on-chain payout receipt.
+- Helpers: `src/lib/solana.server.ts`, `src/lib/vault-client.ts`, `src/lib/proof-tx.server.ts`, `src/lib/sweep.server.ts`.
 - IDL: `src/lib/idl/vault.json`.
 
-Click any "View on Solana Explorer" link in the UI to verify a transaction live.
+Every "View on Solscan ↗" link in the UI deep-links to Solscan devnet so anyone can verify the transaction live.
 
 ## Demo mode
 
-For judges, contributors, or curious tinkerers:
+Optimized for judges, contributors, and curious tinkerers — zero crypto knowledge required:
 
-1. Sign up at `/signup` (a custodial wallet provisions automatically).
-2. From the dashboard, click **Load demo data** to seed four vaults that cover every state (pending, active, released, expired).
-3. Open the released vault → grab a claim link → walk through `/claim` as a beneficiary.
+1. Sign up at `/signup` — a custodial Solana wallet is provisioned automatically and the proof-of-life tx is broadcast.
+2. Hit `/create` — the form is **prefilled** with a randomized demo beneficiary and a templated letter so you can ship a vault end-to-end in under 30 seconds.
+3. On creation, vaults are **auto-released** in demo mode and the success screen surfaces:
+   - the user system wallet address
+   - the proof tx (user → hot wallet)
+   - the letter tx (SPL Memo, if a letter was attached)
+   - a one-click **"View claim demo"** link populated with the beneficiary's name
+4. Follow the claim link → confirm → watch the hot-wallet → user-system-wallet payout tx land on Solscan, with the owner's letter revealed underneath and a verify-on-chain link.
 
 Demo passwords are generated freshly per session — never static.
 
