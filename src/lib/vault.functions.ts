@@ -597,14 +597,18 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!v) throw new Error("Vault not found or not visible");
 
-    // Pre-compute on-chain claim signature
-    const sig = v.vault_pda
-      ? (await claimOnChain({
-          vaultPda: v.vault_pda,
-          beneficiaryEmail: "pending",
-          amountCad: Number(v.amount_cad),
-        })).signature
-      : `sim_claim_${Date.now()}`;
+    const { data: pendingBen, error: pendingErr } = await supabaseAdmin
+      .from("beneficiaries")
+      .select("id")
+      .eq("vault_id", data.vault_id)
+      .eq("claim_token", data.claim_token)
+      .maybeSingle();
+    if (pendingErr) throw pendingErr;
+    if (!pendingBen?.id) throw new Error("Invalid claim link");
+
+    // On-chain claim proof: platform hot wallet → beneficiary claim wallet.
+    const payout = await sendHotToBeneficiaryClaim(pendingBen.id, 0.001);
+    const sig = payout.signature;
 
     // Atomically consume the token and emit audit event
     const { data: result, error } = await supabase.rpc("consume_claim_token", {
