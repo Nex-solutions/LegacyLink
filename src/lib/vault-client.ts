@@ -66,6 +66,7 @@ export async function serverCreateVault(input: {
     tx_signature: res.tx_signature,
     owner_pubkey: res.owner_pubkey,
     hot_pubkey: res.hot_pubkey,
+    claim_demo: res.claim_demo,
   };
 }
 
