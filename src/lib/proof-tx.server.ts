@@ -109,16 +109,18 @@ export async function sendUserToHotProof(
   const connection = await pickWorkingConnection();
   void Connection;
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
+  const FEE_BUFFER = 10_000; // ~5k lamports per sig + cushion
   const userBalance = await connection.getBalance(userKp.publicKey).catch(() => 0);
-  const topUpLamports = Math.max(0, lamports - userBalance + 5_000_000);
+  const needed = lamports + FEE_BUFFER;
 
-  // One fresh-blockhash transaction: hot wallet pays fees/top-up if needed,
-  // while the user wallet still signs the proof transfer into the hot wallet.
-  const signature = await sendWithFreshBlockhash(
-    connection,
-    ({ blockhash, lastValidBlockHeight }) => {
-      const tx = new Transaction({ feePayer: masterKp.publicKey, blockhash, lastValidBlockHeight });
-      if (topUpLamports > 0) {
+  // If user wallet is short, top it up FIRST in a separate transaction so the
+  // proof transaction is a clean unidirectional user → hot wallet transfer.
+  if (userBalance < needed) {
+    const topUpLamports = needed - userBalance;
+    await sendWithFreshBlockhash(
+      connection,
+      ({ blockhash, lastValidBlockHeight }) => {
+        const tx = new Transaction({ feePayer: masterKp.publicKey, blockhash, lastValidBlockHeight });
         tx.add(
           SystemProgram.transfer({
             fromPubkey: masterKp.publicKey,
@@ -126,7 +128,20 @@ export async function sendUserToHotProof(
             lamports: topUpLamports,
           }),
         );
-      }
+        return tx;
+      },
+      [masterKp],
+      "user wallet top-up",
+    );
+    // Brief wait so the next tx sees the new balance.
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+
+  // Clean proof tx: user wallet pays fees AND sends SOL to hot wallet.
+  const signature = await sendWithFreshBlockhash(
+    connection,
+    ({ blockhash, lastValidBlockHeight }) => {
+      const tx = new Transaction({ feePayer: userKp.publicKey, blockhash, lastValidBlockHeight });
       tx.add(
         SystemProgram.transfer({
           fromPubkey: userKp.publicKey,
@@ -136,7 +151,7 @@ export async function sendUserToHotProof(
       );
       return tx;
     },
-    [masterKp, userKp],
+    [userKp],
     "vault proof transfer",
   );
 
