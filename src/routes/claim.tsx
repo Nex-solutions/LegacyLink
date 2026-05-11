@@ -23,7 +23,7 @@ export const Route = createFileRoute("/claim")({
 
 type Step = "lookup" | "found" | "claimed" | "notyet" | "notlisted" | "missing";
 type TokenView = {
-  vault: { id: string; name: string; amount_cad: number; status: string };
+  vault: { id: string; name: string; amount_cad: number; status: string; letter_message?: string | null; letter_tx_signature?: string | null; owner_name?: string | null };
   beneficiary: { name: string; email: string; pct: number; payout_cad: number; claimed_at: string | null; payout_tx_signature?: string | null };
 } | null;
 
