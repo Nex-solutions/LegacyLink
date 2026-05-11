@@ -89,7 +89,7 @@ export function AppHeader() {
             <Link to="/advisor/messages" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Messages</Link>
             <Link to="/advisor/dashboard" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Dashboard</Link>
             <button
-              onClick={() => { clearAdvisor(); navigate({ to: "/" }); }}
+              onClick={() => { setUserState(null); setAdvisorState(null); clearAdvisor(); navigate({ to: "/" }); }}
               className="ll-pill ll-pill-ghost text-sm"
               style={{ padding: "0.5rem 1rem" }}
             >
