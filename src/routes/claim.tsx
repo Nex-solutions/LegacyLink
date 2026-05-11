@@ -24,7 +24,7 @@ export const Route = createFileRoute("/claim")({
 type Step = "lookup" | "found" | "claimed" | "notyet" | "notlisted" | "missing";
 type TokenView = {
   vault: { id: string; name: string; amount_cad: number; status: string };
-  beneficiary: { name: string; email: string; pct: number; payout_cad: number; claimed_at: string | null };
+  beneficiary: { name: string; email: string; pct: number; payout_cad: number; claimed_at: string | null; payout_tx_signature?: string | null };
 } | null;
 
 function Claim() {
@@ -138,7 +138,14 @@ function Claim() {
               </div>
 
               {tokenView.beneficiary.claimed_at ? (
-                <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This share was already claimed on {new Date(tokenView.beneficiary.claimed_at).toLocaleDateString()}.</p>
+                <>
+                  <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This share was already claimed on {new Date(tokenView.beneficiary.claimed_at).toLocaleDateString()}.</p>
+                  {tokenView.beneficiary.payout_tx_signature && (
+                    <a href={solscanUrl("tx", tokenView.beneficiary.payout_tx_signature)} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs font-mono break-all underline" style={{ color: "var(--honey)" }}>
+                      View payout on Solscan ↗ {tokenView.beneficiary.payout_tx_signature}
+                    </a>
+                  )}
+                </>
               ) : tokenView.vault.status !== "Released" ? (
                 <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This vault hasn't released yet. We'll email you the moment it does.</p>
               ) : (
