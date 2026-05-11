@@ -175,6 +175,38 @@ function Claim() {
               >
                 View hot wallet → user system wallet payout on Solscan ↗ {tokenClaimed.tx_signature}
               </a>
+
+              {tokenView?.vault.letter_message && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mt-8 p-6 rounded-2xl text-left"
+                  style={{ background: "rgba(127,168,130,0.10)", border: "1px solid rgba(127,168,130,0.35)" }}
+                >
+                  <p className="text-xs uppercase tracking-[0.2em]" style={{ color: "var(--honey)" }}>
+                    A message from {tokenView.vault.owner_name ?? "the vault owner"}
+                  </p>
+                  <p
+                    className="mt-3 whitespace-pre-wrap"
+                    style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 20, lineHeight: 1.55 }}
+                  >
+                    {tokenView.vault.letter_message}
+                  </p>
+                  {tokenView.vault.letter_tx_signature && (
+                    <a
+                      href={solscanUrl("tx", tokenView.vault.letter_tx_signature)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-4 inline-block text-xs font-mono break-all underline"
+                      style={{ color: "var(--honey)" }}
+                    >
+                      Verify letter on Solana ↗
+                    </a>
+                  )}
+                </motion.div>
+              )}
+
               <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
             </motion.div>
           )}
