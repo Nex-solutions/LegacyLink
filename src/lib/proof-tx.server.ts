@@ -5,6 +5,8 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
+import type { Connection, PublicKey, Signer, Transaction } from "@solana/web3.js";
+
 function getRpcUrls(): string[] {
   const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
   return [...new Set(urls)];
@@ -34,6 +36,54 @@ async function loadKeypair(encryptedSecret: string) {
   return Keypair.fromSecretKey(raw);
 }
 
+function isTransientSolanaError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503|rate limit|fetch failed|network/i.test(msg);
+}
+
+async function waitForSignature(connection: Connection, signature: string, label: string, timeoutMs = 10_000): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const { value } = await connection.getSignatureStatuses([signature]);
+    const status = value[0];
+    if (status?.err) throw new Error(`${label} failed: ${JSON.stringify(status.err)}`);
+    if (status?.confirmationStatus === "confirmed" || status?.confirmationStatus === "finalized") return;
+    await new Promise((resolve) => setTimeout(resolve, 750));
+  }
+  console.warn(`[proof-tx] ${label} sent; confirmation still pending (${signature})`);
+}
+
+async function sendWithFreshBlockhash(
+  connection: Connection,
+  buildTx: (fresh: { blockhash: string; lastValidBlockHeight: number }) => Transaction,
+  signers: Signer[],
+  label: string,
+  attempts = 4,
+): Promise<string> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const fresh = await connection.getLatestBlockhash("confirmed");
+      const tx = buildTx(fresh);
+      tx.sign(...signers);
+      const signature = await connection.sendRawTransaction(tx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+        maxRetries: 3,
+      });
+      await waitForSignature(connection, signature, label);
+      return signature;
+    } catch (error) {
+      lastError = error;
+      if (!isTransientSolanaError(error)) throw error;
+      const delay = 350 * Math.pow(2, i);
+      console.warn(`[proof-tx] ${label} transient retry ${i + 1}/${attempts}`, error instanceof Error ? error.message : error);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
 /**
  * Send `solAmount` SOL from the user's custodial wallet to the platform hot
  * (master) wallet. If the user wallet doesn't have enough lamports for the
@@ -45,14 +95,7 @@ export async function sendUserToHotProof(
   solAmount: number,
 ): Promise<{ signature: string; fromPubkey: string; toPubkey: string }> {
   const web3 = await import("@solana/web3.js");
-  const {
-    Connection,
-    PublicKey,
-    Transaction,
-    SystemProgram,
-    sendAndConfirmTransaction,
-    LAMPORTS_PER_SOL,
-  } = web3;
+  const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
 
   // Load user wallet
   const { data: secretRow, error: sErr } = await supabaseAdmin
@@ -77,38 +120,41 @@ export async function sendUserToHotProof(
     throw new Error("Platform hot wallet not initialised");
   }
   const hotPubkey = new PublicKey(master.pubkey);
+  const masterKp = await loadKeypair(master.encrypted_secret);
 
   const connection = await pickWorkingConnection();
   void Connection;
   const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
-  const feeBuffer = 10_000; // ~2x signature fee headroom
+  const userBalance = await connection.getBalance(userKp.publicKey).catch(() => 0);
+  const topUpLamports = Math.max(0, lamports - userBalance + 5_000_000);
 
-  // Top up the user wallet if it can't cover the transfer + fees.
-  const balance = await connection.getBalance(userKp.publicKey).catch(() => 0);
-  if (balance < lamports + feeBuffer) {
-    const masterKp = await loadKeypair(master.encrypted_secret);
-    const needed = lamports + feeBuffer - balance + 5_000_000; // add 0.005 SOL headroom
-    const topUp = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: masterKp.publicKey,
-        toPubkey: userKp.publicKey,
-        lamports: needed,
-      }),
-    );
-    await sendAndConfirmTransaction(connection, topUp, [masterKp], { commitment: "confirmed" });
-  }
-
-  // The actual proof: user wallet → hot wallet
-  const tx = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: userKp.publicKey,
-      toPubkey: hotPubkey,
-      lamports,
-    }),
+  // One fresh-blockhash transaction: hot wallet pays fees/top-up if needed,
+  // while the user wallet still signs the proof transfer into the hot wallet.
+  const signature = await sendWithFreshBlockhash(
+    connection,
+    ({ blockhash, lastValidBlockHeight }) => {
+      const tx = new Transaction({ feePayer: masterKp.publicKey, blockhash, lastValidBlockHeight });
+      if (topUpLamports > 0) {
+        tx.add(
+          SystemProgram.transfer({
+            fromPubkey: masterKp.publicKey,
+            toPubkey: userKp.publicKey,
+            lamports: topUpLamports,
+          }),
+        );
+      }
+      tx.add(
+        SystemProgram.transfer({
+          fromPubkey: userKp.publicKey,
+          toPubkey: hotPubkey,
+          lamports,
+        }),
+      );
+      return tx;
+    },
+    [masterKp, userKp],
+    "vault proof transfer",
   );
-  const signature = await sendAndConfirmTransaction(connection, tx, [userKp], {
-    commitment: "confirmed",
-  });
 
   return {
     signature,
