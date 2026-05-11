@@ -130,6 +130,18 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
             Claim tx ↗
           </a>
         )}
+        {vault.letter_tx_signature && (
+          <a
+            href={solscanUrl("tx", vault.letter_tx_signature)}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs underline"
+            style={{ color: "var(--honey)" }}
+            title={vault.letter_message ?? undefined}
+          >
+            Letter tx ↗
+          </a>
+        )}
         {cond.kind === "inactivity" && onCheckIn && !incomplete && (
           <button
             onClick={() => onCheckIn(vault.id)}
