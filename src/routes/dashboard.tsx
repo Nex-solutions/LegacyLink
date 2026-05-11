@@ -9,7 +9,7 @@ import { VaultCard } from "@/components/legacy/VaultCard";
 import { getUser } from "@/lib/legacy-auth";
 import { formatCAD, getVaults, type Vault } from "@/lib/legacy-data";
 import { addAdvisorLink, getAdvisorLinks, recommendedAdvisors, removeAdvisorLink, type AdvisorLink, type RecommendedAdvisor } from "@/lib/legacy-advisors";
-import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverResetDemo, serverRetryVault } from "@/lib/vault-client";
+import { evaluateAndHydrate, hydrateVaults, serverCheckIn, serverRetryVault } from "@/lib/vault-client";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LegacyLink" }] }),
@@ -57,16 +57,7 @@ function Dashboard() {
     })();
   }, [navigate]);
 
-  async function handleResetDemo() {
-    try {
-      await serverResetDemo();
-      setVaults(getVaults());
-      toast.success("Demo data reset. Four vaults loaded for the live walkthrough.");
-    } catch (e) {
-      console.error(e);
-      toast.error("Couldn't reset demo");
-    }
-  }
+
 
   function handleInviteExternal(e: React.FormEvent) {
     e.preventDefault();
@@ -246,11 +237,8 @@ function Dashboard() {
           )}
 
           {/* Vaults */}
-          <div className="mt-12 flex items-center justify-between flex-wrap gap-3">
+          <div className="mt-12">
             <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your Vaults</h2>
-            <button onClick={handleResetDemo} className="ll-pill ll-pill-ghost text-sm" style={{ padding: "0.45rem 0.95rem" }}>
-              ⚡ Load demo data
-            </button>
           </div>
 
           {completed.length === 0 ? (
@@ -263,11 +251,10 @@ function Dashboard() {
               </svg>
               <h3 className="mt-4" style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your legacy starts here.</h3>
               <p className="mt-3 max-w-md mx-auto text-sm" style={{ color: "var(--warm-gray)" }}>
-                Just exploring? Load four demo vaults that show every state — time-locked, inactivity, manual release, and already released.
+                Create your first vault to set aside funds with a release condition and an optional on-chain letter to your beneficiary.
               </p>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Link to="/create" className="ll-pill ll-pill-secondary">Create your first vault</Link>
-                <button onClick={handleResetDemo} className="ll-pill ll-pill-ghost">⚡ Load demo data</button>
               </div>
             </div>
           ) : (
@@ -480,16 +467,8 @@ function Dashboard() {
           </span>
         </Link>
 
-        {/* Demo controls — for hackathon walkthrough */}
-        <button
-          onClick={handleResetDemo}
-          aria-label="Reset demo data"
-          title="Reset demo data — loads a curated scenario for live walkthroughs"
-          className="fixed bottom-8 left-8 z-30 px-3 py-2 rounded-full text-xs flex items-center gap-2"
-          style={{ background: "rgba(26,46,26,0.08)", color: "var(--forest)", border: "1px solid rgba(26,46,26,0.15)", backdropFilter: "blur(6px)" }}
-        >
-          <span aria-hidden>↻</span> Reset demo
-        </button>
+
+
 
         {/* Customer support modal — appears after 3 failed retries */}
         {supportFor && (
