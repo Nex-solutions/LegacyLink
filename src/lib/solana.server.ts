@@ -248,19 +248,22 @@ export async function initVaultOnChain(args: {
     const vaultUsdcAta = getAssociatedTokenAddressSync(usdcMint, vaultPda, true);
     const amountCents = new BN(Math.round((args.amountCadCents ?? 0)));
 
-    const signature = await program.methods
-      .initializeVault(Array.from(vaultIdBytes) as never, amountCents)
-      .accounts({
-        vault: vaultPda,
-        vaultUsdcAta,
-        owner: owner.publicKey,
-        usdcMint,
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
-      } as never)
-      .rpc();
+    const buildRpc = () =>
+      program.methods
+        .initializeVault(Array.from(vaultIdBytes) as never, amountCents)
+        .accounts({
+          vault: vaultPda,
+          vaultUsdcAta,
+          owner: owner.publicKey,
+          usdcMint,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+        } as never)
+        .rpc({ commitment: "confirmed", skipPreflight: false, maxRetries: 5 });
+
+    const signature = await sendWithBlockhashRetry(buildRpc, "init_vault");
 
     return { vaultPda: vaultPda.toBase58(), usdcAta: vaultUsdcAta.toBase58(), signature };
   } catch (e) {
