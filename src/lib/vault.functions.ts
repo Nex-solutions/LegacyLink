@@ -762,9 +762,9 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
       .eq("id", vault.owner_id)
       .maybeSingle();
     if (prof) {
-      ownerName = (prof.display_name as string | null)
-        ?? [prof.first_name, prof.last_name].filter(Boolean).join(" ").trim()
-        || null;
+      const dn = prof.display_name as string | null;
+      const full = [prof.first_name, prof.last_name].filter(Boolean).join(" ").trim();
+      ownerName = dn ?? (full || null);
     }
 
     return {
