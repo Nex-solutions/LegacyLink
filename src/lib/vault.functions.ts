@@ -186,6 +186,7 @@ const createInputSchema = z.object({
   amount_cad: z.number().positive(),
   condition: conditionSchema,
   beneficiaries: z.array(beneficiaryInputSchema).min(1),
+  letter_message: z.string().max(280).optional().nullable(),
 });
 
 export const createVault = createServerFn({ method: "POST" })
