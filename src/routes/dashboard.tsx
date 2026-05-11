@@ -467,16 +467,8 @@ function Dashboard() {
           </span>
         </Link>
 
-        {/* Demo controls — for hackathon walkthrough */}
-        <button
-          onClick={handleResetDemo}
-          aria-label="Reset demo data"
-          title="Reset demo data — loads a curated scenario for live walkthroughs"
-          className="fixed bottom-8 left-8 z-30 px-3 py-2 rounded-full text-xs flex items-center gap-2"
-          style={{ background: "rgba(26,46,26,0.08)", color: "var(--forest)", border: "1px solid rgba(26,46,26,0.15)", backdropFilter: "blur(6px)" }}
-        >
-          <span aria-hidden>↻</span> Reset demo
-        </button>
+
+
 
         {/* Customer support modal — appears after 3 failed retries */}
         {supportFor && (
