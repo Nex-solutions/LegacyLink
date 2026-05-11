@@ -251,11 +251,10 @@ function Dashboard() {
               </svg>
               <h3 className="mt-4" style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>Your legacy starts here.</h3>
               <p className="mt-3 max-w-md mx-auto text-sm" style={{ color: "var(--warm-gray)" }}>
-                Just exploring? Load four demo vaults that show every state — time-locked, inactivity, manual release, and already released.
+                Create your first vault to set aside funds with a release condition and an optional on-chain letter to your beneficiary.
               </p>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Link to="/create" className="ll-pill ll-pill-secondary">Create your first vault</Link>
-                <button onClick={handleResetDemo} className="ll-pill ll-pill-ghost">⚡ Load demo data</button>
               </div>
             </div>
           ) : (
