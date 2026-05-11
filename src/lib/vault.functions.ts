@@ -248,6 +248,7 @@ export const createVault = createServerFn({ method: "POST" })
           init_tx: init.signature,
           tx_signature: fund.signature,
           solana_pubkey: ownerPubkey,
+          status: "released",
           last_step: "beneficiaries",
         })
         .eq("id", vaultId);
