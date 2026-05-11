@@ -218,7 +218,7 @@ function Create() {
             </div>
           )}
           <p className="mt-6 text-sm" style={{ color: "var(--warm-gray)" }}>
-            Demo flow: release this vault, then claim as the listed beneficiary to see hot wallet → beneficiary wallet on Solscan.
+            Demo flow: release this vault, then claim as the listed beneficiary to see hot wallet → user system wallet on Solscan.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button onClick={() => navigate({ to: "/vault/$id", params: { id: success } })} className="ll-pill ll-pill-primary">
