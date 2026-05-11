@@ -200,17 +200,23 @@ async function ensureSolBalance(connection: Connection, pubkey: PublicKey): Prom
 async function sendWithBlockhashRetry(
   fn: () => Promise<string>,
   label: string,
-  attempts = 4,
+  attempts = 1,
+  timeoutMs = 8_000,
 ): Promise<string> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
-      return await fn();
+      return await Promise.race([
+        fn(),
+        new Promise<string>((_, reject) =>
+          setTimeout(() => reject(new Error(`${label} timed out before confirmation`)), timeoutMs)
+        ),
+      ]);
     } catch (e) {
       lastErr = e;
       const msg = e instanceof Error ? e.message : String(e);
       const transient =
-        /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503/i.test(msg);
+        /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|timed out|429|503/i.test(msg);
       if (!transient) throw e;
       const wait = 400 * Math.pow(2, i);
       console.warn(`[solana] ${label} transient (attempt ${i + 1}/${attempts}): ${msg}. retrying in ${wait}ms`);
