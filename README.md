@@ -21,8 +21,9 @@ Set conditions today, your people get paid in CAD automatically. No lawyers, no 
 
 - [What is LegacyLink?](#what-is-legacylink)
 - [Why it exists](#why-it-exists)
+- [Key features](#key-features)
 - [How it works](#how-it-works)
-- [Architecture](#architecture)
+- [Letter to beneficiary (on-chain)](#letter-to-beneficiary-on-chain)
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
@@ -48,7 +49,7 @@ LegacyLink is an **estate-as-a-service** platform that lets a Canadian adult loc
 - **Inactivity-based** — release if the owner doesn't check in for N days ("dead-man switch").
 - **Manual** — owner-triggered release.
 
-Beneficiaries receive funds in **Canadian dollars** via Interac e-Transfer (off-ramp), while the source-of-truth lives **on Solana** as a verifiable, tamper-evident record.
+Beneficiaries receive funds in **Canadian dollars** via Interac e-Transfer (off-ramp), while the source-of-truth lives **on Solana** as a verifiable, tamper-evident record. Owners can also attach a short **letter to the beneficiary** that is anchored on-chain via SPL Memo and revealed at claim time.
 
 ## Why it exists
 
@@ -57,6 +58,17 @@ Beneficiaries receive funds in **Canadian dollars** via Interac e-Transfer (off-
 - Probate currently takes an average of **8 months** in Canada.
 
 Traditional estate planning is expensive, slow, and inaccessible. LegacyLink compresses it into ten minutes, with cryptographic guarantees that survive the user.
+
+## Key features
+
+- 🔒 **Programmable vaults** — time, inactivity, or manual release conditions.
+- 💸 **CAD in, CAD out** — Paytrie on/off-ramp; beneficiaries never touch crypto.
+- ⛓️ **On-chain proof at every step** — wallet provisioning, vault creation, letter, and claim payouts each emit a public Solana devnet signature.
+- ✉️ **Letter to beneficiary** — short message anchored via SPL Memo from the owner's system wallet, revealed to the beneficiary on successful claim with a Solscan verify link.
+- 🪪 **Token claim links** — each beneficiary gets a single-use, public claim URL (no sign-in required) so heirs can claim without onboarding.
+- 👨‍💼 **Advisor workspace** — read-only client overview for advisors linked at the account level.
+- 🛡️ **RLS-first backend** — every user-scoped table protected by row-level security and a `SECURITY DEFINER` role function.
+
 
 ## How it works
 
