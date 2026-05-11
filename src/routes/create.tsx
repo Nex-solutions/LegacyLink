@@ -78,9 +78,10 @@ function Create() {
 
   // step 4
   const [agree, setAgree] = useState(false);
+  const [letter, setLetter] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null } | null>(null);
+  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; letter_tx_signature: string | null; claim_demo: { name: string; email: string; token: string } | null } | null>(null);
 
   useEffect(() => { if (!getUser()) navigate({ to: "/login" }); }, [navigate]);
 
