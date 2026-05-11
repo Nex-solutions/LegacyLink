@@ -222,9 +222,9 @@ src/
 ├── components/
 │   ├── legacy/              # Brand components (Nav, PageShell, VaultCard)
 │   └── ui/                  # shadcn/ui primitives
-├── integrations/supabase/   # Auto-generated Lovable Cloud client + types (DO NOT EDIT)
+├── integrations/supabase/   # Auto-generated backend client + types (DO NOT EDIT)
 └── styles.css               # Tailwind v4 tokens
-supabase/                    # Cloud config + SQL migrations
+supabase/                    # Backend config + SQL migrations
 ```
 
 ## Getting started
@@ -232,7 +232,7 @@ supabase/                    # Cloud config + SQL migrations
 ### Prerequisites
 
 - [Bun](https://bun.sh) ≥ 1.1 (or Node 20 + npm if you prefer)
-- A [Lovable Cloud](https://lovable.dev) project (managed Postgres + Auth + Storage) — auto-provisioned when you fork on Lovable
+- A managed Postgres + Auth + Storage backend (any provider — bring your own connection string)
 - A Helius (or any) Solana **devnet** RPC URL
 - A funded **devnet** hot wallet (≥ 0.1 SOL) for proof tx, sweeps, and claim payouts
 - A [Paytrie](https://paytrie.com) merchant account for the CAD ↔ USDC rails
@@ -251,15 +251,15 @@ The app boots at `http://localhost:5173`.
 
 ## Environment variables
 
-The browser-visible `VITE_*` variables are auto-managed by Lovable Cloud (do not edit `.env` manually). Server-only secrets are configured in **Cloud → Settings → Secrets**.
+The browser-visible `VITE_*` variables are auto-managed by the backend integration (do not edit `.env` manually). Server-only secrets are configured in your hosting provider's secret manager.
 
 **Browser (auto-managed):**
 
 | Variable                       | Purpose                                                              |
 | ------------------------------ | -------------------------------------------------------------------- |
-| `VITE_SUPABASE_URL`            | Cloud project URL                                                    |
+| `VITE_SUPABASE_URL`            | Backend project URL                                                  |
 | `VITE_SUPABASE_PUBLISHABLE_KEY`| Public/anon key for browser-side calls                               |
-| `VITE_SUPABASE_PROJECT_ID`     | Cloud project identifier                                             |
+| `VITE_SUPABASE_PROJECT_ID`     | Backend project identifier                                           |
 
 **Server-only secrets (configure in Cloud):**
 
@@ -273,7 +273,7 @@ The browser-visible `VITE_*` variables are auto-managed by Lovable Cloud (do not
 | `MASTER_WALLET_SECRET`         |    ✅    | base58 secret for **your** hot wallet keypair                        |
 | `PAYTRIE_API_KEY`              |    ✅    | Required for CAD ↔ USDC on/off-ramp                                  |
 | `PAYTRIE_WEBHOOK_SECRET`       |    ✅    | HMAC secret for the `/api/public/paytrie-webhook` endpoint           |
-| `LOVABLE_API_KEY`              |    ✅    | Lovable AI Gateway key (used by AI-assisted flows)                   |
+| `LOVABLE_API_KEY`              |    ✅    | AI gateway key (used by AI-assisted flows)                           |
 
 > ⚠️ Never commit secrets. `.env` is git-ignored. Use your hosting provider's secret manager.
 
