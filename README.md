@@ -100,15 +100,16 @@ LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ra
    │                                                                                      │
    │            ⏳ Time passes — owner checks in, or doesn't ⏳                           │
    │                                                                                      │
-   │  4. Trigger fires      │  Unlock vault → HOT WALLET        │                         │
+   │  4. Beneficiary claims │  Sweep HOT WALLET → user system   │                         │
+   │                        │  wallet (on-chain payout proof)   │                         │
    │                        │ ────────────────────────────────► │                         │
-   │                        │  Hot wallet → Paytrie payout addr │                         │
-   │                        │ ────────────────────────────────► │                         │
-   │                        │  Paytrie: USDC → CAD                                        │
+   │                        │  Off-ramp via Paytrie: USDC → CAD                           │
    │                        │  Pay each beneficiary in CAD via Interac e-Transfer         │
    │                        │ ──────────────────────────────────────────────────────────► │
+   │                        │  Reveal owner's on-chain letter to the beneficiary          │
+   │                        │ ──────────────────────────────────────────────────────────► │
    │                                                                                      │
-   │  Every step writes a vault_event row + (where applicable) a public Solana tx link.   │
+   │  Every step writes a vault_event row + a public Solana tx link (Solscan devnet).     │
 ```
 
 ### Step-by-step
@@ -118,15 +119,27 @@ LegacyLink is **CAD-in, CAD-out**. The owner deposits Canadian dollars; we on-ra
 3. **Owner funds the vault in CAD.** The owner pays via Interac e-Transfer or card. **Paytrie on-ramps the CAD into USDC** and that USDC lands directly in the owner's custodial wallet on Solana.
 4. **Sweep into the hot wallet.** As soon as the on-ramp settles, the platform **sweeps the USDC from the user's custodial wallet into the system hot wallet** (a single, well-monitored treasury account). This consolidates funds for vault accounting, gas efficiency, and clean off-ramp routing.
 5. **Lock in the vault.** Our **Anchor program** initializes a vault PDA owned by the hot wallet, **locks the USDC** against it, and writes the beneficiaries + release conditions. The `init_tx` + `tx_signature` are persisted against the row in Postgres for audit.
-6. **Conditions set.** The owner picks any combination of:
+6. **Optional letter.** If the owner wrote a message, the platform anchors it on Solana via **SPL Memo** from the owner's system wallet and stores the resulting `letter_tx_signature` against the vault. The letter stays sealed until claim.
+7. **Conditions set.** The owner picks any combination of:
    - **Date** — release on a specific calendar date.
    - **Inactivity ("dead-man switch")** — release if the owner doesn't check in for N days.
    - **Manual** — owner-triggered release, useful for living gifts.
-7. **Trigger fires.** A scheduled job evaluates conditions. When one matches, the vault PDA is **unlocked back to the hot wallet** on-chain.
-8. **Payout → off-ramp.** The platform **triggers a payout from the hot wallet to Paytrie's deposit address**, Paytrie **off-ramps USDC → CAD**, and each beneficiary receives their share via **Interac e-Transfer**. Beneficiaries get plain Canadian dollars in their bank account — no wallet, no seed phrase, no crypto knowledge required.
-9. **Audit trail.** Every state change emits a `vault_event` row, and every on-chain action exposes a public **Solana Explorer** link from the UI.
+8. **Trigger fires.** A scheduled job evaluates conditions. When one matches, the vault is marked released and beneficiary claim links go live.
+9. **Beneficiary claim.** The beneficiary opens their token claim link (no sign-in needed) and confirms. The platform **sweeps SOL/USDC from the hot wallet back to the user's system wallet** — that on-chain transfer is the cryptographic payout receipt — and **Paytrie off-ramps USDC → CAD** to deliver Interac e-Transfer to the beneficiary. The sealed letter is revealed alongside a Solscan verify link for both the payout tx and the letter tx.
+10. **Audit trail.** Every state change emits a `vault_event` row, and every on-chain action exposes a public **Solscan (devnet)** link from the UI.
 
 > 💡 **Why on-chain at all?** The chain is the source of truth nobody — including us — can quietly rewrite. The fiat rails handle UX; Solana handles guarantees.
+
+## Letter to beneficiary (on-chain)
+
+When creating a vault, the owner can attach a short message (up to 280 chars) for the beneficiary. The platform:
+
+1. Anchors the message on Solana via the **SPL Memo program** (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`), signed by the owner's system wallet.
+2. Persists the resulting transaction signature on the `vaults.letter_tx_signature` column.
+3. Keeps the message sealed in the UI until the beneficiary completes a claim.
+4. On successful claim, reveals the message in a serif card alongside a **"Verify letter on Solana"** link to Solscan devnet.
+
+Letter anchoring is **non-critical**: if the memo tx fails, vault creation still succeeds and the claim screen falls back to displaying the letter without the on-chain link.
 
 ### The hot wallet (forker note)
 
