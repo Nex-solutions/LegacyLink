@@ -527,6 +527,23 @@ function Create() {
 
                 {/* Advisors are linked at the account level — they see all your trusts read-only. Manage from the dashboard. */}
 
+                <div className="mt-8">
+                  <label className="ll-label flex items-center justify-between">
+                    <span>A letter to your beneficiary <span style={{ color: "var(--warm-gray)" }}>(optional)</span></span>
+                    <span className="text-xs" style={{ color: "var(--warm-gray)" }}>{letter.length}/280 · anchored on Solana</span>
+                  </label>
+                  <textarea
+                    value={letter}
+                    onChange={(e) => setLetter(e.target.value.slice(0, 280))}
+                    placeholder="A few words you want them to read the day they receive this…"
+                    rows={4}
+                    className="ll-input"
+                    style={{ resize: "vertical", fontFamily: "var(--font-serif)" }}
+                  />
+                  <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>
+                    Stored on-chain via SPL Memo from your system wallet. Revealed to the beneficiary on claim.
+                  </p>
+                </div>
 
                 <label className="flex items-start gap-3 mt-6 cursor-pointer">
                   <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1" style={{ accentColor: "var(--honey)" }} />
