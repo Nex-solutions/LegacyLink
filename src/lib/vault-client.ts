@@ -57,7 +57,7 @@ export async function serverCreateVault(input: {
   amount_cad: number;
   condition: VaultCondition;
   beneficiaries: { name: string; email: string; pct: number }[];
-}): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string }> {
+}): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null }> {
   const res = await createVault({ data: input });
   await hydrateVaults();
   return {
@@ -66,6 +66,7 @@ export async function serverCreateVault(input: {
     tx_signature: res.tx_signature,
     owner_pubkey: res.owner_pubkey,
     hot_pubkey: res.hot_pubkey,
+    claim_demo: res.claim_demo,
   };
 }
 

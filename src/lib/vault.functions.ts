@@ -26,6 +26,7 @@ export type Beneficiary = {
   pct: number;
   claimed_at?: string | null;
   claim_token?: string | null;
+  payout_tx_signature?: string | null;
 };
 
 export type VaultCondition =
@@ -98,7 +99,7 @@ export const listVaults = createServerFn({ method: "GET" })
         unlock_date, inactivity_days, last_checkin,
         created_at, vault_pda, tx_signature, letter_message,
         failure_count, last_step,
-        beneficiaries ( id, name, email, pct, claimed_at, claim_token )
+        beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
       `)
       .order("created_at", { ascending: false });
 
@@ -116,6 +117,7 @@ export const listVaults = createServerFn({ method: "GET" })
         pct: Number(b.pct),
         claimed_at: b.claimed_at,
         claim_token: b.claim_token,
+        payout_tx_signature: b.payout_tx_signature,
       })),
       created_at: (row.created_at as string).slice(0, 10),
       vault_pda: row.vault_pda,
@@ -139,7 +141,7 @@ export const getVaultById = createServerFn({ method: "GET" })
         id, name, amount_cad, status, condition_kind,
         unlock_date, inactivity_days, last_checkin,
         created_at, vault_pda, tx_signature, letter_message,
-        beneficiaries ( id, name, email, pct, claimed_at, claim_token )
+        beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
       `)
       .eq("id", data.id)
       .maybeSingle();
@@ -153,7 +155,7 @@ export const getVaultById = createServerFn({ method: "GET" })
       condition: rowToCondition(row as never),
       beneficiaries: (row.beneficiaries ?? []).map((b) => ({
         id: b.id, name: b.name, email: b.email, pct: Number(b.pct),
-        claimed_at: b.claimed_at, claim_token: b.claim_token,
+        claimed_at: b.claimed_at, claim_token: b.claim_token, payout_tx_signature: b.payout_tx_signature,
       })),
       created_at: (row.created_at as string).slice(0, 10),
       vault_pda: row.vault_pda,
@@ -186,7 +188,7 @@ const createInputSchema = z.object({
 export const createVault = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createInputSchema.parse(d))
-  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string }> => {
+  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null }> => {
     const { supabase, userId } = context;
 
     // Reuse the user's signup system wallet — never generate a new one here.
@@ -246,15 +248,17 @@ export const createVault = createServerFn({ method: "POST" })
         .eq("id", vaultId);
 
       // Beneficiaries
+      const beneficiaryRows = data.beneficiaries.map((b) => ({
+        vault_id: vaultId,
+        name: b.name,
+        email: b.email,
+        pct: b.pct,
+        claim_token: crypto.randomUUID(),
+      }));
       if (data.beneficiaries.length) {
         const { error: benErr } = await supabase
           .from("beneficiaries")
-          .insert(data.beneficiaries.map((b) => ({
-            vault_id: vaultId,
-            name: b.name,
-            email: b.email,
-            pct: b.pct,
-          })));
+          .insert(beneficiaryRows);
         if (benErr) throw benErr;
       }
 
@@ -270,6 +274,9 @@ export const createVault = createServerFn({ method: "POST" })
         tx_signature: fund.signature,
         owner_pubkey: proof.fromPubkey,
         hot_pubkey: proof.toPubkey,
+        claim_demo: beneficiaryRows[0]
+          ? { name: beneficiaryRows[0].name, email: beneficiaryRows[0].email, token: beneficiaryRows[0].claim_token }
+          : null,
       };
     } catch (err) {
       console.error("createVault failed", err);
@@ -646,9 +653,20 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
 export const resetDemoServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { error } = await supabase.rpc("seed_demo_for_user");
     if (error) throw error;
+    const { data: seededVaults, error: vErr } = await supabaseAdmin
+      .from("vaults")
+      .select("id, beneficiaries(id, claim_token)")
+      .eq("owner_id", userId);
+    if (vErr) throw vErr;
+    await Promise.all(
+      (seededVaults ?? []).flatMap((vault) =>
+        (vault.beneficiaries ?? [])
+          .map((b) => supabaseAdmin.from("beneficiaries").update({ claim_token: crypto.randomUUID() }).eq("id", b.id)),
+      ),
+    );
     return { ok: true };
   });
 
@@ -705,7 +723,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
 
     const { data: ben, error: bErr } = await supabaseAdmin
       .from("beneficiaries")
-      .select("id, name, email, pct, claimed_at")
+      .select("id, name, email, pct, claimed_at, payout_tx_signature")
       .eq("vault_id", data.vault_id)
       .eq("claim_token", data.token)
       .maybeSingle();
@@ -727,6 +745,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
         pct: Number(ben.pct),
         payout_cad: Number(vault.amount_cad) * Number(ben.pct) / 100,
         claimed_at: ben.claimed_at,
+        payout_tx_signature: ben.payout_tx_signature,
       },
     };
   });

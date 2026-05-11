@@ -11,6 +11,7 @@ export type Beneficiary = {
   id?: string;
   claimed_at?: string | null;
   claim_token?: string | null;
+  payout_tx_signature?: string | null;
 };
 
 export type VaultCondition =
@@ -26,6 +27,7 @@ export type Vault = {
   condition: VaultCondition;
   beneficiaries: Beneficiary[];
   created_at: string;
+  tx_signature?: string | null;
   failure_count?: number;
   last_step?: string | null;
   // Per-vault advisor access. Owners must explicitly grant — advisors never

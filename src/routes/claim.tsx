@@ -24,7 +24,7 @@ export const Route = createFileRoute("/claim")({
 type Step = "lookup" | "found" | "claimed" | "notyet" | "notlisted" | "missing";
 type TokenView = {
   vault: { id: string; name: string; amount_cad: number; status: string };
-  beneficiary: { name: string; email: string; pct: number; payout_cad: number; claimed_at: string | null };
+  beneficiary: { name: string; email: string; pct: number; payout_cad: number; claimed_at: string | null; payout_tx_signature?: string | null };
 } | null;
 
 function Claim() {
@@ -138,7 +138,14 @@ function Claim() {
               </div>
 
               {tokenView.beneficiary.claimed_at ? (
-                <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This share was already claimed on {new Date(tokenView.beneficiary.claimed_at).toLocaleDateString()}.</p>
+                <>
+                  <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This share was already claimed on {new Date(tokenView.beneficiary.claimed_at).toLocaleDateString()}.</p>
+                  {tokenView.beneficiary.payout_tx_signature && (
+                    <a href={solscanUrl("tx", tokenView.beneficiary.payout_tx_signature)} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs font-mono break-all underline" style={{ color: "var(--honey)" }}>
+                      View payout on Solscan ↗ {tokenView.beneficiary.payout_tx_signature}
+                    </a>
+                  )}
+                </>
               ) : tokenView.vault.status !== "Released" ? (
                 <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This vault hasn't released yet. We'll email you the moment it does.</p>
               ) : (
@@ -157,7 +164,7 @@ function Claim() {
               <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl" style={{ background: "var(--sage)", color: "var(--forest)" }}>✓</div>
               <h2 className="mt-5" style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600 }}>Claim complete.</h2>
               <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
-                {formatCAD(tokenClaimed.amount_cad)} is on its way to {tokenClaimed.email} via Interac e-Transfer.
+                {formatCAD(tokenClaimed.amount_cad)} is moving from the platform hot wallet to {tokenClaimed.email}'s beneficiary wallet for offramp.
               </p>
               <a
                 href={solscanUrl("tx", tokenClaimed.tx_signature)}
@@ -166,7 +173,7 @@ function Claim() {
                 className="mt-3 inline-block text-xs font-mono break-all underline"
                 style={{ color: "var(--honey)" }}
               >
-                View hot wallet → claim wallet payout on Solscan ↗ {tokenClaimed.tx_signature}
+                View hot wallet → beneficiary wallet payout on Solscan ↗ {tokenClaimed.tx_signature}
               </a>
               <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
             </motion.div>
@@ -228,7 +235,7 @@ function Claim() {
                   className="mt-3 inline-block text-xs font-mono break-all underline"
                   style={{ color: "var(--honey)" }}
                 >
-                  View hot wallet → claim wallet payout on Solscan ↗ {legacyClaimTx}
+                  View hot wallet → beneficiary wallet payout on Solscan ↗ {legacyClaimTx}
                 </a>
               )}
               <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>

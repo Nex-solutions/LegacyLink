@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { differenceInDays, parseISO } from "date-fns";
 import { formatCAD, type Vault } from "@/lib/legacy-data";
+import { solscanUrl } from "@/lib/solana-explorer";
 
 function StatusPill({ status }: { status: Vault["status"] }) {
   const styles =
@@ -53,6 +54,7 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
   }
 
   const incomplete = vault.status === "Failed" || vault.status === "Draft";
+  const demoBeneficiary = vault.beneficiaries[0];
 
   return (
     <motion.div
@@ -107,6 +109,27 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
         </Link>
       </div>
       <div className="flex flex-wrap items-center gap-2 mt-1">
+        {demoBeneficiary?.claim_token && !incomplete && (
+          <Link
+            to="/claim"
+            search={{ vault: vault.id, token: demoBeneficiary.claim_token }}
+            className="ll-pill ll-pill-secondary text-sm"
+            style={{ padding: "0.5rem 1.1rem" }}
+          >
+            View claim demo · {demoBeneficiary.name}
+          </Link>
+        )}
+        {demoBeneficiary?.claimed_at && demoBeneficiary.payout_tx_signature && (
+          <a
+            href={solscanUrl("tx", demoBeneficiary.payout_tx_signature)}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs underline"
+            style={{ color: "var(--honey)" }}
+          >
+            Claim tx ↗
+          </a>
+        )}
         {cond.kind === "inactivity" && onCheckIn && !incomplete && (
           <button
             onClick={() => onCheckIn(vault.id)}
