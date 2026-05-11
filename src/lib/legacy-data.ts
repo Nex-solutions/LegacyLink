@@ -28,6 +28,8 @@ export type Vault = {
   beneficiaries: Beneficiary[];
   created_at: string;
   tx_signature?: string | null;
+  letter_message?: string | null;
+  letter_tx_signature?: string | null;
   failure_count?: number;
   last_step?: string | null;
   // Per-vault advisor access. Owners must explicitly grant — advisors never
