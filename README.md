@@ -249,6 +249,26 @@ bun run dev
 
 The app boots at `http://localhost:5173`.
 
+### Self-hosting without the bundled backend (forker setup)
+
+This repo ships pre-wired to a managed Postgres + Auth + Storage backend (the `VITE_SUPABASE_*` and `SUPABASE_SERVICE_ROLE_KEY` env vars). If you don't want to use that provider, you can swap it out — the codebase only depends on a standard Postgres database, an auth service that issues JWTs, and a public/anon + service-role key pair. Any compatible provider works (self-hosted Supabase via Docker, Neon + Auth.js, Postgres + Clerk, AWS RDS + Cognito, etc.).
+
+Steps:
+
+1. **Stand up Postgres + Auth.** Easiest path: run [self-hosted Supabase](https://supabase.com/docs/guides/self-hosting) via Docker — same API surface, no code changes needed. Alternatively bring your own Postgres (Neon, RDS, Railway, Fly Postgres, …) and pair it with an auth provider that issues JWTs.
+2. **Apply the schema.** Run every SQL file in `supabase/migrations/` against your database in order:
+   ```bash
+   for f in supabase/migrations/*.sql; do psql "$DATABASE_URL" -f "$f"; done
+   ```
+   These migrations create the tables, RLS policies, the `has_role` SECURITY DEFINER function, and triggers — vanilla Postgres SQL that runs on any Postgres ≥ 14.
+3. **Point the app at your backend.** Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, and `SUPABASE_SERVICE_ROLE_KEY` to your provider's equivalents. (The variable names are kept for compatibility with the auto-generated client at `src/integrations/supabase/client.ts` — if you fully replace the client, rename freely.)
+4. **Replace the auto-generated client (optional).** If you're not using a Supabase-compatible API, replace `src/integrations/supabase/client.ts` with your own typed client and update the `import { supabase } from "@/integrations/supabase/client"` call sites. The server functions, RLS expectations, and schema stay the same.
+5. **Wire your own AI gateway (optional).** `LOVABLE_API_KEY` powers the AI-assisted flows. Swap in any OpenAI-compatible gateway by updating the AI helper in `src/lib/` (base URL + key) and renaming the env var.
+6. **Bring your own hot wallet + Paytrie account** as described in [The hot wallet](#the-hot-wallet-forker-note) and [Environment variables](#environment-variables).
+
+Everything else — the Solana program, sweep logic, claim flow, letter anchoring — is provider-agnostic and works as-is.
+
+
 ## Environment variables
 
 The browser-visible `VITE_*` variables are auto-managed by the backend integration (do not edit `.env` manually). Server-only secrets are configured in your hosting provider's secret manager.
