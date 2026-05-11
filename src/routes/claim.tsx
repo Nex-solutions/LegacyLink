@@ -8,6 +8,7 @@ import { formatCAD, getVault, type Vault } from "@/lib/legacy-data";
 import { evaluateAndHydrate, serverClaimByEmail } from "@/lib/vault-client";
 import { publicLookupClaim, publicClaimByToken } from "@/lib/vault.functions";
 import { conditionSummary } from "@/lib/vault-release";
+import { solscanUrl } from "@/lib/solana-explorer";
 
 type Search = { vault?: string; token?: string };
 
@@ -61,6 +62,7 @@ function Claim() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<Step>("lookup");
   const [vault, setVaultState] = useState<Vault | null>(null);
+  const [legacyClaimTx, setLegacyClaimTx] = useState<string | null>(null);
 
   const myShare = useMemo(() => {
     if (!vault) return null;
@@ -88,6 +90,7 @@ function Claim() {
     if (!vault || !myShare) return;
     try {
       const res = await serverClaimByEmail(vault.id, email);
+      setLegacyClaimTx(res.tx_signature);
       setStep("claimed");
       toast.success(`${formatCAD(res.amount_cad)} on its way to ${email}`);
     } catch (e) {
