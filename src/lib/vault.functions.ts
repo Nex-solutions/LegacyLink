@@ -98,7 +98,7 @@ export const listVaults = createServerFn({ method: "GET" })
       .select(`
         id, name, amount_cad, status, condition_kind,
         unlock_date, inactivity_days, last_checkin,
-        created_at, vault_pda, tx_signature, letter_message,
+        created_at, vault_pda, tx_signature, letter_message, letter_tx_signature,
         failure_count, last_step,
         beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
       `)
@@ -124,6 +124,7 @@ export const listVaults = createServerFn({ method: "GET" })
       vault_pda: row.vault_pda,
       tx_signature: row.tx_signature,
       letter_message: row.letter_message,
+      letter_tx_signature: (row as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
       failure_count: (row as { failure_count?: number }).failure_count ?? 0,
       last_step: (row as { last_step?: string | null }).last_step ?? null,
     }));
