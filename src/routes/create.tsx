@@ -199,6 +199,22 @@ function Create() {
                 {chain.tx_signature} ↗
               </a>
 
+              {chain.letter_tx_signature && (
+                <>
+                  <div className="mt-3 text-xs" style={{ color: "var(--warm-gray)" }}>
+                    Letter to beneficiary · anchored via SPL Memo from your system wallet
+                  </div>
+                  <a
+                    href={solscanUrl("tx", chain.letter_tx_signature)}
+                    target="_blank" rel="noreferrer"
+                    className="text-xs font-mono break-all underline"
+                    style={{ color: "var(--forest)" }}
+                  >
+                    {chain.letter_tx_signature} ↗
+                  </a>
+                </>
+              )}
+
             </div>
           )}
 
