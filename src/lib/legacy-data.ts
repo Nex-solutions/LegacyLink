@@ -26,6 +26,7 @@ export type Vault = {
   condition: VaultCondition;
   beneficiaries: Beneficiary[];
   created_at: string;
+  tx_signature?: string | null;
   failure_count?: number;
   last_step?: string | null;
   // Per-vault advisor access. Owners must explicitly grant — advisors never
