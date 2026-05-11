@@ -152,7 +152,7 @@ function Landing() {
           <div className="grid md:grid-cols-3 gap-5 mt-10">
             {[
               { n: "01", t: "Sign up", d: "Email + password. A custodial Solana wallet is provisioned automatically.", to: "/signup", cta: "Create account" },
-              { n: "02", t: "Load demo data", d: "From your dashboard, click Load demo data to seed 4 vaults covering every state.", to: "/dashboard", cta: "Go to dashboard" },
+              { n: "02", t: "Create a demo vault", d: "Open the create flow — the form is prefilled with a demo beneficiary and letter so you can ship a vault end-to-end in under 30 seconds.", to: "/create", cta: "Create demo vault" },
               { n: "03", t: "Try a claim", d: "Open the released vault to grab a claim link, then walk through it as a beneficiary.", to: "/claim", cta: "Claim a vault" },
             ].map((s) => (
               <div key={s.n} className="ll-card p-6">
