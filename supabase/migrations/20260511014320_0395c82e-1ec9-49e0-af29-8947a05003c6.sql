@@ -1,0 +1,1 @@
+ALTER TABLE public.vaults ADD COLUMN IF NOT EXISTS letter_tx_signature text;

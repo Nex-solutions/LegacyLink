@@ -469,6 +469,7 @@ export type Database = {
           last_checkin: string | null
           last_step: string | null
           letter_message: string | null
+          letter_tx_signature: string | null
           name: string
           owner_id: string
           solana_pubkey: string | null
@@ -491,6 +492,7 @@ export type Database = {
           last_checkin?: string | null
           last_step?: string | null
           letter_message?: string | null
+          letter_tx_signature?: string | null
           name: string
           owner_id: string
           solana_pubkey?: string | null
@@ -513,6 +515,7 @@ export type Database = {
           last_checkin?: string | null
           last_step?: string | null
           letter_message?: string | null
+          letter_tx_signature?: string | null
           name?: string
           owner_id?: string
           solana_pubkey?: string | null
