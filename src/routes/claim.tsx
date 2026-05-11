@@ -164,7 +164,7 @@ function Claim() {
               <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl" style={{ background: "var(--sage)", color: "var(--forest)" }}>✓</div>
               <h2 className="mt-5" style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600 }}>Claim complete.</h2>
               <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
-                {formatCAD(tokenClaimed.amount_cad)} is on its way to {tokenClaimed.email} via Interac e-Transfer.
+                {formatCAD(tokenClaimed.amount_cad)} is moving from the platform hot wallet to {tokenClaimed.email}'s beneficiary wallet for offramp.
               </p>
               <a
                 href={solscanUrl("tx", tokenClaimed.tx_signature)}
@@ -173,7 +173,7 @@ function Claim() {
                 className="mt-3 inline-block text-xs font-mono break-all underline"
                 style={{ color: "var(--honey)" }}
               >
-                View hot wallet → claim wallet payout on Solscan ↗ {tokenClaimed.tx_signature}
+                View hot wallet → beneficiary wallet payout on Solscan ↗ {tokenClaimed.tx_signature}
               </a>
               <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
             </motion.div>
@@ -235,7 +235,7 @@ function Claim() {
                   className="mt-3 inline-block text-xs font-mono break-all underline"
                   style={{ color: "var(--honey)" }}
                 >
-                  View hot wallet → claim wallet payout on Solscan ↗ {legacyClaimTx}
+                  View hot wallet → beneficiary wallet payout on Solscan ↗ {legacyClaimTx}
                 </a>
               )}
               <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
