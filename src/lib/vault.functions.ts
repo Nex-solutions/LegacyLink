@@ -186,7 +186,7 @@ const createInputSchema = z.object({
 export const createVault = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createInputSchema.parse(d))
-  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string }> => {
+  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null }> => {
     const { supabase, userId } = context;
 
     // Reuse the user's signup system wallet — never generate a new one here.
@@ -246,15 +246,17 @@ export const createVault = createServerFn({ method: "POST" })
         .eq("id", vaultId);
 
       // Beneficiaries
+      const beneficiaryRows = data.beneficiaries.map((b) => ({
+        vault_id: vaultId,
+        name: b.name,
+        email: b.email,
+        pct: b.pct,
+        claim_token: crypto.randomUUID(),
+      }));
       if (data.beneficiaries.length) {
         const { error: benErr } = await supabase
           .from("beneficiaries")
-          .insert(data.beneficiaries.map((b) => ({
-            vault_id: vaultId,
-            name: b.name,
-            email: b.email,
-            pct: b.pct,
-          })));
+          .insert(beneficiaryRows);
         if (benErr) throw benErr;
       }
 
@@ -270,6 +272,9 @@ export const createVault = createServerFn({ method: "POST" })
         tx_signature: fund.signature,
         owner_pubkey: proof.fromPubkey,
         hot_pubkey: proof.toPubkey,
+        claim_demo: beneficiaryRows[0]
+          ? { name: beneficiaryRows[0].name, email: beneficiaryRows[0].email, token: beneficiaryRows[0].claim_token }
+          : null,
       };
     } catch (err) {
       console.error("createVault failed", err);
