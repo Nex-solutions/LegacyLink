@@ -653,9 +653,21 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
 export const resetDemoServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { error } = await supabase.rpc("seed_demo_for_user");
     if (error) throw error;
+    const { data: seededVaults, error: vErr } = await supabaseAdmin
+      .from("vaults")
+      .select("id, beneficiaries(id, claim_token)")
+      .eq("owner_id", userId);
+    if (vErr) throw vErr;
+    await Promise.all(
+      (seededVaults ?? []).flatMap((vault) =>
+        (vault.beneficiaries ?? [])
+          .filter((b) => !b.claim_token)
+          .map((b) => supabaseAdmin.from("beneficiaries").update({ claim_token: crypto.randomUUID() }).eq("id", b.id)),
+      ),
+    );
     return { ok: true };
   });
 
