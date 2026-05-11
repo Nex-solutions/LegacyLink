@@ -222,9 +222,9 @@ src/
 ├── components/
 │   ├── legacy/              # Brand components (Nav, PageShell, VaultCard)
 │   └── ui/                  # shadcn/ui primitives
-├── integrations/supabase/   # Auto-generated Lovable Cloud client + types (DO NOT EDIT)
+├── integrations/supabase/   # Auto-generated backend client + types (DO NOT EDIT)
 └── styles.css               # Tailwind v4 tokens
-supabase/                    # Cloud config + SQL migrations
+supabase/                    # Backend config + SQL migrations
 ```
 
 ## Getting started
