@@ -664,7 +664,6 @@ export const resetDemoServer = createServerFn({ method: "POST" })
     await Promise.all(
       (seededVaults ?? []).flatMap((vault) =>
         (vault.beneficiaries ?? [])
-          .filter((b) => !b.claim_token)
           .map((b) => supabaseAdmin.from("beneficiaries").update({ claim_token: crypto.randomUUID() }).eq("id", b.id)),
       ),
     );
