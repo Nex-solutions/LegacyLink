@@ -10,7 +10,6 @@ import {
   fundVaultOnChain,
   checkInOnChain,
   releaseVaultOnChain,
-  claimOnChain,
   isSimulatedMode,
 } from "./solana.server";
 import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
