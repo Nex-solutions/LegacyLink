@@ -5,7 +5,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
-import type { Connection, PublicKey, Signer, Transaction } from "@solana/web3.js";
+import type { Connection, Signer, Transaction } from "@solana/web3.js";
 
 function getRpcUrls(): string[] {
   const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
