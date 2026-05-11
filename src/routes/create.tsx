@@ -200,8 +200,25 @@ function Create() {
             </div>
           )}
 
+          {chain?.claim_demo && (
+            <div className="mt-6 mx-auto max-w-md p-4 rounded-xl text-left" style={{ background: "rgba(127,168,130,0.10)", border: "1px solid rgba(127,168,130,0.35)" }}>
+              <p className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>View claim demo</p>
+              <p className="mt-1 text-sm" style={{ color: "var(--forest)" }}>
+                Beneficiary: <strong>{chain.claim_demo.name}</strong> · {chain.claim_demo.email}
+              </p>
+              <a
+                href={`/claim?vault=${success}&token=${encodeURIComponent(chain.claim_demo.token)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-block text-xs font-mono break-all underline"
+                style={{ color: "var(--honey)" }}
+              >
+                Open beneficiary claim flow ↗
+              </a>
+            </div>
+          )}
           <p className="mt-6 text-sm" style={{ color: "var(--warm-gray)" }}>
-            Reviewer demo: open this vault, release it, then use the beneficiary claim link shown on the vault page.
+            Demo flow: release this vault, then claim as the listed beneficiary to see hot wallet → beneficiary wallet on Solscan.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button onClick={() => navigate({ to: "/vault/$id", params: { id: success } })} className="ll-pill ll-pill-primary">
