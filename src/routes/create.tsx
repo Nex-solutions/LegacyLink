@@ -80,7 +80,7 @@ function Create() {
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string } | null>(null);
+  const [chain, setChain] = useState<{ vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; claim_demo: { name: string; email: string; token: string } | null } | null>(null);
 
   useEffect(() => { if (!getUser()) navigate({ to: "/login" }); }, [navigate]);
 
@@ -124,14 +124,14 @@ function Create() {
   async function submit() {
     setSubmitting(true);
     try {
-      const { id, vault_pda, tx_signature, owner_pubkey, hot_pubkey } = await serverCreateVault({
+      const { id, vault_pda, tx_signature, owner_pubkey, hot_pubkey, claim_demo } = await serverCreateVault({
         name: name || "Untitled Vault",
         amount_cad: amountNum,
         condition: getCondition(),
         beneficiaries: bens.map((b) => ({ name: b.name.trim(), email: b.email.trim().toLowerCase(), pct: Number(b.pct) })),
       });
       if (trustee.email) toast.success(`Setup email sent to ${trustee.name || trustee.email}`);
-      setChain({ vault_pda, tx_signature, owner_pubkey, hot_pubkey });
+      setChain({ vault_pda, tx_signature, owner_pubkey, hot_pubkey, claim_demo });
       setSuccess(id);
     } catch (e) {
       console.error(e);
