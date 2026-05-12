@@ -59,6 +59,13 @@ export function AppHeader() {
         {!signedIn && (
           <>
             <Link
+              to="/business-plan"
+              className="hidden sm:inline text-sm font-medium"
+              style={{ color: "var(--forest)" }}
+            >
+              Business Plan
+            </Link>
+            <Link
               to="/advisor"
               title="Open the advisor portal"
               aria-label="Open the advisor portal"
