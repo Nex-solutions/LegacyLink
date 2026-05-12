@@ -166,6 +166,34 @@ function Landing() {
         </div>
       </section>
 
+      {/* Business Plan banner */}
+      <section className="px-6 lg:px-12 py-16">
+        <div className="max-w-6xl mx-auto">
+          <div
+            className="ll-card relative overflow-hidden p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-center"
+            style={{ background: "linear-gradient(135deg, var(--forest) 0%, #1f3a1f 100%)", border: "1px solid rgba(232,160,32,0.35)" }}
+          >
+            <div className="ll-blob" style={{ width: 320, height: 320, right: -100, top: -100, background: "var(--honey)", opacity: 0.18 }} />
+            <div className="relative z-10">
+              <span className="text-[10px] uppercase tracking-[0.18em] px-2.5 py-1 rounded-full" style={{ background: "rgba(232,160,32,0.22)", color: "var(--honey)" }}>
+                For investors & judges
+              </span>
+              <h2 className="mt-4" style={{ fontFamily: "var(--font-serif)", color: "var(--cream)", fontSize: "clamp(28px,4vw,40px)", lineHeight: 1.15, fontWeight: 600 }}>
+                Read the full business plan.
+              </h2>
+              <p className="mt-3 max-w-xl" style={{ color: "rgba(250,250,247,0.78)" }}>
+                The market thesis, unit economics, regulatory path, and 24-month roadmap behind LegacyLink — the settlement layer for Canada's $1.2T wealth transfer.
+              </p>
+            </div>
+            <div className="relative z-10">
+              <Link to="/business-plan" className="ll-pill ll-pill-secondary inline-flex items-center gap-2">
+                Open Business Plan <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="px-6 lg:px-12 py-24 text-center relative overflow-hidden">
         <Blob className="w-[420px] h-[420px] left-1/2 -translate-x-1/2 top-10" color="var(--honey)" opacity={0.10} />
