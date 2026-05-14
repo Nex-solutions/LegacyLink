@@ -3,11 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  getMasterWallet,
-  initMasterWallet,
-  revealMasterMnemonic,
-} from "./master-wallet.server";
+import { getMasterWallet, initMasterWallet, revealMasterMnemonic } from "./master-wallet.server";
 
 async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -53,9 +49,7 @@ export const listLedger = createServerFn({ method: "GET" })
         .select("id, kind, reference, external_ref, memo, tx_signature, user_id, created_at")
         .order("created_at", { ascending: false })
         .limit(data.limit),
-      supabaseAdmin
-        .from("ledger_accounts")
-        .select("id, code, name, type, user_id, currency"),
+      supabaseAdmin.from("ledger_accounts").select("id, code, name, type, user_id, currency"),
     ]);
     if (txErr) throw txErr;
     if (aErr) throw aErr;
@@ -88,7 +82,7 @@ export const getLedgerBalances = createServerFn({ method: "GET" })
           _account_id: a.id,
         });
         return { ...a, balance: Number(bal ?? 0) };
-      })
+      }),
     );
     return { accounts: balances };
   });

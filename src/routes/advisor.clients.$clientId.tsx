@@ -6,8 +6,14 @@ import { Blob, PageShell } from "@/components/legacy/PageShell";
 import { findClient, formatCAD, type ClientVault } from "@/lib/legacy-data";
 import { getAdvisor, type Advisor } from "@/lib/legacy-auth";
 import {
-  addNote, addTask, deleteNote, deleteTask, getNotes, getTasks,
-  subscribeWorkspace, toggleTask,
+  addNote,
+  addTask,
+  deleteNote,
+  deleteTask,
+  getNotes,
+  getTasks,
+  subscribeWorkspace,
+  toggleTask,
 } from "@/lib/advisor-workspace";
 
 export const Route = createFileRoute("/advisor/clients/$clientId")({
@@ -55,7 +61,11 @@ function ClientDetail() {
     );
   }
 
-  const initials = client.name.split(" ").map((s) => s[0]).join("").slice(0, 2);
+  const initials = client.name
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2);
   const totalBeneficiaries = client.vaultDetail.reduce((a, v) => a + v.beneficiaries.length, 0);
 
   return (
@@ -66,7 +76,10 @@ function ClientDetail() {
           <Link to="/advisor/dashboard" className="text-sm" style={{ color: "var(--cream)" }}>
             ← Back to dashboard
           </Link>
-          <span className="text-[11px] uppercase tracking-[0.18em]" style={{ color: "rgba(250,250,247,0.55)" }}>
+          <span
+            className="text-[11px] uppercase tracking-[0.18em]"
+            style={{ color: "rgba(250,250,247,0.55)" }}
+          >
             Read-only · Advisor view
           </span>
         </div>
@@ -83,7 +96,14 @@ function ClientDetail() {
               {initials}
             </div>
             <div className="flex-1">
-              <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 32, color: "var(--cream)", fontWeight: 600 }}>
+              <h1
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: 32,
+                  color: "var(--cream)",
+                  fontWeight: 600,
+                }}
+              >
                 {client.name}
               </h1>
               <p className="text-sm" style={{ color: "rgba(250,250,247,0.65)" }}>
@@ -91,15 +111,16 @@ function ClientDetail() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => window.print()}
-                className="ll-pill ll-pill-secondary text-sm"
-              >📄 Download summary</button>
+              <button onClick={() => window.print()} className="ll-pill ll-pill-secondary text-sm">
+                📄 Download summary
+              </button>
               <Link
                 to="/advisor/messages"
                 className="ll-pill text-sm inline-block"
                 style={{ background: "var(--honey)", color: "var(--forest)" }}
-              >✉ Message client</Link>
+              >
+                ✉ Message client
+              </Link>
             </div>
           </div>
 
@@ -107,14 +128,20 @@ function ClientDetail() {
             <MiniStat label="Protected" value={formatCAD(client.total)} />
             <MiniStat label="Vaults" value={String(client.vaults)} />
             <MiniStat label="Beneficiaries" value={String(totalBeneficiaries)} />
-            <MiniStat label="Last active" value={client.lastActiveDays === 0 ? "Today" : `${client.lastActiveDays}d ago`} />
+            <MiniStat
+              label="Last active"
+              value={client.lastActiveDays === 0 ? "Today" : `${client.lastActiveDays}d ago`}
+            />
           </div>
         </div>
       </section>
 
       {/* Tabs */}
       <div className="max-w-6xl mx-auto px-6 lg:px-12 mt-8">
-        <div className="flex flex-wrap gap-1 border-b" style={{ borderColor: "rgba(26,46,26,0.1)" }}>
+        <div
+          className="flex flex-wrap gap-1 border-b"
+          style={{ borderColor: "rgba(26,46,26,0.1)" }}
+        >
           {(["vaults", "beneficiaries", "activity", "notes", "tasks"] as Tab[]).map((t) => (
             <button
               key={t}
@@ -124,7 +151,9 @@ function ClientDetail() {
                 color: tab === t ? "var(--forest)" : "var(--warm-gray)",
                 borderBottom: tab === t ? "2px solid var(--honey)" : "2px solid transparent",
               }}
-            >{t}</button>
+            >
+              {t}
+            </button>
           ))}
         </div>
 
@@ -142,7 +171,9 @@ function ClientDetail() {
               <table className="w-full text-sm">
                 <thead style={{ background: "rgba(26,46,26,0.04)" }}>
                   <tr>
-                    <Th>Name</Th><Th>Vault</Th><Th>Estimated share</Th>
+                    <Th>Name</Th>
+                    <Th>Vault</Th>
+                    <Th>Estimated share</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -150,10 +181,18 @@ function ClientDetail() {
                     v.beneficiaries.map((b, i) => {
                       const split = v.beneficiaries.length || 1;
                       return (
-                        <tr key={`${v.id}-${i}`} className="border-t" style={{ borderColor: "rgba(26,46,26,0.06)" }}>
+                        <tr
+                          key={`${v.id}-${i}`}
+                          className="border-t"
+                          style={{ borderColor: "rgba(26,46,26,0.06)" }}
+                        >
                           <Td>{b.name}</Td>
                           <Td>{v.name}</Td>
-                          <Td><span style={{ color: "var(--honey)", fontWeight: 600 }}>{formatCAD(v.amount_cad / split)}</span></Td>
+                          <Td>
+                            <span style={{ color: "var(--honey)", fontWeight: 600 }}>
+                              {formatCAD(v.amount_cad / split)}
+                            </span>
+                          </Td>
                         </tr>
                       );
                     }),
@@ -165,7 +204,10 @@ function ClientDetail() {
 
           {tab === "activity" && (
             <div className="ll-card p-6 text-sm" style={{ color: "var(--warm-gray)" }}>
-              <p>Synthetic activity from this client's vault history is shown on the main advisor dashboard. Per-vault timelines are available on each vault's detail page.</p>
+              <p>
+                Synthetic activity from this client's vault history is shown on the main advisor
+                dashboard. Per-vault timelines are available on each vault's detail page.
+              </p>
             </div>
           )}
 
@@ -182,8 +224,18 @@ function ClientDetail() {
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="ll-card p-4">
-      <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--warm-gray)" }}>{label}</p>
-      <p className="mt-1.5" style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 22, fontWeight: 600 }}>
+      <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--warm-gray)" }}>
+        {label}
+      </p>
+      <p
+        className="mt-1.5"
+        style={{
+          fontFamily: "var(--font-serif)",
+          color: "var(--honey)",
+          fontSize: 22,
+          fontWeight: 600,
+        }}
+      >
         {value}
       </p>
     </div>
@@ -191,18 +243,31 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>{children}</th>;
+  return (
+    <th
+      className="text-left px-4 py-3 text-[11px] uppercase tracking-wider"
+      style={{ color: "var(--warm-gray)" }}
+    >
+      {children}
+    </th>
+  );
 }
 function Td({ children }: { children: React.ReactNode }) {
-  return <td className="px-4 py-3" style={{ color: "var(--forest)" }}>{children}</td>;
+  return (
+    <td className="px-4 py-3" style={{ color: "var(--forest)" }}>
+      {children}
+    </td>
+  );
 }
 
 function VaultMini({ clientId, vault }: { clientId: string; vault: ClientVault }) {
   const cond = vault.condition;
   const desc =
-    cond.kind === "time" ? `Releases ${new Date(cond.unlock_date).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}`
-    : cond.kind === "inactivity" ? `Inactivity · ${cond.inactivity_days}-day threshold`
-    : "Manual release";
+    cond.kind === "time"
+      ? `Releases ${new Date(cond.unlock_date).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}`
+      : cond.kind === "inactivity"
+        ? `Inactivity · ${cond.inactivity_days}-day threshold`
+        : "Manual release";
   return (
     <Link
       to="/advisor/clients/$clientId/vault/$vaultId"
@@ -210,14 +275,40 @@ function VaultMini({ clientId, vault }: { clientId: string; vault: ClientVault }
       className="ll-card p-5 block transition hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between">
-        <h3 style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)", fontSize: 17 }}>{vault.name}</h3>
-        <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "var(--sage)", color: "var(--forest)" }}>{vault.status}</span>
+        <h3
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontWeight: 600,
+            color: "var(--forest)",
+            fontSize: 17,
+          }}
+        >
+          {vault.name}
+        </h3>
+        <span
+          className="text-[11px] px-2 py-0.5 rounded-full"
+          style={{ background: "var(--sage)", color: "var(--forest)" }}
+        >
+          {vault.status}
+        </span>
       </div>
-      <p className="mt-2" style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 22, fontWeight: 600 }}>
+      <p
+        className="mt-2"
+        style={{
+          fontFamily: "var(--font-serif)",
+          color: "var(--honey)",
+          fontSize: 22,
+          fontWeight: 600,
+        }}
+      >
         {formatCAD(vault.amount_cad)}
       </p>
-      <p className="mt-1 text-[12px]" style={{ color: "var(--warm-gray)" }}>{desc}</p>
-      <p className="mt-3 text-[12px]" style={{ color: "var(--honey)" }}>View detail →</p>
+      <p className="mt-1 text-[12px]" style={{ color: "var(--warm-gray)" }}>
+        {desc}
+      </p>
+      <p className="mt-3 text-[12px]" style={{ color: "var(--honey)" }}>
+        View detail →
+      </p>
     </Link>
   );
 }
@@ -228,7 +319,9 @@ function NotesPanel({ clientId }: { clientId: string }) {
   return (
     <div className="grid lg:grid-cols-[1fr_2fr] gap-6">
       <div className="ll-card p-5">
-        <h3 style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>Add a private note</h3>
+        <h3 style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>
+          Add a private note
+        </h3>
         <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>
           Visible only to you. Never shown to the client.
         </p>
@@ -241,22 +334,40 @@ function NotesPanel({ clientId }: { clientId: string }) {
         />
         <button
           disabled={!body.trim()}
-          onClick={() => { addNote(clientId, body.trim()); setBody(""); toast.success("Note saved"); }}
+          onClick={() => {
+            addNote(clientId, body.trim());
+            setBody("");
+            toast.success("Note saved");
+          }}
           className="ll-pill ll-pill-primary mt-3 text-sm"
           style={{ opacity: body.trim() ? 1 : 0.5 }}
-        >Save note</button>
+        >
+          Save note
+        </button>
       </div>
       <div className="space-y-3">
         {notes.length === 0 && (
-          <div className="ll-card p-8 text-center text-sm" style={{ color: "var(--warm-gray)" }}>No notes yet.</div>
+          <div className="ll-card p-8 text-center text-sm" style={{ color: "var(--warm-gray)" }}>
+            No notes yet.
+          </div>
         )}
         {notes.map((n) => (
           <div key={n.id} className="ll-card p-4">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--forest)" }}>{n.body}</p>
-              <button onClick={() => deleteNote(n.id)} className="text-xs" style={{ color: "var(--warm-gray)" }}>Delete</button>
+              <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--forest)" }}>
+                {n.body}
+              </p>
+              <button
+                onClick={() => deleteNote(n.id)}
+                className="text-xs"
+                style={{ color: "var(--warm-gray)" }}
+              >
+                Delete
+              </button>
             </div>
-            <p className="text-[11px] mt-2" style={{ color: "var(--warm-gray)" }}>{new Date(n.createdAt).toLocaleString()}</p>
+            <p className="text-[11px] mt-2" style={{ color: "var(--warm-gray)" }}>
+              {new Date(n.createdAt).toLocaleString()}
+            </p>
           </div>
         ))}
       </div>
@@ -271,7 +382,9 @@ function TasksPanel({ clientId, clientName }: { clientId: string; clientName: st
   return (
     <div className="grid lg:grid-cols-[1fr_2fr] gap-6">
       <div className="ll-card p-5">
-        <h3 style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>Add a task</h3>
+        <h3 style={{ fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--forest)" }}>
+          Add a task
+        </h3>
         <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>
           Personal follow-ups for {clientName}.
         </p>
@@ -289,27 +402,56 @@ function TasksPanel({ clientId, clientName }: { clientId: string; clientName: st
         />
         <button
           disabled={!title.trim()}
-          onClick={() => { addTask({ clientId, title: title.trim(), due: due || undefined }); setTitle(""); setDue(""); toast.success("Task added"); }}
+          onClick={() => {
+            addTask({ clientId, title: title.trim(), due: due || undefined });
+            setTitle("");
+            setDue("");
+            toast.success("Task added");
+          }}
           className="ll-pill ll-pill-primary mt-3 text-sm"
           style={{ opacity: title.trim() ? 1 : 0.5 }}
-        >Add task</button>
+        >
+          Add task
+        </button>
       </div>
       <div className="space-y-2">
         {tasks.length === 0 && (
-          <div className="ll-card p-8 text-center text-sm" style={{ color: "var(--warm-gray)" }}>No tasks yet.</div>
+          <div className="ll-card p-8 text-center text-sm" style={{ color: "var(--warm-gray)" }}>
+            No tasks yet.
+          </div>
         )}
         {tasks.map((t) => (
           <motion.div layout key={t.id} className="ll-card p-4 flex items-center gap-3">
-            <input type="checkbox" checked={t.done} onChange={() => toggleTask(t.id)} className="w-4 h-4" />
+            <input
+              type="checkbox"
+              checked={t.done}
+              onChange={() => toggleTask(t.id)}
+              className="w-4 h-4"
+            />
             <div className="flex-1">
-              <p className="text-sm" style={{ color: "var(--forest)", textDecoration: t.done ? "line-through" : undefined, opacity: t.done ? 0.6 : 1 }}>
+              <p
+                className="text-sm"
+                style={{
+                  color: "var(--forest)",
+                  textDecoration: t.done ? "line-through" : undefined,
+                  opacity: t.done ? 0.6 : 1,
+                }}
+              >
                 {t.title}
               </p>
               {t.due && (
-                <p className="text-[11px]" style={{ color: "var(--warm-gray)" }}>Due {new Date(t.due).toLocaleDateString()}</p>
+                <p className="text-[11px]" style={{ color: "var(--warm-gray)" }}>
+                  Due {new Date(t.due).toLocaleDateString()}
+                </p>
               )}
             </div>
-            <button onClick={() => deleteTask(t.id)} className="text-xs" style={{ color: "var(--warm-gray)" }}>Delete</button>
+            <button
+              onClick={() => deleteTask(t.id)}
+              className="text-xs"
+              style={{ color: "var(--warm-gray)" }}
+            >
+              Delete
+            </button>
           </motion.div>
         ))}
       </div>

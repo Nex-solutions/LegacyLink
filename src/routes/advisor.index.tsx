@@ -7,30 +7,44 @@ export const Route = createFileRoute("/advisor/")({
   head: () => ({
     meta: [
       { title: "LegacyLink for Advisors — Real-time client estate visibility" },
-      { name: "description", content: "A real-time window into your clients' estate vaults — built for Canadian financial advisors and estate planners." },
+      {
+        name: "description",
+        content:
+          "A real-time window into your clients' estate vaults — built for Canadian financial advisors and estate planners.",
+      },
       { property: "og:title", content: "LegacyLink for Advisors" },
-      { property: "og:description", content: "Monitor every client vault, condition, and release from one dashboard." },
+      {
+        property: "og:description",
+        content: "Monitor every client vault, condition, and release from one dashboard.",
+      },
     ],
   }),
   component: AdvisorLanding,
 });
 
 const FIRMS = [
-  "Raymond James", "Edward Jones", "Harbourfront Wealth",
-  "Investors Group", "IG Wealth Management", "Independent Advisors",
+  "Raymond James",
+  "Edward Jones",
+  "Harbourfront Wealth",
+  "Investors Group",
+  "IG Wealth Management",
+  "Independent Advisors",
 ];
 
 const VALUES = [
   {
-    n: "01", title: "Full Visibility",
+    n: "01",
+    title: "Full Visibility",
     body: "See every vault, condition, and upcoming release across your entire client book — in real time.",
   },
   {
-    n: "02", title: "Proactive Alerts",
+    n: "02",
+    title: "Proactive Alerts",
     body: "Get notified the moment a client goes quiet, a vault nears release, or a condition needs review.",
   },
   {
-    n: "03", title: "Effortless Onboarding",
+    n: "03",
+    title: "Effortless Onboarding",
     body: "Invite clients directly from your dashboard. They are protected within minutes, not weeks.",
   },
 ];
@@ -42,8 +56,14 @@ function AdvisorLanding() {
       <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 lg:gap-5 min-w-0">
           <Logo />
-          <span className="hidden md:inline-block h-4 w-px" style={{ background: "rgba(26,46,26,0.14)" }} />
-          <span className="hidden md:inline text-xs uppercase tracking-[0.18em]" style={{ color: "var(--warm-gray)" }}>
+          <span
+            className="hidden md:inline-block h-4 w-px"
+            style={{ background: "rgba(26,46,26,0.14)" }}
+          />
+          <span
+            className="hidden md:inline text-xs uppercase tracking-[0.18em]"
+            style={{ color: "var(--warm-gray)" }}
+          >
             Advisor Portal
           </span>
         </div>
@@ -55,8 +75,18 @@ function AdvisorLanding() {
           >
             <span aria-hidden>←</span> For Families
           </Link>
-          <Link to="/advisor/login" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Sign in</Link>
-          <Link to="/advisor/signup" className="ll-pill ll-pill-primary text-sm" style={{ padding: "0.55rem 1.2rem" }}>
+          <Link
+            to="/advisor/login"
+            className="hidden sm:inline text-sm"
+            style={{ color: "var(--forest)" }}
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/advisor/signup"
+            className="ll-pill ll-pill-primary text-sm"
+            style={{ padding: "0.55rem 1.2rem" }}
+          >
             Create Advisor Account
           </Link>
         </nav>
@@ -64,7 +94,7 @@ function AdvisorLanding() {
 
       {/* Hero */}
       <section className="relative px-6 lg:px-12 pt-12 lg:pt-20 pb-24 overflow-hidden">
-        <Blob className="w-[640px] h-[640px] -top-40 -right-40" color="var(--sage)" opacity={0.10} />
+        <Blob className="w-[640px] h-[640px] -top-40 -right-40" color="var(--sage)" opacity={0.1} />
         <Blob className="w-[420px] h-[420px] top-40 -left-20" color="var(--honey)" opacity={0.08} />
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
@@ -82,7 +112,14 @@ function AdvisorLanding() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
             className="mt-6"
-            style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: "clamp(40px,6vw,56px)", lineHeight: 1.05, fontWeight: 600, letterSpacing: "-0.02em" }}
+            style={{
+              fontFamily: "var(--font-serif)",
+              color: "var(--forest)",
+              fontSize: "clamp(40px,6vw,56px)",
+              lineHeight: 1.05,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+            }}
           >
             Your clients' legacies,
             <br />
@@ -96,8 +133,8 @@ function AdvisorLanding() {
             className="mx-auto mt-7 max-w-2xl text-lg"
             style={{ color: "var(--warm-gray)" }}
           >
-            LegacyLink gives financial advisors a real-time window into their clients'
-            estate vaults — with zero extra work for you or them.
+            LegacyLink gives financial advisors a real-time window into their clients' estate vaults
+            — with zero extra work for you or them.
           </motion.p>
 
           <motion.div
@@ -106,8 +143,12 @@ function AdvisorLanding() {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="mt-10 flex flex-wrap items-center justify-center gap-4"
           >
-            <Link to="/advisor/signup" className="ll-pill ll-pill-primary">Create Advisor Account</Link>
-            <Link to="/advisor/login" className="ll-pill ll-pill-ghost">Sign In</Link>
+            <Link to="/advisor/signup" className="ll-pill ll-pill-primary">
+              Create Advisor Account
+            </Link>
+            <Link to="/advisor/login" className="ll-pill ll-pill-ghost">
+              Sign In
+            </Link>
           </motion.div>
         </div>
       </section>
@@ -124,12 +165,27 @@ function AdvisorLanding() {
               transition={{ delay: i * 0.1, duration: 0.5 }}
               className="ll-card p-8"
             >
-              <div style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 40, fontWeight: 600, lineHeight: 1 }}>{v.n}</div>
+              <div
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  color: "var(--honey)",
+                  fontSize: 40,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                }}
+              >
+                {v.n}
+              </div>
               <div className="mt-5 h-px w-10" style={{ background: "rgba(26,46,26,0.14)" }} />
-              <h3 className="mt-5 text-xl" style={{ fontFamily: "var(--font-serif)", fontWeight: 600 }}>
+              <h3
+                className="mt-5 text-xl"
+                style={{ fontFamily: "var(--font-serif)", fontWeight: 600 }}
+              >
                 {v.title}
               </h3>
-              <p className="mt-3 text-[15px] leading-relaxed" style={{ color: "var(--warm-gray)" }}>{v.body}</p>
+              <p className="mt-3 text-[15px] leading-relaxed" style={{ color: "var(--warm-gray)" }}>
+                {v.body}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -138,9 +194,16 @@ function AdvisorLanding() {
       {/* Trust strip */}
       <section className="px-6 lg:px-12 pb-24">
         <div className="max-w-5xl mx-auto text-center">
-          <p style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 500, color: "var(--forest)" }}>
-            Whether you're at a major firm or running an independent practice,
-            LegacyLink fits your workflow.
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: 22,
+              fontWeight: 500,
+              color: "var(--forest)",
+            }}
+          >
+            Whether you're at a major firm or running an independent practice, LegacyLink fits your
+            workflow.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
             {FIRMS.map((f) => (
@@ -153,10 +216,30 @@ function AdvisorLanding() {
       </section>
 
       {/* Footer CTA strip */}
-      <section style={{ background: "var(--forest)" }} className="px-6 lg:px-12 py-20 text-center relative overflow-hidden">
-        <div className="ll-blob ll-drift" style={{ width: 480, height: 480, right: -120, top: -160, background: "var(--honey)", opacity: 0.18 }} />
+      <section
+        style={{ background: "var(--forest)" }}
+        className="px-6 lg:px-12 py-20 text-center relative overflow-hidden"
+      >
+        <div
+          className="ll-blob ll-drift"
+          style={{
+            width: 480,
+            height: 480,
+            right: -120,
+            top: -160,
+            background: "var(--honey)",
+            opacity: 0.18,
+          }}
+        />
         <div className="relative z-10 max-w-3xl mx-auto">
-          <h2 style={{ fontFamily: "var(--font-serif)", color: "var(--cream)", fontSize: "clamp(30px,4vw,44px)", fontWeight: 600 }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-serif)",
+              color: "var(--cream)",
+              fontSize: "clamp(30px,4vw,44px)",
+              fontWeight: 600,
+            }}
+          >
             Ready to protect your clients' legacies?
           </h2>
           <Link to="/advisor/signup" className="ll-pill ll-pill-secondary mt-8 inline-flex">
@@ -165,7 +248,10 @@ function AdvisorLanding() {
         </div>
       </section>
 
-      <footer className="px-6 lg:px-12 py-8 text-center text-xs" style={{ color: "rgba(74,74,74,0.6)" }}>
+      <footer
+        className="px-6 lg:px-12 py-8 text-center text-xs"
+        style={{ color: "rgba(74,74,74,0.6)" }}
+      >
         © LegacyLink · Built for Canadian families and the advisors who serve them
       </footer>
     </PageShell>

@@ -8,10 +8,7 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 const RPC = import.meta.env.VITE_SOLANA_RPC || "https://api.devnet.solana.com";
 
 export function SolanaProvider({ children }: { children: ReactNode }) {
-  const wallets = useMemo(
-    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
-    []
-  );
+  const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
 
   return (
     <ConnectionProvider endpoint={RPC}>

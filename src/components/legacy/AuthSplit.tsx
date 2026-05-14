@@ -5,14 +5,45 @@ export function AuthSplit({ children, quote }: { children: ReactNode; quote: str
   return (
     <div className="min-h-screen w-full grid lg:grid-cols-2" style={{ background: "var(--cream)" }}>
       {/* Left side */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden" style={{ background: "var(--forest)" }}>
-        <div className="ll-blob ll-drift" style={{ width: 480, height: 480, top: -120, right: -160, background: "var(--honey)", opacity: 0.18 }} />
-        <div className="ll-blob ll-drift" style={{ width: 360, height: 360, bottom: -120, left: -100, background: "var(--sage)", opacity: 0.22 }} />
+      <div
+        className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden"
+        style={{ background: "var(--forest)" }}
+      >
+        <div
+          className="ll-blob ll-drift"
+          style={{
+            width: 480,
+            height: 480,
+            top: -120,
+            right: -160,
+            background: "var(--honey)",
+            opacity: 0.18,
+          }}
+        />
+        <div
+          className="ll-blob ll-drift"
+          style={{
+            width: 360,
+            height: 360,
+            bottom: -120,
+            left: -100,
+            background: "var(--sage)",
+            opacity: 0.22,
+          }}
+        />
         <div className="relative z-10">
           <Logo light />
         </div>
         <div className="relative z-10 max-w-lg">
-          <p style={{ fontFamily: "var(--font-serif)", color: "var(--cream)", fontSize: 44, lineHeight: 1.15, fontWeight: 500 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              color: "var(--cream)",
+              fontSize: 44,
+              lineHeight: 1.15,
+              fontWeight: 500,
+            }}
+          >
             "{quote}"
           </p>
           {/* Organic SVG */}
@@ -47,7 +78,9 @@ export function AuthSplit({ children, quote }: { children: ReactNode; quote: str
 
       {/* Right side */}
       <div className="flex flex-col justify-center px-6 sm:px-12 py-12 relative">
-        <div className="lg:hidden mb-8"><Logo /></div>
+        <div className="lg:hidden mb-8">
+          <Logo />
+        </div>
         <div className="w-full max-w-md mx-auto">{children}</div>
       </div>
     </div>

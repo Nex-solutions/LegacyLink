@@ -9,7 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/funds/add")({
   head: () => ({ meta: [{ title: "Add Funds — LegacyLink" }] }),
@@ -55,7 +62,8 @@ function AddFundsPage() {
 
   const quoteMut = useMutation({
     mutationFn: () => quoteFn({ data: { amountCad: amount } }),
-    onSuccess: (q) => setQuote({ quoteId: q.quoteId, rightSideValue: q.rightSideValue, fee: q.fee }),
+    onSuccess: (q) =>
+      setQuote({ quoteId: q.quoteId, rightSideValue: q.rightSideValue, fee: q.fee }),
   });
 
   const intentMut = useMutation({
@@ -74,12 +82,16 @@ function AddFundsPage() {
     <div className="container mx-auto p-6 max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Add Funds</h1>
-        <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>← Dashboard</Button>
+        <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
+          ← Dashboard
+        </Button>
       </div>
 
       {!intent && (
         <Card>
-          <CardHeader><CardTitle>How much CAD do you want to add?</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>How much CAD do you want to add?</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="amt">Amount (CAD)</Label>
@@ -89,25 +101,48 @@ function AddFundsPage() {
                 min={10}
                 max={50000}
                 value={amount}
-                onChange={(e) => { setAmount(Number(e.target.value)); setQuote(null); }}
+                onChange={(e) => {
+                  setAmount(Number(e.target.value));
+                  setQuote(null);
+                }}
               />
             </div>
             {!quote ? (
-              <Button onClick={() => quoteMut.mutate()} disabled={quoteMut.isPending || amount < 10}>
+              <Button
+                onClick={() => quoteMut.mutate()}
+                disabled={quoteMut.isPending || amount < 10}
+              >
                 {quoteMut.isPending ? "Getting rate…" : "Get rate"}
               </Button>
             ) : (
               <div className="rounded-lg border p-4 space-y-2 bg-muted/30">
-                <div className="flex justify-between text-sm"><span>You pay</span><span className="font-mono">CA${amount.toFixed(2)}</span></div>
-                <div className="flex justify-between text-sm"><span>Fee</span><span className="font-mono">CA${quote.fee.toFixed(2)}</span></div>
-                <div className="flex justify-between font-semibold"><span>You'll receive</span><span className="font-mono">{quote.rightSideValue} USDC</span></div>
-                <Button className="w-full mt-2" onClick={() => intentMut.mutate()} disabled={intentMut.isPending}>
+                <div className="flex justify-between text-sm">
+                  <span>You pay</span>
+                  <span className="font-mono">CA${amount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Fee</span>
+                  <span className="font-mono">CA${quote.fee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <span>You'll receive</span>
+                  <span className="font-mono">{quote.rightSideValue} USDC</span>
+                </div>
+                <Button
+                  className="w-full mt-2"
+                  onClick={() => intentMut.mutate()}
+                  disabled={intentMut.isPending}
+                >
                   {intentMut.isPending ? "Preparing…" : "Make Payment"}
                 </Button>
               </div>
             )}
-            {quoteMut.error && <p className="text-sm text-destructive">{(quoteMut.error as Error).message}</p>}
-            {intentMut.error && <p className="text-sm text-destructive">{(intentMut.error as Error).message}</p>}
+            {quoteMut.error && (
+              <p className="text-sm text-destructive">{(quoteMut.error as Error).message}</p>
+            )}
+            {intentMut.error && (
+              <p className="text-sm text-destructive">{(intentMut.error as Error).message}</p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -128,22 +163,34 @@ function AddFundsPage() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Open your bank's Interac e-Transfer page and send <strong>CA${amount.toFixed(2)}</strong> to{" "}
-              <strong>{intent.depositEmail}</strong>. You <em>must</em> include the reference{" "}
-              <strong>{intent.rmt}</strong> in the message field — this is how we match the payment to your account.
+              Open your bank's Interac e-Transfer page and send{" "}
+              <strong>CA${amount.toFixed(2)}</strong> to <strong>{intent.depositEmail}</strong>. You{" "}
+              <em>must</em> include the reference <strong>{intent.rmt}</strong> in the message field
+              — this is how we match the payment to your account.
             </p>
 
             {!acknowledged ? (
-              <Button className="w-full" onClick={() => { setDemoMethod("interac"); setDemoOpen(true); }}>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setDemoMethod("interac");
+                  setDemoOpen(true);
+                }}
+              >
                 Make Payment
               </Button>
             ) : (
               <div className="rounded-lg bg-primary/5 border border-primary/30 p-4 text-center">
                 <p className="font-medium">Your trust is making its way to us 🛡️</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  We'll receive a confirmation from Paytrie usually within 15–30 minutes. Once funds land, we sweep them into your vault automatically.
+                  We'll receive a confirmation from Paytrie usually within 15–30 minutes. Once funds
+                  land, we sweep them into your vault automatically.
                 </p>
-                <Button variant="outline" className="mt-3" onClick={() => navigate({ to: "/funds/history" })}>
+                <Button
+                  variant="outline"
+                  className="mt-3"
+                  onClick={() => navigate({ to: "/funds/history" })}
+                >
                   View status
                 </Button>
               </div>
@@ -157,7 +204,8 @@ function AddFundsPage() {
           <DialogHeader>
             <DialogTitle>Demo payment — CA${amount.toFixed(2)}</DialogTitle>
             <DialogDescription>
-              Sandbox flow. No real money moves. Pick a method and complete the form to simulate payment.
+              Sandbox flow. No real money moves. Pick a method and complete the form to simulate
+              payment.
             </DialogDescription>
           </DialogHeader>
 
@@ -193,16 +241,29 @@ function AddFundsPage() {
             <div className="space-y-3">
               <div>
                 <Label htmlFor="cardNumber">Card number</Label>
-                <Input id="cardNumber" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
+                <Input
+                  id="cardNumber"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(e.target.value)}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="cardExp">Expiry</Label>
-                  <Input id="cardExp" value={cardExp} onChange={(e) => setCardExp(e.target.value)} placeholder="MM/YY" />
+                  <Input
+                    id="cardExp"
+                    value={cardExp}
+                    onChange={(e) => setCardExp(e.target.value)}
+                    placeholder="MM/YY"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="cardCvc">CVC</Label>
-                  <Input id="cardCvc" value={cardCvc} onChange={(e) => setCardCvc(e.target.value)} />
+                  <Input
+                    id="cardCvc"
+                    value={cardCvc}
+                    onChange={(e) => setCardCvc(e.target.value)}
+                  />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -212,10 +273,17 @@ function AddFundsPage() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDemoOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDemoOpen(false)}>
+              Cancel
+            </Button>
             <Button
-              onClick={() => { setAcknowledged(true); setDemoOpen(false); }}
-              disabled={demoMethod === "card" && (!cardNumber.trim() || !cardExp.trim() || !cardCvc.trim())}
+              onClick={() => {
+                setAcknowledged(true);
+                setDemoOpen(false);
+              }}
+              disabled={
+                demoMethod === "card" && (!cardNumber.trim() || !cardExp.trim() || !cardCvc.trim())
+              }
             >
               I've made payment
             </Button>
@@ -230,7 +298,9 @@ function Field({ label, value, highlight }: { label: string; value: string; high
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="text-xs uppercase text-muted-foreground">{label}</span>
-      <code className={`text-sm break-all text-right ${highlight ? "font-bold text-primary" : ""}`}>{value}</code>
+      <code className={`text-sm break-all text-right ${highlight ? "font-bold text-primary" : ""}`}>
+        {value}
+      </code>
     </div>
   );
 }

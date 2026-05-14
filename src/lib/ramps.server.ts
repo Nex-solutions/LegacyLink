@@ -40,7 +40,9 @@ async function userIdForPubkey(pubkey: string): Promise<string | null> {
 
 class MockRampProvider implements RampProvider {
   async onramp(input: OnRampInput): Promise<RampResult> {
-    console.log(`[ramp:mock] onramp CA$${input.amountCad} → ${input.userPubkey} (${input.reference})`);
+    console.log(
+      `[ramp:mock] onramp CA$${input.amountCad} → ${input.userPubkey} (${input.reference})`,
+    );
     const ref = `mock_on_${Date.now().toString(36)}`;
     // Mock 1:1 CAD→USDC. In production use the provider's quoted USDC amount.
     const amountUsdc = input.amountCad;
@@ -60,7 +62,9 @@ class MockRampProvider implements RampProvider {
     return { providerRef: ref, status: "completed" };
   }
   async offramp(input: OffRampInput): Promise<RampResult> {
-    console.log(`[ramp:mock] offramp CA$${input.amountCad} → ${input.beneficiaryEmail} via ${input.payoutMethod ?? "interac"} (${input.reference})`);
+    console.log(
+      `[ramp:mock] offramp CA$${input.amountCad} → ${input.beneficiaryEmail} via ${input.payoutMethod ?? "interac"} (${input.reference})`,
+    );
     const ref = `mock_off_${Date.now().toString(36)}`;
     // Look up the beneficiary's user_id by email if they have an account.
     const { data: prof } = await supabaseAdmin

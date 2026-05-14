@@ -21,11 +21,17 @@ export type LetterInput = {
   signatures: Signature[];
 };
 
-const FOREST = rgb(0.102, 0.18, 0.102);   // ~#1A2E1A
-const HONEY = rgb(0.855, 0.647, 0.125);   // ~#DAA520
+const FOREST = rgb(0.102, 0.18, 0.102); // ~#1A2E1A
+const HONEY = rgb(0.855, 0.647, 0.125); // ~#DAA520
 const GRAY = rgb(0.36, 0.36, 0.36);
 
-export async function buildLegacyLetterPdf({ vault, ownerName, ownerEmail, message, signatures }: LetterInput): Promise<Uint8Array> {
+export async function buildLegacyLetterPdf({
+  vault,
+  ownerName,
+  ownerEmail,
+  message,
+  signatures,
+}: LetterInput): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([595, 842]); // A4
   const serif = await pdf.embedFont(StandardFonts.TimesRoman);
@@ -40,13 +46,25 @@ export async function buildLegacyLetterPdf({ vault, ownerName, ownerEmail, messa
 
   page.drawText("LegacyLink", { x: margin, y, size: 22, font: serifBold, color: FOREST });
   y -= 18;
-  page.drawText("A letter for those who matter most.", { x: margin, y, size: 10, font: sans, color: GRAY });
+  page.drawText("A letter for those who matter most.", {
+    x: margin,
+    y,
+    size: 10,
+    font: sans,
+    color: GRAY,
+  });
   y -= 36;
 
   // Vault title
   page.drawText(vault.name, { x: margin, y, size: 28, font: serifBold, color: FOREST });
   y -= 26;
-  page.drawText(`${formatCAD(vault.amount_cad)} held in trust`, { x: margin, y, size: 12, font: sans, color: HONEY });
+  page.drawText(`${formatCAD(vault.amount_cad)} held in trust`, {
+    x: margin,
+    y,
+    size: 12,
+    font: sans,
+    color: HONEY,
+  });
   y -= 14;
   page.drawText(conditionSummary(vault), { x: margin, y, size: 10, font: sans, color: GRAY });
   y -= 32;
@@ -54,16 +72,29 @@ export async function buildLegacyLetterPdf({ vault, ownerName, ownerEmail, messa
   // Hand-written message
   page.drawText("From " + ownerName, { x: margin, y, size: 11, font: serifBold, color: FOREST });
   y -= 18;
-  y = drawWrapped(page, message, { x: margin, y, maxWidth: 595 - margin * 2, font: serif, size: 12, color: FOREST, lineHeight: 18 });
+  y = drawWrapped(page, message, {
+    x: margin,
+    y,
+    maxWidth: 595 - margin * 2,
+    font: serif,
+    size: 12,
+    color: FOREST,
+    lineHeight: 18,
+  });
   y -= 24;
 
   // Beneficiaries
   page.drawText("To my beneficiaries", { x: margin, y, size: 13, font: serifBold, color: FOREST });
   y -= 8;
-  page.drawLine({ start: { x: margin, y }, end: { x: 595 - margin, y }, color: HONEY, thickness: 1 });
+  page.drawLine({
+    start: { x: margin, y },
+    end: { x: 595 - margin, y },
+    color: HONEY,
+    thickness: 1,
+  });
   y -= 18;
   for (const b of vault.beneficiaries) {
-    const share = formatCAD(vault.amount_cad * b.pct / 100);
+    const share = formatCAD((vault.amount_cad * b.pct) / 100);
     page.drawText(`${b.name}`, { x: margin, y, size: 12, font: serifBold, color: FOREST });
     page.drawText(b.email, { x: margin + 200, y, size: 10, font: sans, color: GRAY });
     page.drawText(`${b.pct}%`, { x: 595 - margin - 90, y, size: 12, font: serif, color: FOREST });
@@ -76,37 +107,85 @@ export async function buildLegacyLetterPdf({ vault, ownerName, ownerEmail, messa
   // Signatures block
   page.drawText("Signatures", { x: margin, y, size: 13, font: serifBold, color: FOREST });
   y -= 8;
-  page.drawLine({ start: { x: margin, y }, end: { x: 595 - margin, y }, color: HONEY, thickness: 1 });
+  page.drawLine({
+    start: { x: margin, y },
+    end: { x: 595 - margin, y },
+    color: HONEY,
+    thickness: 1,
+  });
   y -= 22;
   const colWidth = (595 - margin * 2 - 24) / Math.max(signatures.length, 1);
   signatures.forEach((sig, i) => {
     const x = margin + i * (colWidth + 24);
     // signature line
-    page.drawLine({ start: { x, y: y + 4 }, end: { x: x + colWidth, y: y + 4 }, color: rgb(0.5, 0.5, 0.5), thickness: 0.7 });
+    page.drawLine({
+      start: { x, y: y + 4 },
+      end: { x: x + colWidth, y: y + 4 },
+      color: rgb(0.5, 0.5, 0.5),
+      thickness: 0.7,
+    });
     // cursive-style name (Times italic-ish via Times — close enough at this size)
     page.drawText(sig.name, { x: x + 4, y: y + 8, size: 18, font: serifBold, color: FOREST });
     page.drawText(`${sig.role}`, { x, y: y - 8, size: 9, font: serifBold, color: FOREST });
-    page.drawText(format(new Date(sig.signedAt), "MMM d, yyyy 'at' h:mm a"), { x, y: y - 20, size: 8, font: sans, color: GRAY });
+    page.drawText(format(new Date(sig.signedAt), "MMM d, yyyy 'at' h:mm a"), {
+      x,
+      y: y - 20,
+      size: 8,
+      font: sans,
+      color: GRAY,
+    });
   });
   y -= 40;
 
   // Footer
-  page.drawLine({ start: { x: margin, y }, end: { x: 595 - margin, y }, color: rgb(0.85, 0.83, 0.78), thickness: 0.5 });
+  page.drawLine({
+    start: { x: margin, y },
+    end: { x: 595 - margin, y },
+    color: rgb(0.85, 0.83, 0.78),
+    thickness: 0.5,
+  });
   y -= 16;
   page.drawText(`Vault ID: ${vault.id}`, { x: margin, y, size: 9, font: sans, color: GRAY });
-  page.drawText(`Issued ${format(new Date(), "MMMM d, yyyy")}`, { x: 595 - margin - 160, y, size: 9, font: sans, color: GRAY });
+  page.drawText(`Issued ${format(new Date(), "MMMM d, yyyy")}`, {
+    x: 595 - margin - 160,
+    y,
+    size: 9,
+    font: sans,
+    color: GRAY,
+  });
   y -= 12;
-  page.drawText(`Owner: ${ownerName} · ${ownerEmail}`, { x: margin, y, size: 9, font: sans, color: GRAY });
+  page.drawText(`Owner: ${ownerName} · ${ownerEmail}`, {
+    x: margin,
+    y,
+    size: 9,
+    font: sans,
+    color: GRAY,
+  });
   y -= 12;
-  page.drawText("Certainty is a gift. — LegacyLink", { x: margin, y, size: 9, font: sans, color: GRAY });
+  page.drawText("Certainty is a gift. — LegacyLink", {
+    x: margin,
+    y,
+    size: 9,
+    font: sans,
+    color: GRAY,
+  });
 
   return await pdf.save();
 }
 
-function drawWrapped(page: import("pdf-lib").PDFPage, text: string, opts: {
-  x: number; y: number; maxWidth: number;
-  font: import("pdf-lib").PDFFont; size: number; color: ReturnType<typeof rgb>; lineHeight: number;
-}) {
+function drawWrapped(
+  page: import("pdf-lib").PDFPage,
+  text: string,
+  opts: {
+    x: number;
+    y: number;
+    maxWidth: number;
+    font: import("pdf-lib").PDFFont;
+    size: number;
+    color: ReturnType<typeof rgb>;
+    lineHeight: number;
+  },
+) {
   const { x, maxWidth, font, size, color, lineHeight } = opts;
   let { y } = opts;
   const paragraphs = text.split(/\n+/);

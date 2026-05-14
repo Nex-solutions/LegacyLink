@@ -47,7 +47,9 @@ export type Vault = {
 let _cache: Vault[] = [];
 const _listeners = new Set<() => void>();
 
-function notify() { _listeners.forEach((fn) => fn()); }
+function notify() {
+  _listeners.forEach((fn) => fn());
+}
 
 export function subscribeVaults(fn: () => void): () => void {
   _listeners.add(fn);
@@ -102,8 +104,8 @@ export type AdvisorClient = {
   email: string;
   vaults: number;
   total: number;
-  since: string;            // e.g. "Aug 2024"
-  lastActiveDays: number;   // days since last check-in / activity
+  since: string; // e.g. "Aug 2024"
+  lastActiveDays: number; // days since last check-in / activity
   status: ClientStatus;
   alert?: string;
   conditionTypes: Array<"time" | "inactivity" | "manual">;
@@ -124,17 +126,26 @@ export const advisorClients: AdvisorClient[] = [
     conditionTypes: ["time", "inactivity", "manual"],
     vaultDetail: [
       {
-        id: "sc-1", name: "Family Trust Alpha", amount_cad: 12000, status: "Active",
+        id: "sc-1",
+        name: "Family Trust Alpha",
+        amount_cad: 12000,
+        status: "Active",
         condition: { kind: "time", unlock_date: "2026-05-20" },
         beneficiaries: [{ name: "Amara Chen" }, { name: "Leo Chen" }],
       },
       {
-        id: "sc-2", name: "Kids Education", amount_cad: 6200, status: "Active",
+        id: "sc-2",
+        name: "Kids Education",
+        amount_cad: 6200,
+        status: "Active",
         condition: { kind: "inactivity", inactivity_days: 180, last_checkin: "2026-05-01" },
         beneficiaries: [{ name: "Amara Chen" }],
       },
       {
-        id: "sc-3", name: "Emergency Reserve", amount_cad: 2500, status: "Active",
+        id: "sc-3",
+        name: "Emergency Reserve",
+        amount_cad: 2500,
+        status: "Active",
         condition: { kind: "manual" },
         beneficiaries: [{ name: "Daniel Chen" }],
       },
@@ -152,7 +163,10 @@ export const advisorClients: AdvisorClient[] = [
     conditionTypes: ["time"],
     vaultDetail: [
       {
-        id: "mo-1", name: "Daughter's Wedding Fund", amount_cad: 8000, status: "Active",
+        id: "mo-1",
+        name: "Daughter's Wedding Fund",
+        amount_cad: 8000,
+        status: "Active",
         condition: { kind: "time", unlock_date: "2027-06-01" },
         beneficiaries: [{ name: "Ngozi Okafor" }],
       },
@@ -171,12 +185,18 @@ export const advisorClients: AdvisorClient[] = [
     conditionTypes: ["inactivity", "manual"],
     vaultDetail: [
       {
-        id: "ps-1", name: "Retirement Bridge", amount_cad: 11000, status: "Active",
+        id: "ps-1",
+        name: "Retirement Bridge",
+        amount_cad: 11000,
+        status: "Active",
         condition: { kind: "inactivity", inactivity_days: 90, last_checkin: "2026-04-04" },
         beneficiaries: [{ name: "Aarav Sharma" }, { name: "Maya Sharma" }],
       },
       {
-        id: "ps-2", name: "Charitable Gift", amount_cad: 4300, status: "Active",
+        id: "ps-2",
+        name: "Charitable Gift",
+        amount_cad: 4300,
+        status: "Active",
         condition: { kind: "manual" },
         beneficiaries: [{ name: "BC Children's Hospital" }],
       },
@@ -196,20 +216,57 @@ export type ActivityEvent = {
 };
 
 export const activityFeed: ActivityEvent[] = [
-  { id: "e1", client: "Sarah Chen", title: "Sarah Chen funded a new vault", detail: "$4,200 CAD · Family Trust Alpha", when: "3 days ago", kind: "fund" },
-  { id: "e2", client: "Michael Okafor", title: "Michael Okafor checked in", detail: "Emergency Reserve", when: "1 week ago", kind: "checkin" },
-  { id: "e3", client: "Priya Sharma", title: "Inactivity warning triggered", detail: "Retirement Bridge · 30 day threshold", when: "1 week ago", kind: "warning" },
-  { id: "e4", client: "Priya Sharma", title: "Priya Sharma added a beneficiary", detail: "Retirement Bridge", when: "2 weeks ago", kind: "beneficiary" },
-  { id: "e5", client: "Sarah Chen", title: "Sarah Chen created a new vault", detail: "Education Fund", when: "1 month ago", kind: "fund" },
+  {
+    id: "e1",
+    client: "Sarah Chen",
+    title: "Sarah Chen funded a new vault",
+    detail: "$4,200 CAD · Family Trust Alpha",
+    when: "3 days ago",
+    kind: "fund",
+  },
+  {
+    id: "e2",
+    client: "Michael Okafor",
+    title: "Michael Okafor checked in",
+    detail: "Emergency Reserve",
+    when: "1 week ago",
+    kind: "checkin",
+  },
+  {
+    id: "e3",
+    client: "Priya Sharma",
+    title: "Inactivity warning triggered",
+    detail: "Retirement Bridge · 30 day threshold",
+    when: "1 week ago",
+    kind: "warning",
+  },
+  {
+    id: "e4",
+    client: "Priya Sharma",
+    title: "Priya Sharma added a beneficiary",
+    detail: "Retirement Bridge",
+    when: "2 weeks ago",
+    kind: "beneficiary",
+  },
+  {
+    id: "e5",
+    client: "Sarah Chen",
+    title: "Sarah Chen created a new vault",
+    detail: "Education Fund",
+    when: "1 month ago",
+    kind: "fund",
+  },
 ];
 
 export function formatCAD(n: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(n) + " CAD";
+  return (
+    new Intl.NumberFormat("en-CA", {
+      style: "currency",
+      currency: "CAD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(n) + " CAD"
+  );
 }
 
 export function advisorTotals() {
@@ -310,8 +367,14 @@ export function upcomingReleases(windowDays = 90): UpcomingRelease[] {
         const days = Math.floor((target - now) / 86400000);
         if (days >= 0 && days <= windowDays) {
           out.push({
-            clientId: c.id, clientName: c.name, vaultId: v.id, vaultName: v.name,
-            amount_cad: v.amount_cad, daysAway: days, date: v.condition.unlock_date, kind: "time",
+            clientId: c.id,
+            clientName: c.name,
+            vaultId: v.id,
+            vaultName: v.name,
+            amount_cad: v.amount_cad,
+            daysAway: days,
+            date: v.condition.unlock_date,
+            kind: "time",
           });
         }
       } else if (v.condition.kind === "inactivity") {
@@ -320,9 +383,14 @@ export function upcomingReleases(windowDays = 90): UpcomingRelease[] {
         const days = Math.floor((target - now) / 86400000);
         if (days >= 0 && days <= windowDays) {
           out.push({
-            clientId: c.id, clientName: c.name, vaultId: v.id, vaultName: v.name,
-            amount_cad: v.amount_cad, daysAway: days,
-            date: new Date(target).toISOString().slice(0, 10), kind: "inactivity",
+            clientId: c.id,
+            clientName: c.name,
+            vaultId: v.id,
+            vaultName: v.name,
+            amount_cad: v.amount_cad,
+            daysAway: days,
+            date: new Date(target).toISOString().slice(0, 10),
+            kind: "inactivity",
           });
         }
       }
@@ -382,7 +450,12 @@ export function exportBookCSV(): string {
             ? `Inactivity · ${v.condition.inactivity_days}d`
             : "Manual";
       rows.push([
-        c.name, c.email, v.name, String(v.amount_cad), v.status, cond,
+        c.name,
+        c.email,
+        v.name,
+        String(v.amount_cad),
+        v.status,
+        cond,
         v.beneficiaries.map((b) => b.name).join("; "),
       ]);
     }

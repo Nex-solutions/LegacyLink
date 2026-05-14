@@ -39,7 +39,6 @@ export function evaluateReleases(): string[] {
 export function conditionSummary(v: Vault): string {
   const c = v.condition;
   if (c.kind === "time") return `Releases on ${c.unlock_date}`;
-  if (c.kind === "inactivity")
-    return `Releases after ${c.inactivity_days} days without a check-in`;
+  if (c.kind === "inactivity") return `Releases after ${c.inactivity_days} days without a check-in`;
   return "Released manually by the owner";
 }

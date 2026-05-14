@@ -118,9 +118,7 @@ export async function recordOnRampAndSweep(args: {
   const net = args.amountUsdc - fee;
 
   // Tx A — mint into user wallet, fees recognised
-  const mintEntries: LedgerEntryInput[] = [
-    { account_id: userAcct, side: "debit", amount: net },
-  ];
+  const mintEntries: LedgerEntryInput[] = [{ account_id: userAcct, side: "debit", amount: net }];
   if (fee > 0) mintEntries.push({ account_id: feeAcct, side: "debit", amount: fee });
   mintEntries.push({ account_id: onrampAcct, side: "credit", amount: args.amountUsdc });
 

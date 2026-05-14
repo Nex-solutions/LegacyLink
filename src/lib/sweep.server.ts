@@ -72,7 +72,9 @@ async function feeLamportsFromSig(connection: Connection, sig: string): Promise<
 }
 
 // ──────────────── Gas top-up ────────────────
-export async function topUpUserGas(userId: string): Promise<{ topped: boolean; signature?: string }> {
+export async function topUpUserGas(
+  userId: string,
+): Promise<{ topped: boolean; signature?: string }> {
   const { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction } = await loadWeb3();
   const connection = await getConnection();
   const { data: wallet } = await supabaseAdmin
@@ -92,7 +94,7 @@ export async function topUpUserGas(userId: string): Promise<{ topped: boolean; s
       fromPubkey: master.publicKey,
       toPubkey: userPk,
       lamports: TOP_UP_LAMPORTS,
-    })
+    }),
   );
   const signature = await sendAndConfirmTransaction(connection, tx, [master], {
     commitment: "confirmed",
@@ -134,8 +136,8 @@ export async function sweepUserToMaster(args: {
         master.publicKey,
         mint,
         TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      )
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+      ),
     );
   }
 
@@ -147,8 +149,8 @@ export async function sweepUserToMaster(args: {
       masterAta,
       user.publicKey,
       amountUnits,
-      USDC_DECIMALS
-    )
+      USDC_DECIMALS,
+    ),
   );
 
   const signature = await sendAndConfirmTransaction(connection, tx, [user, master], {
@@ -189,8 +191,8 @@ export async function payoutFromMaster(args: {
         dest,
         mint,
         TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      )
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+      ),
     );
   }
 
@@ -202,8 +204,8 @@ export async function payoutFromMaster(args: {
       destAta,
       master.publicKey,
       amountUnits,
-      USDC_DECIMALS
-    )
+      USDC_DECIMALS,
+    ),
   );
 
   const signature = await sendAndConfirmTransaction(connection, tx, [master], {

@@ -1,6 +1,13 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { clearAdvisor, getUser, getAdvisor, signOut, type User, type Advisor } from "@/lib/legacy-auth";
+import {
+  clearAdvisor,
+  getUser,
+  getAdvisor,
+  signOut,
+  type User,
+  type Advisor,
+} from "@/lib/legacy-auth";
 import legacyMark from "@/assets/legacy-mark.png";
 
 export function Logo({ light = false, to = "/" }: { light?: boolean; to?: string }) {
@@ -25,7 +32,12 @@ export function Logo({ light = false, to = "/" }: { light?: boolean; to?: string
       </span>
       <span
         className="text-xl tracking-tight"
-        style={{ fontFamily: "var(--font-serif)", color: light ? "var(--cream)" : "var(--forest)", fontWeight: 600, letterSpacing: "-0.01em" }}
+        style={{
+          fontFamily: "var(--font-serif)",
+          color: light ? "var(--cream)" : "var(--forest)",
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+        }}
       >
         LegacyLink
       </span>
@@ -49,7 +61,11 @@ export function AppHeader() {
         <span
           title="This is a hackathon devnet build. Funds shown are simulated USDC on Solana devnet — no real CAD moves."
           className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full"
-          style={{ background: "rgba(232,160,32,0.16)", color: "var(--honey)", border: "1px solid rgba(232,160,32,0.35)" }}
+          style={{
+            background: "rgba(232,160,32,0.16)",
+            color: "var(--honey)",
+            border: "1px solid rgba(232,160,32,0.35)",
+          }}
         >
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
           Devnet · test mode
@@ -70,21 +86,47 @@ export function AppHeader() {
               title="Open the advisor portal"
               aria-label="Open the advisor portal"
               className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold tracking-tight rounded-full px-3.5 py-1.5 border transition-all hover:shadow-sm hover:-translate-y-px"
-              style={{ color: "var(--forest)", background: "rgba(232,160,32,0.18)", borderColor: "rgba(232,160,32,0.55)" }}
+              style={{
+                color: "var(--forest)",
+                background: "rgba(232,160,32,0.18)",
+                borderColor: "rgba(232,160,32,0.55)",
+              }}
             >
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--honey)" }} />
               For Advisors
-              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
+                →
+              </span>
             </Link>
-            <span className="hidden sm:inline-block h-4 w-px" style={{ background: "rgba(26,46,26,0.14)" }} />
+            <span
+              className="hidden sm:inline-block h-4 w-px"
+              style={{ background: "rgba(26,46,26,0.14)" }}
+            />
           </>
         )}
         {user ? (
           <>
-            <Link to="/messages" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Messages</Link>
-            <Link to="/dashboard" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Dashboard</Link>
+            <Link
+              to="/messages"
+              className="hidden sm:inline text-sm"
+              style={{ color: "var(--forest)" }}
+            >
+              Messages
+            </Link>
+            <Link
+              to="/dashboard"
+              className="hidden sm:inline text-sm"
+              style={{ color: "var(--forest)" }}
+            >
+              Dashboard
+            </Link>
             <button
-              onClick={async () => { setUserState(null); setAdvisorState(null); navigate({ to: "/" }); await signOut(); }}
+              onClick={async () => {
+                setUserState(null);
+                setAdvisorState(null);
+                navigate({ to: "/" });
+                await signOut();
+              }}
               className="ll-pill ll-pill-ghost text-sm"
               style={{ padding: "0.5rem 1rem" }}
             >
@@ -93,10 +135,27 @@ export function AppHeader() {
           </>
         ) : advisor ? (
           <>
-            <Link to="/advisor/messages" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Messages</Link>
-            <Link to="/advisor/dashboard" className="hidden sm:inline text-sm" style={{ color: "var(--forest)" }}>Dashboard</Link>
+            <Link
+              to="/advisor/messages"
+              className="hidden sm:inline text-sm"
+              style={{ color: "var(--forest)" }}
+            >
+              Messages
+            </Link>
+            <Link
+              to="/advisor/dashboard"
+              className="hidden sm:inline text-sm"
+              style={{ color: "var(--forest)" }}
+            >
+              Dashboard
+            </Link>
             <button
-              onClick={() => { setUserState(null); setAdvisorState(null); clearAdvisor(); navigate({ to: "/" }); }}
+              onClick={() => {
+                setUserState(null);
+                setAdvisorState(null);
+                clearAdvisor();
+                navigate({ to: "/" });
+              }}
               className="ll-pill ll-pill-ghost text-sm"
               style={{ padding: "0.5rem 1rem" }}
             >
@@ -105,8 +164,14 @@ export function AppHeader() {
           </>
         ) : (
           <>
-            <Link to="/login" className="text-sm" style={{ color: "var(--forest)" }}>Sign in</Link>
-            <Link to="/signup" className="ll-pill ll-pill-primary text-sm" style={{ padding: "0.5rem 1.1rem" }}>
+            <Link to="/login" className="text-sm" style={{ color: "var(--forest)" }}>
+              Sign in
+            </Link>
+            <Link
+              to="/signup"
+              className="ll-pill ll-pill-primary text-sm"
+              style={{ padding: "0.5rem 1.1rem" }}
+            >
               Get Started
             </Link>
           </>

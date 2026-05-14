@@ -76,17 +76,43 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "LegacyLink — Protect what matters. For the people who matter." },
-      { name: "description", content: "LegacyLink is a digital estate vault for Canadian families. Set aside Canadian dollars today so they reach the right hands at exactly the right moment — automatically and with certainty." },
+      {
+        name: "description",
+        content:
+          "LegacyLink is a digital estate vault for Canadian families. Set aside Canadian dollars today so they reach the right hands at exactly the right moment — automatically and with certainty.",
+      },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "LegacyLink — Protect what matters. For the people who matter." },
-      { property: "og:description", content: "LegacyLink is a digital estate vault for Canadian families. Set aside Canadian dollars today so they reach the right hands at exactly the right moment — automatically and with certainty." },
+      {
+        property: "og:title",
+        content: "LegacyLink — Protect what matters. For the people who matter.",
+      },
+      {
+        property: "og:description",
+        content:
+          "LegacyLink is a digital estate vault for Canadian families. Set aside Canadian dollars today so they reach the right hands at exactly the right moment — automatically and with certainty.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "LegacyLink — Protect what matters. For the people who matter." },
-      { name: "twitter:description", content: "LegacyLink is a digital estate vault for Canadian families. Set aside Canadian dollars today so they reach the right hands at exactly the right moment — automatically and with certainty." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5d4372aa-9604-4db6-8152-803b0278cdb0/id-preview-de86d341--c365388f-36e9-4c5a-b3a9-0aa9cc24cf3e.lovable.app-1778329084526.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5d4372aa-9604-4db6-8152-803b0278cdb0/id-preview-de86d341--c365388f-36e9-4c5a-b3a9-0aa9cc24cf3e.lovable.app-1778329084526.png" },
+      {
+        name: "twitter:title",
+        content: "LegacyLink — Protect what matters. For the people who matter.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "LegacyLink is a digital estate vault for Canadian families. Set aside Canadian dollars today so they reach the right hands at exactly the right moment — automatically and with certainty.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5d4372aa-9604-4db6-8152-803b0278cdb0/id-preview-de86d341--c365388f-36e9-4c5a-b3a9-0aa9cc24cf3e.lovable.app-1778329084526.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5d4372aa-9604-4db6-8152-803b0278cdb0/id-preview-de86d341--c365388f-36e9-4c5a-b3a9-0aa9cc24cf3e.lovable.app-1778329084526.png",
+      },
     ],
     links: [
       {
@@ -121,9 +147,13 @@ function RootComponent() {
   useEffect(() => {
     // Set up listener BEFORE checking session, per Supabase guidance.
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      if (!session?.user) { clearUser(); return; }
+      if (!session?.user) {
+        clearUser();
+        return;
+      }
       const email = session.user.email ?? "";
-      const name = (session.user.user_metadata?.display_name as string | undefined) ?? email.split("@")[0];
+      const name =
+        (session.user.user_metadata?.display_name as string | undefined) ?? email.split("@")[0];
       setUser({ name, email });
     });
     void hydrateUserFromSession();

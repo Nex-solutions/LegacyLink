@@ -8,7 +8,9 @@ import { decryptSecret } from "./solana.server";
 import type { Signer, Transaction } from "@solana/web3.js";
 
 function getRpcUrls(): string[] {
-  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
+  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(
+    Boolean,
+  ) as string[];
   return [...new Set(urls)];
 }
 
@@ -58,7 +60,10 @@ async function sendWithFreshBlockhash(
     } catch (error) {
       lastError = error;
       const msg = error instanceof Error ? error.message : String(error);
-      const transient = /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503|rate limit|fetch failed|network/i.test(msg);
+      const transient =
+        /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|429|503|rate limit|fetch failed|network/i.test(
+          msg,
+        );
       if (!transient) throw error;
       const delay = 350 * Math.pow(2, i);
       console.warn(`[proof-tx] ${label} transient retry ${i + 1}/${attempts}`, msg);
@@ -89,7 +94,9 @@ export async function sendUserToHotProof(
     .maybeSingle();
   if (sErr) throw sErr;
   if (!secretRow?.encrypted_secret) {
-    throw new Error("Your system wallet hasn't been provisioned yet. Please complete signup first.");
+    throw new Error(
+      "Your system wallet hasn't been provisioned yet. Please complete signup first.",
+    );
   }
   const userKp = await loadKeypair(secretRow.encrypted_secret);
 
@@ -120,7 +127,11 @@ export async function sendUserToHotProof(
     await sendWithFreshBlockhash(
       connection,
       ({ blockhash, lastValidBlockHeight }) => {
-        const tx = new Transaction({ feePayer: masterKp.publicKey, blockhash, lastValidBlockHeight });
+        const tx = new Transaction({
+          feePayer: masterKp.publicKey,
+          blockhash,
+          lastValidBlockHeight,
+        });
         tx.add(
           SystemProgram.transfer({
             fromPubkey: masterKp.publicKey,
@@ -281,12 +292,18 @@ export async function anchorLetterMessage(
         await sendWithFreshBlockhash(
           connection,
           ({ blockhash, lastValidBlockHeight }) => {
-            const tx = new Transaction({ feePayer: masterKp.publicKey, blockhash, lastValidBlockHeight });
-            tx.add(SystemProgram.transfer({
-              fromPubkey: masterKp.publicKey,
-              toPubkey: userKp.publicKey,
-              lamports: 20_000,
-            }));
+            const tx = new Transaction({
+              feePayer: masterKp.publicKey,
+              blockhash,
+              lastValidBlockHeight,
+            });
+            tx.add(
+              SystemProgram.transfer({
+                fromPubkey: masterKp.publicKey,
+                toPubkey: userKp.publicKey,
+                lamports: 20_000,
+              }),
+            );
             return tx;
           },
           [masterKp],

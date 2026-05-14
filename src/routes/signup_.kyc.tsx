@@ -153,7 +153,9 @@ function SignupKyc() {
           try {
             const { Connection, PublicKey } = await import("@solana/web3.js");
             const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-            const existingTxs = await connection.getSignaturesForAddress(new PublicKey(r.pubkey), { limit: 1 });
+            const existingTxs = await connection.getSignaturesForAddress(new PublicKey(r.pubkey), {
+              limit: 1,
+            });
             fundingSig = existingTxs[0]?.signature ?? null;
             if (!fundingSig) {
               const { blockhash } = await connection.getLatestBlockhash("confirmed");

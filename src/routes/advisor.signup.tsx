@@ -10,15 +10,29 @@ export const Route = createFileRoute("/advisor/signup")({
 });
 
 const PROVINCES = [
-  "Alberta", "British Columbia", "Manitoba", "New Brunswick",
-  "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island",
-  "Quebec", "Saskatchewan", "Northwest Territories", "Nunavut", "Yukon",
+  "Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland and Labrador",
+  "Nova Scotia",
+  "Ontario",
+  "Prince Edward Island",
+  "Quebec",
+  "Saskatchewan",
+  "Northwest Territories",
+  "Nunavut",
+  "Yukon",
   "Outside Canada",
 ];
 
 const ADVISOR_TYPES = [
-  "Financial Advisor", "Estate Planner", "Wealth Manager",
-  "Insurance Advisor", "Independent Advisor", "Other",
+  "Financial Advisor",
+  "Estate Planner",
+  "Wealth Manager",
+  "Insurance Advisor",
+  "Independent Advisor",
+  "Other",
 ];
 
 function AdvisorSignup() {
@@ -28,7 +42,12 @@ function AdvisorSignup() {
   const [form, setForm] = useState(() => {
     const FIRST = ["Élise", "Marcus", "Priya", "Daniel", "Sofia", "James"];
     const LAST = ["Tremblay", "Bell", "Nair", "Chen", "Morgan", "Patel"];
-    const FIRMS = ["Boréal Wealth", "Pine Ridge Advisors", "Aster Private Wealth", "Northstar Capital"];
+    const FIRMS = [
+      "Boréal Wealth",
+      "Pine Ridge Advisors",
+      "Aster Private Wealth",
+      "Northstar Capital",
+    ];
     const f = FIRST[Math.floor(Math.random() * FIRST.length)];
     const l = LAST[Math.floor(Math.random() * LAST.length)];
     const firm = FIRMS[Math.floor(Math.random() * FIRMS.length)];
@@ -39,7 +58,9 @@ function AdvisorSignup() {
     const digits = "23456789";
     const symbols = "!@#$%^&*?";
     const all = upper + lower + digits + symbols;
-    const pwArr = [upper, lower, lower, digits, digits, symbols].map((s) => s[Math.floor(Math.random() * s.length)]);
+    const pwArr = [upper, lower, lower, digits, digits, symbols].map(
+      (s) => s[Math.floor(Math.random() * s.length)],
+    );
     for (let i = 0; i < 10; i++) pwArr.push(all[Math.floor(Math.random() * all.length)]);
     const pw = pwArr.sort(() => Math.random() - 0.5).join("");
     return {
@@ -87,74 +108,132 @@ function AdvisorSignup() {
 
   return (
     <AdvisorAuthShell>
-      <span className="inline-block text-xs px-3 py-1 rounded-full font-medium"
-        style={{ background: "var(--sage)", color: "var(--forest)" }}>
+      <span
+        className="inline-block text-xs px-3 py-1 rounded-full font-medium"
+        style={{ background: "var(--sage)", color: "var(--forest)" }}
+      >
         For Financial Advisors & Estate Planners
       </span>
 
-      <h1 className="mt-4" style={{ fontFamily: "var(--font-serif)", fontSize: 32, fontWeight: 600, color: "var(--forest)" }}>
+      <h1
+        className="mt-4"
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 32,
+          fontWeight: 600,
+          color: "var(--forest)",
+        }}
+      >
         Create Advisor Account
       </h1>
       <p className="mt-2 text-base" style={{ color: "var(--warm-gray)" }}>
-        Monitor your clients' estate vaults, track releases, and invite new clients —
-        all from one dashboard.
+        Monitor your clients' estate vaults, track releases, and invite new clients — all from one
+        dashboard.
       </p>
 
       <form onSubmit={submit} className="mt-8 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="ll-label">First Name</label>
-            <input className="ll-input" value={form.firstName} onChange={(e) => update("firstName", e.target.value)} />
+            <input
+              className="ll-input"
+              value={form.firstName}
+              onChange={(e) => update("firstName", e.target.value)}
+            />
           </div>
           <div>
             <label className="ll-label">Last Name</label>
-            <input className="ll-input" value={form.lastName} onChange={(e) => update("lastName", e.target.value)} />
+            <input
+              className="ll-input"
+              value={form.lastName}
+              onChange={(e) => update("lastName", e.target.value)}
+            />
           </div>
         </div>
 
         <div>
           <label className="ll-label">Work Email</label>
-          <input type="email" className="ll-input" placeholder="you@yourfirm.com"
-            value={form.email} onChange={(e) => update("email", e.target.value)} />
-          <p className="mt-1.5 text-xs" style={{ color: "rgba(74,74,74,0.65)" }}>Use your professional email</p>
+          <input
+            type="email"
+            className="ll-input"
+            placeholder="you@yourfirm.com"
+            value={form.email}
+            onChange={(e) => update("email", e.target.value)}
+          />
+          <p className="mt-1.5 text-xs" style={{ color: "rgba(74,74,74,0.65)" }}>
+            Use your professional email
+          </p>
         </div>
 
         <div>
           <label className="ll-label">Firm or Organization</label>
-          <input className="ll-input" placeholder="e.g. Raymond James, Edward Jones, Independent Practice"
-            value={form.firm} onChange={(e) => update("firm", e.target.value)} />
-          <p className="mt-1.5 text-xs" style={{ color: "rgba(74,74,74,0.65)" }}>Independent advisors welcome</p>
+          <input
+            className="ll-input"
+            placeholder="e.g. Raymond James, Edward Jones, Independent Practice"
+            value={form.firm}
+            onChange={(e) => update("firm", e.target.value)}
+          />
+          <p className="mt-1.5 text-xs" style={{ color: "rgba(74,74,74,0.65)" }}>
+            Independent advisors welcome
+          </p>
         </div>
 
         <div>
           <label className="ll-label">Advisor Type</label>
-          <select className="ll-input" value={form.advisorType} onChange={(e) => update("advisorType", e.target.value)}>
-            {ADVISOR_TYPES.map((t) => <option key={t}>{t}</option>)}
+          <select
+            className="ll-input"
+            value={form.advisorType}
+            onChange={(e) => update("advisorType", e.target.value)}
+          >
+            {ADVISOR_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
           </select>
         </div>
 
         <div>
-          <label className="ll-label">License Number <span style={{ color: "rgba(74,74,74,0.55)" }}>(optional)</span></label>
-          <input className="ll-input" placeholder="e.g. CFP-XXXXX"
-            value={form.license} onChange={(e) => update("license", e.target.value)} />
-          <p className="mt-1.5 text-xs" style={{ color: "rgba(74,74,74,0.65)" }}>Helps verify your credentials with clients</p>
+          <label className="ll-label">
+            License Number <span style={{ color: "rgba(74,74,74,0.55)" }}>(optional)</span>
+          </label>
+          <input
+            className="ll-input"
+            placeholder="e.g. CFP-XXXXX"
+            value={form.license}
+            onChange={(e) => update("license", e.target.value)}
+          />
+          <p className="mt-1.5 text-xs" style={{ color: "rgba(74,74,74,0.65)" }}>
+            Helps verify your credentials with clients
+          </p>
         </div>
 
         <div>
           <label className="ll-label">Province</label>
-          <select className="ll-input" value={form.province} onChange={(e) => update("province", e.target.value)}>
-            {PROVINCES.map((p) => <option key={p}>{p}</option>)}
+          <select
+            className="ll-input"
+            value={form.province}
+            onChange={(e) => update("province", e.target.value)}
+          >
+            {PROVINCES.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
           </select>
         </div>
 
         <div>
           <label className="ll-label">Password</label>
           <div className="relative">
-            <input type={showPw ? "text" : "password"} className="ll-input pr-16"
-              value={form.password} onChange={(e) => update("password", e.target.value)} />
-            <button type="button" onClick={() => setShowPw((s) => !s)}
+            <input
+              type={showPw ? "text" : "password"}
+              className="ll-input pr-16"
+              value={form.password}
+              onChange={(e) => update("password", e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((s) => !s)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
-              style={{ color: "var(--honey)" }}>
+              style={{ color: "var(--honey)" }}
+            >
               {showPw ? "Hide" : "Show"}
             </button>
           </div>
@@ -162,22 +241,33 @@ function AdvisorSignup() {
 
         <div>
           <label className="ll-label">Confirm Password</label>
-          <input type={showPw ? "text" : "password"} className="ll-input"
-            value={form.confirm} onChange={(e) => update("confirm", e.target.value)} />
+          <input
+            type={showPw ? "text" : "password"}
+            className="ll-input"
+            value={form.confirm}
+            onChange={(e) => update("confirm", e.target.value)}
+          />
         </div>
 
         <label className="flex items-start gap-3 mt-2 cursor-pointer">
-          <input type="checkbox" className="mt-1 accent-[var(--honey)] w-4 h-4"
-            checked={form.agree} onChange={(e) => update("agree", e.target.checked)} />
+          <input
+            type="checkbox"
+            className="mt-1 accent-[var(--honey)] w-4 h-4"
+            checked={form.agree}
+            onChange={(e) => update("agree", e.target.checked)}
+          />
           <span className="text-sm" style={{ color: "var(--warm-gray)" }}>
-            I confirm I am a licensed financial professional and agree to the
-            LegacyLink Advisor Terms of Service.
+            I confirm I am a licensed financial professional and agree to the LegacyLink Advisor
+            Terms of Service.
           </span>
         </label>
 
-        <button disabled={loading} type="submit"
+        <button
+          disabled={loading}
+          type="submit"
           className="ll-pill ll-pill-primary w-full mt-2"
-          style={{ height: 52, opacity: loading ? 0.7 : 1 }}>
+          style={{ height: 52, opacity: loading ? 0.7 : 1 }}
+        >
           {loading ? "Setting up your portal…" : "Create Advisor Account"}
         </button>
       </form>
