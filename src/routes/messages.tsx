@@ -272,7 +272,7 @@ function FamilyMessages() {
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
-                            handleSend(e as any);
+                            handleSend(e as unknown as React.FormEvent);
                           }
                         }}
                         rows={2}
