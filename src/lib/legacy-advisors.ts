@@ -29,16 +29,44 @@ export type RecommendedAdvisor = {
 };
 
 export const recommendedAdvisors: RecommendedAdvisor[] = [
-  { id: "rec-1", name: "Élise Tremblay, CFP®", firm: "Boréal Wealth", city: "Montréal · QC", focus: "Estate & legacy planning", rating: "4.9", email: "elise@borealwealth.ca" },
-  { id: "rec-2", name: "Marcus Bell, CIM", firm: "Pine Ridge Advisors", city: "Toronto · ON", focus: "Family trusts & insurance", rating: "4.8", email: "marcus@pineridge.ca" },
-  { id: "rec-3", name: "Priya Nair, CFP®", firm: "Aster Private Wealth", city: "Vancouver · BC", focus: "Cross-border estates", rating: "5.0", email: "priya@asterwealth.ca" },
+  {
+    id: "rec-1",
+    name: "Élise Tremblay, CFP®",
+    firm: "Boréal Wealth",
+    city: "Montréal · QC",
+    focus: "Estate & legacy planning",
+    rating: "4.9",
+    email: "elise@borealwealth.ca",
+  },
+  {
+    id: "rec-2",
+    name: "Marcus Bell, CIM",
+    firm: "Pine Ridge Advisors",
+    city: "Toronto · ON",
+    focus: "Family trusts & insurance",
+    rating: "4.8",
+    email: "marcus@pineridge.ca",
+  },
+  {
+    id: "rec-3",
+    name: "Priya Nair, CFP®",
+    firm: "Aster Private Wealth",
+    city: "Vancouver · BC",
+    focus: "Cross-border estates",
+    rating: "5.0",
+    email: "priya@asterwealth.ca",
+  },
 ];
 
 const KEY = "legacylink:advisor-links";
 
 export function getAdvisorLinks(): AdvisorLink[] {
   if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
 
 export function saveAdvisorLinks(links: AdvisorLink[]) {
@@ -48,10 +76,10 @@ export function saveAdvisorLinks(links: AdvisorLink[]) {
 
 export function addAdvisorLink(link: AdvisorLink) {
   const links = getAdvisorLinks();
-  if (links.some(l => l.email.toLowerCase() === link.email.toLowerCase())) return;
+  if (links.some((l) => l.email.toLowerCase() === link.email.toLowerCase())) return;
   saveAdvisorLinks([link, ...links]);
 }
 
 export function removeAdvisorLink(id: string) {
-  saveAdvisorLinks(getAdvisorLinks().filter(l => l.id !== id));
+  saveAdvisorLinks(getAdvisorLinks().filter((l) => l.id !== id));
 }

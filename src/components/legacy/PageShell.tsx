@@ -1,7 +1,13 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
-export function PageShell({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function PageShell({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <motion.main
       initial={{ opacity: 0, y: 20 }}
@@ -16,11 +22,14 @@ export function PageShell({ children, className = "" }: { children: ReactNode; c
   );
 }
 
-export function Blob({ className = "", color = "var(--forest)", opacity = 0.05 }: { className?: string; color?: string; opacity?: number }) {
-  return (
-    <div
-      className={`ll-blob ll-drift ${className}`}
-      style={{ background: color, opacity }}
-    />
-  );
+export function Blob({
+  className = "",
+  color = "var(--forest)",
+  opacity = 0.05,
+}: {
+  className?: string;
+  color?: string;
+  opacity?: number;
+}) {
+  return <div className={`ll-blob ll-drift ${className}`} style={{ background: color, opacity }} />;
 }

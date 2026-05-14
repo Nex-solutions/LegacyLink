@@ -46,7 +46,7 @@ export const createBuyIntent = createServerFn({ method: "POST" })
       amountCad: z.number().min(10).max(50000),
       quoteId: z.number(),
       reference: z.string().max(255).optional(),
-    }).parse
+    }).parse,
   )
   .handler(async ({ context, data }) => {
     const wallet = (await ensureCustodialWallet(context.userId)).pubkey;
@@ -95,7 +95,7 @@ export const createSellIntent = createServerFn({ method: "POST" })
       amountUsdc: z.number().min(1).max(50000),
       etransferEmail: z.string().email(),
       reference: z.string().max(255).optional(),
-    }).parse
+    }).parse,
   )
   .handler(async ({ context, data }) => {
     const quote = await getPriceQuote({

@@ -6,7 +6,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decryptSecret } from "./solana.server";
 
 function getRpcUrls(): string[] {
-  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
+  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(
+    Boolean,
+  ) as string[];
   return [...new Set(urls)];
 }
 
@@ -48,8 +50,13 @@ export async function fundFromMaster(toPubkey: string, solAmount: number): Promi
         if (balance < lamports + 5000) {
           throw new Error(`treasury underfunded: ${balance} lamports`);
         }
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-        const tx = new Transaction({ feePayer: master.publicKey, blockhash, lastValidBlockHeight }).add(
+        const { blockhash, lastValidBlockHeight } =
+          await connection.getLatestBlockhash("confirmed");
+        const tx = new Transaction({
+          feePayer: master.publicKey,
+          blockhash,
+          lastValidBlockHeight,
+        }).add(
           SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: recipient, lamports }),
         );
         tx.sign(master);
@@ -66,7 +73,10 @@ export async function fundFromMaster(toPubkey: string, solAmount: number): Promi
     }
     throw lastError ?? new Error("No RPC endpoints available");
   } catch (e) {
-    console.warn("[treasury] master transfer failed, trying airdrop", e instanceof Error ? e.stack || e.message : e);
+    console.warn(
+      "[treasury] master transfer failed, trying airdrop",
+      e instanceof Error ? e.stack || e.message : e,
+    );
   }
 
   // Last resort: devnet airdrop (often rate-limited but worth a shot).
@@ -93,8 +103,15 @@ export async function signMasterFundingTransaction(args: {
   const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
   const master = await loadMasterKeypair();
   const lamports = Math.round(args.solAmount * LAMPORTS_PER_SOL);
-  const tx = new Transaction({ feePayer: master.publicKey, recentBlockhash: args.recentBlockhash }).add(
-    SystemProgram.transfer({ fromPubkey: master.publicKey, toPubkey: new PublicKey(args.toPubkey), lamports }),
+  const tx = new Transaction({
+    feePayer: master.publicKey,
+    recentBlockhash: args.recentBlockhash,
+  }).add(
+    SystemProgram.transfer({
+      fromPubkey: master.publicKey,
+      toPubkey: new PublicKey(args.toPubkey),
+      lamports,
+    }),
   );
   tx.sign(master);
   const signature = tx.signature ? bs58.encode(tx.signature) : "";

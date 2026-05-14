@@ -4,12 +4,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Blob, PageShell } from "@/components/legacy/PageShell";
 import {
-  advisorClients, advisorTotals, activityFeed, formatCAD,
-  advisorRisks, upcomingReleases, allBeneficiaries, exportBookCSV,
-  type AdvisorClient, type ClientVault, type ActivityKind,
+  advisorClients,
+  advisorTotals,
+  activityFeed,
+  formatCAD,
+  advisorRisks,
+  upcomingReleases,
+  allBeneficiaries,
+  exportBookCSV,
+  type AdvisorClient,
+  type ClientVault,
+  type ActivityKind,
 } from "@/lib/legacy-data";
 import {
-  clearAdvisor, getAdvisor, advisorDisplayName, advisorInitials,
+  clearAdvisor,
+  getAdvisor,
+  advisorDisplayName,
+  advisorInitials,
   type Advisor,
 } from "@/lib/legacy-auth";
 
@@ -45,15 +56,22 @@ function AdvisorDashboard() {
     let list = [...advisorClients];
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+      list = list.filter(
+        (c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q),
+      );
     }
     list.sort((a, b) => {
       switch (sort) {
-        case "aum": return b.total - a.total;
-        case "name": return a.name.localeCompare(b.name);
-        case "vaults": return b.vaults - a.vaults;
-        case "upcoming": return Number(!!b.alert) - Number(!!a.alert);
-        default: return a.lastActiveDays - b.lastActiveDays;
+        case "aum":
+          return b.total - a.total;
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "vaults":
+          return b.vaults - a.vaults;
+        case "upcoming":
+          return Number(!!b.alert) - Number(!!a.alert);
+        default:
+          return a.lastActiveDays - b.lastActiveDays;
       }
     });
     return list;
@@ -75,15 +93,35 @@ function AdvisorDashboard() {
         <div className="px-6 lg:px-12 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/advisor" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "var(--honey)" }}>
-                <span style={{ color: "var(--forest)", fontFamily: "var(--font-serif)", fontWeight: 700 }}>L</span>
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "var(--honey)" }}
+              >
+                <span
+                  style={{
+                    color: "var(--forest)",
+                    fontFamily: "var(--font-serif)",
+                    fontWeight: 700,
+                  }}
+                >
+                  L
+                </span>
               </div>
-              <span style={{ fontFamily: "var(--font-serif)", color: "var(--cream)", fontSize: 20, fontWeight: 600 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  color: "var(--cream)",
+                  fontSize: 20,
+                  fontWeight: 600,
+                }}
+              >
                 LegacyLink
               </span>
             </Link>
-            <span className="hidden md:inline text-[11px] uppercase tracking-[0.18em]"
-              style={{ color: "rgba(250,250,247,0.4)" }}>
+            <span
+              className="hidden md:inline text-[11px] uppercase tracking-[0.18em]"
+              style={{ color: "rgba(250,250,247,0.4)" }}
+            >
               Advisor Portal
             </span>
           </div>
@@ -97,8 +135,12 @@ function AdvisorDashboard() {
               ✉ Messages
             </Link>
             <div className="hidden sm:block text-right leading-tight">
-              <div className="text-[13px]" style={{ color: "var(--cream)" }}>{advisorDisplayName(advisor)}</div>
-              <div className="text-[11px]" style={{ color: "rgba(250,250,247,0.55)" }}>{advisor.firm}</div>
+              <div className="text-[13px]" style={{ color: "var(--cream)" }}>
+                {advisorDisplayName(advisor)}
+              </div>
+              <div className="text-[11px]" style={{ color: "rgba(250,250,247,0.55)" }}>
+                {advisor.firm}
+              </div>
             </div>
             <button
               onClick={() => setMenuOpen((o) => !o)}
@@ -117,16 +159,32 @@ function AdvisorDashboard() {
                   className="absolute right-0 top-12 ll-card overflow-hidden w-48"
                   style={{ zIndex: 40 }}
                 >
-                  <Link to="/advisor/profile" onClick={() => setMenuOpen(false)}
+                  <Link
+                    to="/advisor/profile"
+                    onClick={() => setMenuOpen(false)}
                     className="block px-4 py-3 text-sm hover:bg-[rgba(26,46,26,0.04)]"
-                    style={{ color: "var(--forest)" }}>My Profile</Link>
-                  <button onClick={() => { setMenuOpen(false); toast("Settings coming soon."); }}
-                    className="block w-full text-left px-4 py-3 text-sm hover:bg-[rgba(26,46,26,0.04)]"
-                    style={{ color: "var(--forest)" }}>Settings</button>
+                    style={{ color: "var(--forest)" }}
+                  >
+                    My Profile
+                  </Link>
                   <button
-                    onClick={() => { clearAdvisor(); navigate({ to: "/advisor" }); }}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      toast("Settings coming soon.");
+                    }}
+                    className="block w-full text-left px-4 py-3 text-sm hover:bg-[rgba(26,46,26,0.04)]"
+                    style={{ color: "var(--forest)" }}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearAdvisor();
+                      navigate({ to: "/advisor" });
+                    }}
                     className="block w-full text-left px-4 py-3 text-sm border-t hover:bg-[rgba(26,46,26,0.04)]"
-                    style={{ color: "var(--forest)", borderColor: "rgba(26,46,26,0.08)" }}>
+                    style={{ color: "var(--forest)", borderColor: "rgba(26,46,26,0.08)" }}
+                  >
                     Sign out
                   </button>
                 </motion.div>
@@ -139,9 +197,20 @@ function AdvisorDashboard() {
       {/* Hero */}
       <section className="relative overflow-hidden" style={{ background: "var(--forest)" }}>
         <Blob className="w-[520px] h-[520px] -top-40 -left-32" color="var(--sage)" opacity={0.18} />
-        <Blob className="w-[420px] h-[420px] -bottom-32 right-0" color="var(--honey)" opacity={0.10} />
+        <Blob
+          className="w-[420px] h-[420px] -bottom-32 right-0"
+          color="var(--honey)"
+          opacity={0.1}
+        />
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pt-12 pb-14">
-          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(34px,4vw,44px)", color: "var(--cream)", fontWeight: 600 }}>
+          <h1
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(34px,4vw,44px)",
+              color: "var(--cream)",
+              fontWeight: 600,
+            }}
+          >
             {greeting}, {advisor.firstName}.
           </h1>
           <p className="mt-2 text-[15px]" style={{ color: "rgba(250,250,247,0.55)" }}>
@@ -153,7 +222,11 @@ function AdvisorDashboard() {
             <StatCard label="Clients" value={String(totals.clients)} />
             <StatCard label="Assets Protected" value={formatCAD(totals.aum)} />
             <StatCard label="Active Vaults" value={String(totals.vaults)} />
-            <StatCard label="Upcoming Releases" value={String(totals.upcoming)} highlight={totals.upcoming > 0} />
+            <StatCard
+              label="Upcoming Releases"
+              value={String(totals.upcoming)}
+              highlight={totals.upcoming > 0}
+            />
           </div>
         </div>
       </section>
@@ -164,10 +237,20 @@ function AdvisorDashboard() {
         <section>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-center gap-3">
-              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600, color: "var(--forest)" }}>
+              <h2
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: 28,
+                  fontWeight: 600,
+                  color: "var(--forest)",
+                }}
+              >
                 Your Book
               </h2>
-              <div className="flex rounded-full overflow-hidden" style={{ border: "1px solid rgba(26,46,26,0.12)" }}>
+              <div
+                className="flex rounded-full overflow-hidden"
+                style={{ border: "1px solid rgba(26,46,26,0.12)" }}
+              >
                 {(["clients", "beneficiaries"] as View[]).map((v) => (
                   <button
                     key={v}
@@ -177,7 +260,9 @@ function AdvisorDashboard() {
                       background: view === v ? "var(--forest)" : "transparent",
                       color: view === v ? "var(--cream)" : "var(--forest)",
                     }}
-                  >{v}</button>
+                  >
+                    {v}
+                  </button>
                 ))}
               </div>
             </div>
@@ -205,8 +290,11 @@ function AdvisorDashboard() {
                   </select>
                 </>
               )}
-              <button onClick={() => setModal("invite")}
-                className="ll-pill ll-pill-secondary text-sm" style={{ padding: "0.6rem 1.1rem" }}>
+              <button
+                onClick={() => setModal("invite")}
+                className="ll-pill ll-pill-secondary text-sm"
+                style={{ padding: "0.6rem 1.1rem" }}
+              >
                 + Invite Client
               </button>
             </div>
@@ -233,23 +321,65 @@ function AdvisorDashboard() {
               <table className="w-full text-sm">
                 <thead style={{ background: "rgba(26,46,26,0.04)" }}>
                   <tr>
-                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Beneficiary</th>
-                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Client</th>
-                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Vault</th>
-                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Share</th>
-                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Flag</th>
+                    <th
+                      className="text-left px-4 py-3 text-[11px] uppercase tracking-wider"
+                      style={{ color: "var(--warm-gray)" }}
+                    >
+                      Beneficiary
+                    </th>
+                    <th
+                      className="text-left px-4 py-3 text-[11px] uppercase tracking-wider"
+                      style={{ color: "var(--warm-gray)" }}
+                    >
+                      Client
+                    </th>
+                    <th
+                      className="text-left px-4 py-3 text-[11px] uppercase tracking-wider"
+                      style={{ color: "var(--warm-gray)" }}
+                    >
+                      Vault
+                    </th>
+                    <th
+                      className="text-left px-4 py-3 text-[11px] uppercase tracking-wider"
+                      style={{ color: "var(--warm-gray)" }}
+                    >
+                      Share
+                    </th>
+                    <th
+                      className="text-left px-4 py-3 text-[11px] uppercase tracking-wider"
+                      style={{ color: "var(--warm-gray)" }}
+                    >
+                      Flag
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {beneficiaries.map((b, i) => (
                     <tr key={i} className="border-t" style={{ borderColor: "rgba(26,46,26,0.06)" }}>
-                      <td className="px-4 py-3" style={{ color: "var(--forest)", fontWeight: 500 }}>{b.name}</td>
-                      <td className="px-4 py-3">
-                        <Link to="/advisor/clients/$clientId" params={{ clientId: b.clientId }} style={{ color: "var(--honey)" }}>{b.clientName}</Link>
+                      <td className="px-4 py-3" style={{ color: "var(--forest)", fontWeight: 500 }}>
+                        {b.name}
                       </td>
-                      <td className="px-4 py-3" style={{ color: "var(--warm-gray)" }}>{b.vaultName}</td>
-                      <td className="px-4 py-3" style={{ color: "var(--honey)", fontWeight: 600 }}>{formatCAD(b.amount_cad)}</td>
-                      <td className="px-4 py-3 text-[12px]" style={{ color: b.flag ? "#C0392B" : "var(--warm-gray)" }}>{b.flag || "—"}</td>
+                      <td className="px-4 py-3">
+                        <Link
+                          to="/advisor/clients/$clientId"
+                          params={{ clientId: b.clientId }}
+                          style={{ color: "var(--honey)" }}
+                        >
+                          {b.clientName}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3" style={{ color: "var(--warm-gray)" }}>
+                        {b.vaultName}
+                      </td>
+                      <td className="px-4 py-3" style={{ color: "var(--honey)", fontWeight: 600 }}>
+                        {formatCAD(b.amount_cad)}
+                      </td>
+                      <td
+                        className="px-4 py-3 text-[12px]"
+                        style={{ color: b.flag ? "#C0392B" : "var(--warm-gray)" }}
+                      >
+                        {b.flag || "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -260,7 +390,14 @@ function AdvisorDashboard() {
           {/* Upcoming releases pipeline */}
           {upcoming.length > 0 && view === "clients" && (
             <div className="mt-10">
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600, color: "var(--forest)" }}>
+              <h3
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: 22,
+                  fontWeight: 600,
+                  color: "var(--forest)",
+                }}
+              >
                 Upcoming releases · next 90 days
               </h3>
               <div className="mt-4 ll-card p-5">
@@ -273,12 +410,32 @@ function AdvisorDashboard() {
                       className="flex items-center gap-4 p-3 rounded-xl transition hover:bg-[rgba(232,160,32,0.08)]"
                     >
                       <div className="w-14 text-center">
-                        <div style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600, color: "var(--honey)", lineHeight: 1 }}>{u.daysAway}</div>
-                        <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>days</div>
+                        <div
+                          style={{
+                            fontFamily: "var(--font-serif)",
+                            fontSize: 22,
+                            fontWeight: 600,
+                            color: "var(--honey)",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {u.daysAway}
+                        </div>
+                        <div
+                          className="text-[10px] uppercase tracking-wider"
+                          style={{ color: "var(--warm-gray)" }}
+                        >
+                          days
+                        </div>
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>{u.vaultName}</p>
-                        <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>{u.clientName} · {formatCAD(u.amount_cad)} · {u.kind === "time" ? "Time-based" : "Inactivity"}</p>
+                        <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>
+                          {u.vaultName}
+                        </p>
+                        <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>
+                          {u.clientName} · {formatCAD(u.amount_cad)} ·{" "}
+                          {u.kind === "time" ? "Time-based" : "Inactivity"}
+                        </p>
                       </div>
                       <span style={{ color: "var(--honey)" }}>→</span>
                     </Link>
@@ -294,10 +451,22 @@ function AdvisorDashboard() {
           {risks.length > 0 && (
             <div className="ll-card p-6" style={{ borderTop: "3px solid var(--honey)" }}>
               <div className="flex items-center justify-between">
-                <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600, color: "var(--forest)" }}>
+                <h3
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: "var(--forest)",
+                  }}
+                >
                   Needs your attention
                 </h3>
-                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "rgba(232,160,32,0.18)", color: "var(--forest)" }}>{risks.length}</span>
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded-full"
+                  style={{ background: "rgba(232,160,32,0.18)", color: "var(--forest)" }}
+                >
+                  {risks.length}
+                </span>
               </div>
               <div className="mt-4 space-y-3">
                 {risks.slice(0, 5).map((r) => (
@@ -308,15 +477,35 @@ function AdvisorDashboard() {
                     className="block p-3 rounded-xl transition hover:bg-[rgba(26,46,26,0.04)]"
                   >
                     <div className="flex items-start gap-2">
-                      <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.severity === "high" ? "#C0392B" : r.severity === "medium" ? "var(--honey)" : "var(--sage)" }} />
+                      <span
+                        className="mt-1 w-2 h-2 rounded-full flex-shrink-0"
+                        style={{
+                          background:
+                            r.severity === "high"
+                              ? "#C0392B"
+                              : r.severity === "medium"
+                                ? "var(--honey)"
+                                : "var(--sage)",
+                        }}
+                      />
                       <div className="flex-1">
-                        <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>{r.clientName} · {r.vaultName}</p>
-                        <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>{r.message}</p>
+                        <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>
+                          {r.clientName} · {r.vaultName}
+                        </p>
+                        <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>
+                          {r.message}
+                        </p>
                         {r.kind === "inactivity" && (
                           <button
-                            onClick={(e) => { e.preventDefault(); toast.success(`Check-in nudge sent to ${r.clientName}.`); }}
-                            className="mt-1.5 text-[11px] font-medium" style={{ color: "var(--honey)" }}
-                          >Send check-in nudge →</button>
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toast.success(`Check-in nudge sent to ${r.clientName}.`);
+                            }}
+                            className="mt-1.5 text-[11px] font-medium"
+                            style={{ color: "var(--honey)" }}
+                          >
+                            Send check-in nudge →
+                          </button>
                         )}
                       </div>
                     </div>
@@ -327,48 +516,93 @@ function AdvisorDashboard() {
           )}
 
           <div className="ll-card p-6">
-            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600, color: "var(--forest)" }}>
+            <h3
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 20,
+                fontWeight: 600,
+                color: "var(--forest)",
+              }}
+            >
               Recent Activity
             </h3>
             <div className="mt-5 space-y-5">
               {activityFeed.map((e) => (
                 <div key={e.id} className="flex items-start gap-3">
-                  <span className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: kindColor(e.kind) }} />
+                  <span
+                    className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: kindColor(e.kind) }}
+                  />
                   <div className="flex-1">
-                    <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>{e.title}</p>
-                    <p className="text-[13px] mt-0.5" style={{ color: "var(--warm-gray)" }}>{e.detail}</p>
-                    <p className="text-[12px] mt-1" style={{ color: "rgba(74,74,74,0.55)" }}>{e.when}</p>
+                    <p className="text-sm" style={{ color: "var(--forest)", fontWeight: 500 }}>
+                      {e.title}
+                    </p>
+                    <p className="text-[13px] mt-0.5" style={{ color: "var(--warm-gray)" }}>
+                      {e.detail}
+                    </p>
+                    <p className="text-[12px] mt-1" style={{ color: "rgba(74,74,74,0.55)" }}>
+                      {e.when}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
-            <button onClick={() => toast("Full activity log coming soon.")}
-              className="mt-6 text-sm font-medium" style={{ color: "var(--honey)" }}>
+            <button
+              onClick={() => toast("Full activity log coming soon.")}
+              className="mt-6 text-sm font-medium"
+              style={{ color: "var(--honey)" }}
+            >
               View All Activity →
             </button>
           </div>
 
           <div className="ll-card p-6">
-            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600, color: "var(--forest)" }}>
+            <h3
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 20,
+                fontWeight: 600,
+                color: "var(--forest)",
+              }}
+            >
               Quick Actions
             </h3>
             <div className="mt-5 space-y-3">
-              <QuickActionButton onClick={() => setModal("invite")} icon="✉" label="Invite a New Client" />
-              <QuickActionButton onClick={() => setModal("report")} icon="📋" label="Download Client Report" />
-              <QuickActionButton onClick={() => setModal("review")} icon="📞" label="Schedule a Review" />
-              <QuickActionButton onClick={() => setView("beneficiaries")} icon="👥" label="Open Beneficiary Roster" />
+              <QuickActionButton
+                onClick={() => setModal("invite")}
+                icon="✉"
+                label="Invite a New Client"
+              />
+              <QuickActionButton
+                onClick={() => setModal("report")}
+                icon="📋"
+                label="Download Client Report"
+              />
+              <QuickActionButton
+                onClick={() => setModal("review")}
+                icon="📞"
+                label="Schedule a Review"
+              />
+              <QuickActionButton
+                onClick={() => setView("beneficiaries")}
+                icon="👥"
+                label="Open Beneficiary Roster"
+              />
               <QuickActionButton
                 onClick={() => {
                   const blob = new window.Blob([exportBookCSV()], { type: "text/csv" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
-                  a.href = url; a.download = `legacylink-book-${new Date().toISOString().slice(0, 10)}.csv`;
-                  document.body.appendChild(a); a.click(); a.remove();
+                  a.href = url;
+                  a.download = `legacylink-book-${new Date().toISOString().slice(0, 10)}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
                   URL.revokeObjectURL(url);
                   toast.success("Book exported.");
                 }}
-                icon="⬇" label="Export Book (CSV)"
+                icon="⬇"
+                label="Export Book (CSV)"
               />
             </div>
           </div>
@@ -387,19 +621,48 @@ function AdvisorDashboard() {
 
 // ─── Subcomponents ────────────────────────────────────────────────
 
-function StatCard({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+function StatCard({
+  label,
+  value,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
-    <div className="ll-card p-5"
-      style={{ borderLeft: highlight ? "3px solid var(--honey)" : undefined }}>
-      <p className="text-[11px] uppercase tracking-widest" style={{ color: "var(--warm-gray)" }}>{label}</p>
-      <p className="mt-2" style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 32, fontWeight: 600, lineHeight: 1 }}>
+    <div
+      className="ll-card p-5"
+      style={{ borderLeft: highlight ? "3px solid var(--honey)" : undefined }}
+    >
+      <p className="text-[11px] uppercase tracking-widest" style={{ color: "var(--warm-gray)" }}>
+        {label}
+      </p>
+      <p
+        className="mt-2"
+        style={{
+          fontFamily: "var(--font-serif)",
+          color: "var(--honey)",
+          fontSize: 32,
+          fontWeight: 600,
+          lineHeight: 1,
+        }}
+      >
         {value}
       </p>
     </div>
   );
 }
 
-function QuickActionButton({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+function QuickActionButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: string;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
@@ -422,8 +685,10 @@ function StatusPill({ status }: { status: AdvisorClient["status"] }) {
   } as const;
   const m = map[status];
   return (
-    <span className="inline-flex items-center gap-2 text-[12px] px-3 py-1 rounded-full"
-      style={{ background: "rgba(26,46,26,0.05)", color: "var(--forest)" }}>
+    <span
+      className="inline-flex items-center gap-2 text-[12px] px-3 py-1 rounded-full"
+      style={{ background: "rgba(26,46,26,0.05)", color: "var(--forest)" }}
+    >
       <span className="w-2 h-2 rounded-full" style={{ background: m.color }} />
       {m.text}
     </span>
@@ -433,43 +698,77 @@ function StatusPill({ status }: { status: AdvisorClient["status"] }) {
 function ConditionTag({ kind }: { kind: "time" | "inactivity" | "manual" }) {
   const map = {
     time: { icon: "📅", label: "Time-based", bg: "rgba(127,168,130,0.20)", color: "var(--forest)" },
-    inactivity: { icon: "💤", label: "Inactivity", bg: "rgba(232,160,32,0.18)", color: "var(--forest)" },
+    inactivity: {
+      icon: "💤",
+      label: "Inactivity",
+      bg: "rgba(232,160,32,0.18)",
+      color: "var(--forest)",
+    },
     manual: { icon: "🔑", label: "Manual", bg: "rgba(74,74,74,0.10)", color: "var(--warm-gray)" },
   } as const;
   const m = map[kind];
   return (
-    <span className="text-[11px] px-2.5 py-1 rounded-full font-medium"
-      style={{ background: m.bg, color: m.color }}>
+    <span
+      className="text-[11px] px-2.5 py-1 rounded-full font-medium"
+      style={{ background: m.bg, color: m.color }}
+    >
       {m.icon} {m.label}
     </span>
   );
 }
 
-function ClientCard({ client, expanded, onToggle }: {
-  client: AdvisorClient; expanded: boolean; onToggle: () => void;
+function ClientCard({
+  client,
+  expanded,
+  onToggle,
+}: {
+  client: AdvisorClient;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
-  const initials = client.name.split(" ").map((s) => s[0]).join("").slice(0, 2);
-  const lastActive = client.lastActiveDays === 0 ? "Today"
-    : client.lastActiveDays === 1 ? "Yesterday"
-    : `${client.lastActiveDays} days ago`;
+  const initials = client.name
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2);
+  const lastActive =
+    client.lastActiveDays === 0
+      ? "Today"
+      : client.lastActiveDays === 1
+        ? "Yesterday"
+        : `${client.lastActiveDays} days ago`;
 
   return (
-    <motion.div layout className="ll-card overflow-hidden"
+    <motion.div
+      layout
+      className="ll-card overflow-hidden"
       whileHover={{ y: -3, boxShadow: "0 12px 48px rgba(26,46,26,0.14)" }}
-      transition={{ duration: 0.2 }}>
+      transition={{ duration: 0.2 }}
+    >
       <div className="p-6">
         {/* Top row */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full flex items-center justify-center font-semibold"
-              style={{ background: "var(--forest)", color: "var(--cream)" }}>
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center font-semibold"
+              style={{ background: "var(--forest)", color: "var(--cream)" }}
+            >
               {initials}
             </div>
             <div>
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600, color: "var(--forest)" }}>
+              <h3
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: "var(--forest)",
+                }}
+              >
                 {client.name}
               </h3>
-              <p className="text-[13px]" style={{ color: "rgba(74,74,74,0.7)" }}>{client.email}</p>
+              <p className="text-[13px]" style={{ color: "rgba(74,74,74,0.7)" }}>
+                {client.email}
+              </p>
             </div>
           </div>
           <StatusPill status={client.status} />
@@ -477,16 +776,20 @@ function ClientCard({ client, expanded, onToggle }: {
 
         {/* Middle row */}
         <p className="mt-4 text-[13px]" style={{ color: "rgba(74,74,74,0.75)" }}>
-          {client.vaults} vaults · {formatCAD(client.total)} protected · Since {client.since} · Last active {lastActive}
+          {client.vaults} vaults · {formatCAD(client.total)} protected · Since {client.since} · Last
+          active {lastActive}
         </p>
 
         {/* Alert */}
         {client.alert && (
-          <div className="mt-4 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2"
+          <div
+            className="mt-4 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2"
             style={{
-              background: client.status === "inactive" ? "rgba(192,57,43,0.10)" : "rgba(232,160,32,0.18)",
+              background:
+                client.status === "inactive" ? "rgba(192,57,43,0.10)" : "rgba(232,160,32,0.18)",
               color: "var(--forest)",
-            }}>
+            }}
+          >
             <span>{client.status === "inactive" ? "⚠" : "⚡"}</span>
             <span>{client.alert}</span>
           </div>
@@ -495,7 +798,9 @@ function ClientCard({ client, expanded, onToggle }: {
         {/* Bottom row */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
-            {client.conditionTypes.map((t) => <ConditionTag key={t} kind={t} />)}
+            {client.conditionTypes.map((t) => (
+              <ConditionTag key={t} kind={t} />
+            ))}
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -503,8 +808,14 @@ function ClientCard({ client, expanded, onToggle }: {
               params={{ clientId: client.id }}
               className="text-sm font-medium"
               style={{ color: "var(--forest)" }}
-            >Open detail →</Link>
-            <button onClick={onToggle} className="text-sm font-medium" style={{ color: "var(--honey)" }}>
+            >
+              Open detail →
+            </Link>
+            <button
+              onClick={onToggle}
+              className="text-sm font-medium"
+              style={{ color: "var(--honey)" }}
+            >
               {expanded ? "Collapse ↑" : "Quick view"}
             </button>
           </div>
@@ -513,11 +824,19 @@ function ClientCard({ client, expanded, onToggle }: {
 
       <AnimatePresence>
         {expanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="px-6 pb-6 grid sm:grid-cols-2 gap-3 border-t pt-5"
-              style={{ borderColor: "rgba(26,46,26,0.08)" }}>
-              {client.vaultDetail.map((v) => <ReadOnlyVault key={v.id} clientId={client.id} vault={v} />)}
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="px-6 pb-6 grid sm:grid-cols-2 gap-3 border-t pt-5"
+              style={{ borderColor: "rgba(26,46,26,0.08)" }}
+            >
+              {client.vaultDetail.map((v) => (
+                <ReadOnlyVault key={v.id} clientId={client.id} vault={v} />
+              ))}
             </div>
             <div className="px-6 pb-5 text-right">
               <button onClick={onToggle} className="text-sm" style={{ color: "var(--warm-gray)" }}>
@@ -534,49 +853,88 @@ function ClientCard({ client, expanded, onToggle }: {
 function ReadOnlyVault({ clientId, vault }: { clientId: string; vault: ClientVault }) {
   const cond = vault.condition;
   const desc =
-    cond.kind === "time" ? `Releases on ${new Date(cond.unlock_date).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" })}`
-    : cond.kind === "inactivity" ? `Inactivity trigger · ${cond.inactivity_days}-day threshold`
-    : "Manual release";
+    cond.kind === "time"
+      ? `Releases on ${new Date(cond.unlock_date).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" })}`
+      : cond.kind === "inactivity"
+        ? `Inactivity trigger · ${cond.inactivity_days}-day threshold`
+        : "Manual release";
 
   let progress = 0;
   if (cond.kind === "inactivity") {
-    const daysSince = Math.max(0, Math.floor((Date.now() - new Date(cond.last_checkin).getTime()) / (1000 * 60 * 60 * 24)));
+    const daysSince = Math.max(
+      0,
+      Math.floor((Date.now() - new Date(cond.last_checkin).getTime()) / (1000 * 60 * 60 * 24)),
+    );
     progress = Math.min(100, (daysSince / cond.inactivity_days) * 100);
   }
 
   return (
     <div className="p-5 rounded-2xl" style={{ background: "rgba(26,46,26,0.04)" }}>
       <div className="flex items-start justify-between gap-3">
-        <h4 style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 600, color: "var(--forest)" }}>
+        <h4
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--forest)",
+          }}
+        >
           {vault.name}
         </h4>
-        <span className="text-[11px] px-2 py-1 rounded-full"
-          style={{ background: "var(--sage)", color: "var(--forest)" }}>
+        <span
+          className="text-[11px] px-2 py-1 rounded-full"
+          style={{ background: "var(--sage)", color: "var(--forest)" }}
+        >
           {vault.status}
         </span>
       </div>
-      <p className="mt-2" style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 22, fontWeight: 600 }}>
+      <p
+        className="mt-2"
+        style={{
+          fontFamily: "var(--font-serif)",
+          color: "var(--honey)",
+          fontSize: 22,
+          fontWeight: 600,
+        }}
+      >
         {formatCAD(vault.amount_cad)}
       </p>
-      <p className="mt-1 text-[12px]" style={{ color: "var(--warm-gray)" }}>{desc}</p>
+      <p className="mt-1 text-[12px]" style={{ color: "var(--warm-gray)" }}>
+        {desc}
+      </p>
 
       {cond.kind === "inactivity" && (
-        <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(26,46,26,0.08)" }}>
-          <div className="h-full rounded-full" style={{ width: `${progress}%`, background: "var(--honey)" }} />
+        <div
+          className="mt-3 h-1.5 rounded-full overflow-hidden"
+          style={{ background: "rgba(26,46,26,0.08)" }}
+        >
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${progress}%`, background: "var(--honey)" }}
+          />
         </div>
       )}
 
       <div className="mt-3 flex items-center gap-2">
         {vault.beneficiaries.map((b, i) => (
-          <span key={i} className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold"
-            style={{ background: "var(--sage)", color: "var(--forest)" }}>
-            {b.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}
+          <span
+            key={i}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold"
+            style={{ background: "var(--sage)", color: "var(--forest)" }}
+          >
+            {b.name
+              .split(" ")
+              .map((s) => s[0])
+              .join("")
+              .slice(0, 2)}
           </span>
         ))}
         <Link
           to="/advisor/clients/$clientId/vault/$vaultId"
           params={{ clientId, vaultId: vault.id }}
-          className="ml-auto text-[12px]" style={{ color: "var(--honey)" }}>
+          className="ml-auto text-[12px]"
+          style={{ color: "var(--honey)" }}
+        >
           View Full Detail →
         </Link>
       </div>
@@ -586,11 +944,16 @@ function ReadOnlyVault({ clientId, vault }: { clientId: string; vault: ClientVau
 
 function kindColor(k: ActivityKind) {
   switch (k) {
-    case "fund": return "var(--honey)";
-    case "checkin": return "var(--sage)";
-    case "release": return "var(--forest)";
-    case "warning": return "#C0392B";
-    case "beneficiary": return "var(--honey)";
+    case "fund":
+      return "var(--honey)";
+    case "checkin":
+      return "var(--sage)";
+    case "release":
+      return "var(--forest)";
+    case "warning":
+      return "#C0392B";
+    case "beneficiary":
+      return "var(--honey)";
   }
 }
 
@@ -599,13 +962,17 @@ function kindColor(k: ActivityKind) {
 function ModalShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(26,46,26,0.55)" }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
+        initial={{ scale: 0.96, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.96, opacity: 0 }}
         className="ll-card p-8 max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
@@ -619,32 +986,66 @@ function InviteModal({ advisor, onClose }: { advisor: Advisor; onClose: () => vo
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState(
-    `Hi ${name || "[Name]"}, I'd like to invite you to set up your estate vault on LegacyLink — it's a simple way to make sure what matters reaches the people who matter.`
+    `Hi ${name || "[Name]"}, I'd like to invite you to set up your estate vault on LegacyLink — it's a simple way to make sure what matters reaches the people who matter.`,
   );
   return (
     <ModalShell onClose={onClose}>
-      <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>
+      <h3
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 24,
+          fontWeight: 600,
+          color: "var(--forest)",
+        }}
+      >
         Invite a Family to LegacyLink
       </h3>
       <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
-        We'll email them a private onboarding link. Once they sign up they're strongly linked to you, and they choose which trusts to share — you only see what they grant.
+        We'll email them a private onboarding link. Once they sign up they're strongly linked to
+        you, and they choose which trusts to share — you only see what they grant.
       </p>
       <div className="mt-5 space-y-3">
-        <input className="ll-input" placeholder="Family contact name" value={name} onChange={(e) => setName(e.target.value)} />
-        <input className="ll-input" placeholder="client@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <textarea className="ll-input min-h-[120px]" value={msg} onChange={(e) => setMsg(e.target.value)} />
+        <input
+          className="ll-input"
+          placeholder="Family contact name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          className="ll-input"
+          placeholder="client@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <textarea
+          className="ll-input min-h-[120px]"
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+        />
         <p className="text-[12px]" style={{ color: "var(--warm-gray)" }}>
           This invitation will come from {advisor.firstName} {advisor.lastName}, {advisor.firm}.
         </p>
       </div>
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
-        <button onClick={() => { navigator.clipboard?.writeText("https://legacylink.app/invite/abc123"); toast.success("Link copied"); }}
-          className="ll-pill ll-pill-ghost text-sm">Copy Invite Link</button>
-        <button onClick={() => {
-          if (!email) return toast.error("Add a client email.");
-          onClose();
-          toast.success(`Invitation sent to ${email}. You'll be notified when they sign up.`);
-        }} className="ll-pill ll-pill-primary text-sm">Send Invitation</button>
+        <button
+          onClick={() => {
+            navigator.clipboard?.writeText("https://legacylink.app/invite/abc123");
+            toast.success("Link copied");
+          }}
+          className="ll-pill ll-pill-ghost text-sm"
+        >
+          Copy Invite Link
+        </button>
+        <button
+          onClick={() => {
+            if (!email) return toast.error("Add a client email.");
+            onClose();
+            toast.success(`Invitation sent to ${email}. You'll be notified when they sign up.`);
+          }}
+          className="ll-pill ll-pill-primary text-sm"
+        >
+          Send Invitation
+        </button>
       </div>
     </ModalShell>
   );
@@ -654,19 +1055,39 @@ function ReportModal({ onClose }: { onClose: () => void }) {
   const [client, setClient] = useState(advisorClients[0].id);
   return (
     <ModalShell onClose={onClose}>
-      <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>
+      <h3
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 24,
+          fontWeight: 600,
+          color: "var(--forest)",
+        }}
+      >
         Download Client Report
       </h3>
       <p className="mt-2 text-sm" style={{ color: "var(--warm-gray)" }}>
         Choose a client to generate a printable vault summary.
       </p>
       <select className="ll-input mt-5" value={client} onChange={(e) => setClient(e.target.value)}>
-        {advisorClients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        {advisorClients.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
       </select>
       <div className="flex justify-end gap-3 mt-6">
-        <button onClick={onClose} className="ll-pill ll-pill-ghost text-sm">Cancel</button>
-        <button onClick={() => { onClose(); setTimeout(() => window.print(), 100); }}
-          className="ll-pill ll-pill-secondary text-sm">Generate Report</button>
+        <button onClick={onClose} className="ll-pill ll-pill-ghost text-sm">
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            onClose();
+            setTimeout(() => window.print(), 100);
+          }}
+          className="ll-pill ll-pill-secondary text-sm"
+        >
+          Generate Report
+        </button>
       </div>
     </ModalShell>
   );
@@ -678,20 +1099,48 @@ function ReviewModal({ onClose }: { onClose: () => void }) {
   const [note, setNote] = useState("");
   return (
     <ModalShell onClose={onClose}>
-      <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--forest)" }}>
+      <h3
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 24,
+          fontWeight: 600,
+          color: "var(--forest)",
+        }}
+      >
         Schedule a Review
       </h3>
       <div className="mt-5 space-y-3">
         <select className="ll-input" value={client} onChange={(e) => setClient(e.target.value)}>
-          {advisorClients.map((c) => <option key={c.id}>{c.name}</option>)}
+          {advisorClients.map((c) => (
+            <option key={c.id}>{c.name}</option>
+          ))}
         </select>
-        <input type="datetime-local" className="ll-input" value={when} onChange={(e) => setWhen(e.target.value)} />
-        <textarea className="ll-input min-h-[100px]" placeholder="Notes for the client…" value={note} onChange={(e) => setNote(e.target.value)} />
+        <input
+          type="datetime-local"
+          className="ll-input"
+          value={when}
+          onChange={(e) => setWhen(e.target.value)}
+        />
+        <textarea
+          className="ll-input min-h-[100px]"
+          placeholder="Notes for the client…"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
       </div>
       <div className="flex justify-end gap-3 mt-6">
-        <button onClick={onClose} className="ll-pill ll-pill-ghost text-sm">Cancel</button>
-        <button onClick={() => { onClose(); toast.success(`Review request sent to ${client}.`); }}
-          className="ll-pill ll-pill-primary text-sm">Send Review Request</button>
+        <button onClick={onClose} className="ll-pill ll-pill-ghost text-sm">
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            onClose();
+            toast.success(`Review request sent to ${client}.`);
+          }}
+          className="ll-pill ll-pill-primary text-sm"
+        >
+          Send Review Request
+        </button>
       </div>
     </ModalShell>
   );

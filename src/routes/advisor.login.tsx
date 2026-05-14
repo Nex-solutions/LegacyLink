@@ -36,7 +36,14 @@ function AdvisorLogin() {
 
   return (
     <AdvisorAuthShell>
-      <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 32, fontWeight: 600, color: "var(--forest)" }}>
+      <h1
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 32,
+          fontWeight: 600,
+          color: "var(--forest)",
+        }}
+      >
         Advisor Sign In
       </h1>
       <p className="mt-2 text-base" style={{ color: "var(--warm-gray)" }}>
@@ -46,22 +53,35 @@ function AdvisorLogin() {
       <form onSubmit={submit} className="mt-8 space-y-4">
         <div>
           <label className="ll-label">Email</label>
-          <input type="email" className="ll-input" placeholder="you@yourfirm.com"
-            value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <input
+            type="email"
+            className="ll-input"
+            placeholder="you@yourfirm.com"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
         </div>
         <div>
           <label className="ll-label">Password</label>
-          <input type="password" className="ll-input" placeholder="••••••••"
-            value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <input
+            type="password"
+            className="ll-input"
+            placeholder="••••••••"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
           <div className="mt-2 text-right">
             <Link to="/forgot-password" className="text-xs" style={{ color: "var(--honey)" }}>
               Forgot password?
             </Link>
           </div>
         </div>
-        <button disabled={loading} type="submit"
+        <button
+          disabled={loading}
+          type="submit"
           className="ll-pill ll-pill-primary w-full mt-2"
-          style={{ height: 52, opacity: loading ? 0.7 : 1 }}>
+          style={{ height: 52, opacity: loading ? 0.7 : 1 }}
+        >
           {loading ? "Signing in…" : "Sign In"}
         </button>
       </form>
@@ -79,7 +99,9 @@ function AdvisorLogin() {
         </Link>
       </p>
       <p className="mt-3 text-xs text-center">
-        <Link to="/" style={{ color: "var(--warm-gray)" }}>← Back to LegacyLink</Link>
+        <Link to="/" style={{ color: "var(--warm-gray)" }}>
+          ← Back to LegacyLink
+        </Link>
       </p>
     </AdvisorAuthShell>
   );

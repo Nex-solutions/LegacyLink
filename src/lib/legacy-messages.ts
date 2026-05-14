@@ -23,7 +23,11 @@ export function threadId(familyEmail: string, advisorEmail: string) {
 
 export function getAllMessages(): Message[] {
   if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
 
 function saveAll(msgs: Message[]) {
@@ -33,7 +37,7 @@ function saveAll(msgs: Message[]) {
 
 export function getThread(tid: string): Message[] {
   return getAllMessages()
-    .filter(m => m.threadId === tid)
+    .filter((m) => m.threadId === tid)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
@@ -61,18 +65,21 @@ export function markThreadRead(tid: string, side: Sender) {
 }
 
 export function unreadCount(tid: string, side: Sender) {
-  return getAllMessages().filter(m => m.threadId === tid && !m.readBy.includes(side)).length;
+  return getAllMessages().filter((m) => m.threadId === tid && !m.readBy.includes(side)).length;
 }
 
 // For advisor side: list distinct family emails who have threads with this advisor.
 export function threadsForAdvisor(advisorEmail: string) {
   const ae = advisorEmail.toLowerCase();
-  const seen = new Map<string, { familyEmail: string; familyName: string; lastAt: string; preview: string; unread: number }>();
+  const seen = new Map<
+    string,
+    { familyEmail: string; familyName: string; lastAt: string; preview: string; unread: number }
+  >();
   for (const m of getAllMessages()) {
     const [fam, adv] = m.threadId.split("::");
     if (adv !== ae) continue;
     const prev = seen.get(fam);
-    const familyName = m.sender === "family" ? m.senderName : (prev?.familyName || fam);
+    const familyName = m.sender === "family" ? m.senderName : prev?.familyName || fam;
     if (!prev || m.createdAt > prev.lastAt) {
       seen.set(fam, {
         familyEmail: fam,

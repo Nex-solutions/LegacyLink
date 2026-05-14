@@ -9,10 +9,10 @@ function StatusPill({ status }: { status: Vault["status"] }) {
     status === "Active"
       ? { background: "var(--sage)", color: "var(--forest)" }
       : status === "Pending"
-      ? { background: "var(--honey)", color: "var(--forest)" }
-      : status === "Failed" || status === "Draft"
-      ? { background: "#F4D9C4", color: "#8B3A1A" }
-      : { background: "#D9D7D1", color: "var(--warm-gray)" };
+        ? { background: "var(--honey)", color: "var(--forest)" }
+        : status === "Failed" || status === "Draft"
+          ? { background: "#F4D9C4", color: "#8B3A1A" }
+          : { background: "#D9D7D1", color: "var(--warm-gray)" };
   const label = status === "Failed" || status === "Draft" ? "Incomplete" : status;
   return (
     <span style={styles} className="px-3 py-1 rounded-full text-xs font-medium">
@@ -22,18 +22,34 @@ function StatusPill({ status }: { status: Vault["status"] }) {
 }
 
 function Initials({ name, i }: { name: string; i: number }) {
-  const initials = name.split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase();
+  const initials = name
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   return (
     <div
       className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2"
-      style={{ background: "var(--forest)", color: "var(--cream)", borderColor: "var(--card-white)", marginLeft: i === 0 ? 0 : -10 }}
+      style={{
+        background: "var(--forest)",
+        color: "var(--cream)",
+        borderColor: "var(--card-white)",
+        marginLeft: i === 0 ? 0 : -10,
+      }}
     >
       {initials}
     </div>
   );
 }
 
-export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id: string) => void }) {
+export function VaultCard({
+  vault,
+  onCheckIn,
+}: {
+  vault: Vault;
+  onCheckIn?: (id: string) => void;
+}) {
   const cond = vault.condition;
   let conditionText = "";
   let progress = 0;
@@ -85,19 +101,36 @@ export function VaultCard({ vault, onCheckIn }: { vault: Vault; onCheckIn?: (id:
         <StatusPill status={vault.status} />
       </div>
       <div className="text-center py-3">
-        <div style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 32, fontWeight: 600 }}>
+        <div
+          style={{
+            fontFamily: "var(--font-serif)",
+            color: "var(--forest)",
+            fontSize: 32,
+            fontWeight: 600,
+          }}
+        >
           {formatCAD(vault.amount_cad)}
         </div>
-        <p className="text-sm mt-1" style={{ color: "var(--warm-gray)" }}>{conditionText}</p>
+        <p className="text-sm mt-1" style={{ color: "var(--warm-gray)" }}>
+          {conditionText}
+        </p>
       </div>
       {(cond.kind === "time" || cond.kind === "inactivity") && !incomplete && (
-        <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(26,46,26,0.08)" }}>
-          <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: "var(--honey)" }} />
+        <div
+          className="w-full h-2 rounded-full overflow-hidden"
+          style={{ background: "rgba(26,46,26,0.08)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${progress}%`, background: "var(--honey)" }}
+          />
         </div>
       )}
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center">
-          {vault.beneficiaries.map((b, i) => <Initials key={b.email} name={b.name} i={i} />)}
+          {vault.beneficiaries.map((b, i) => (
+            <Initials key={b.email} name={b.name} i={i} />
+          ))}
         </div>
         <Link
           to="/vault/$id"

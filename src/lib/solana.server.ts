@@ -18,7 +18,9 @@ const subtle = (webcrypto as Crypto).subtle;
 let _web3: Promise<typeof import("@solana/web3.js")> | undefined;
 let _spl: Promise<typeof import("@solana/spl-token")> | undefined;
 let _anchor: Promise<typeof import("@coral-xyz/anchor")> | undefined;
-let _bs58: Promise<{ encode: (b: Uint8Array) => string; decode: (s: string) => Uint8Array }> | undefined;
+let _bs58:
+  | Promise<{ encode: (b: Uint8Array) => string; decode: (s: string) => Uint8Array }>
+  | undefined;
 let _nacl: Promise<typeof import("tweetnacl")> | undefined;
 
 const loadWeb3 = () => (_web3 ??= import("@solana/web3.js"));
@@ -27,10 +29,15 @@ const loadAnchor = () => (_anchor ??= import("@coral-xyz/anchor"));
 const loadBs58 = () =>
   (_bs58 ??= import("bs58").then((m) => {
     const def = (m as unknown as { default?: typeof m }).default;
-    return (def ?? m) as unknown as { encode: (b: Uint8Array) => string; decode: (s: string) => Uint8Array };
+    return (def ?? m) as unknown as {
+      encode: (b: Uint8Array) => string;
+      decode: (s: string) => Uint8Array;
+    };
   }));
 const loadNacl = () =>
-  (_nacl ??= import("tweetnacl").then((m) => (m as unknown as { default?: typeof m }).default ?? m));
+  (_nacl ??= import("tweetnacl").then(
+    (m) => (m as unknown as { default?: typeof m }).default ?? m,
+  ));
 
 // ─── Encryption helpers ──────────────────────────────────────────────
 
@@ -58,7 +65,9 @@ async function getEncKey(): Promise<CryptoKey> {
 export async function encryptSecret(secretKey: Uint8Array): Promise<string> {
   const key = await getEncKey();
   const iv = webcrypto.getRandomValues(new Uint8Array(12));
-  const ct = new Uint8Array(await subtle.encrypt({ name: "AES-GCM", iv }, key, secretKey as BufferSource));
+  const ct = new Uint8Array(
+    await subtle.encrypt({ name: "AES-GCM", iv }, key, secretKey as BufferSource),
+  );
   const packed = new Uint8Array(iv.length + ct.length);
   packed.set(iv, 0);
   packed.set(ct, iv.length);
@@ -178,7 +187,7 @@ export async function deriveVaultPda(ownerPubkey: string, vaultId: string): Prom
   const programId = await getProgramId();
   const [pda] = PublicKey.findProgramAddressSync(
     [Buffer.from("vault"), owner.toBuffer(), vaultIdBytes],
-    programId
+    programId,
   );
   return pda.toBase58();
 }
@@ -209,17 +218,21 @@ async function sendWithBlockhashRetry(
       return await Promise.race([
         fn(),
         new Promise<string>((_, reject) =>
-          setTimeout(() => reject(new Error(`${label} timed out before confirmation`)), timeoutMs)
+          setTimeout(() => reject(new Error(`${label} timed out before confirmation`)), timeoutMs),
         ),
       ]);
     } catch (e) {
       lastErr = e;
       const msg = e instanceof Error ? e.message : String(e);
       const transient =
-        /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|timed out|429|503/i.test(msg);
+        /block height exceeded|blockhash not found|expired|TransactionExpired|timeout|timed out|429|503/i.test(
+          msg,
+        );
       if (!transient) throw e;
       const wait = 400 * Math.pow(2, i);
-      console.warn(`[solana] ${label} transient (attempt ${i + 1}/${attempts}): ${msg}. retrying in ${wait}ms`);
+      console.warn(
+        `[solana] ${label} transient (attempt ${i + 1}/${attempts}): ${msg}. retrying in ${wait}ms`,
+      );
       await new Promise((r) => setTimeout(r, wait));
     }
   }
@@ -244,7 +257,9 @@ export async function initVaultOnChain(args: {
   if (isSimulatedMode()) {
     const vaultPda = await deriveVaultPda(args.ownerPubkey, args.vaultId);
     const ataData = new TextEncoder().encode(`ata|${vaultPda}|usdc`);
-    const usdcAta = bs58.encode(new Uint8Array(await subtle.digest("SHA-256", ataData as BufferSource)));
+    const usdcAta = bs58.encode(
+      new Uint8Array(await subtle.digest("SHA-256", ataData as BufferSource)),
+    );
     return { vaultPda, usdcAta, signature: await fakeSig("init_vault", vaultPda) };
   }
 
@@ -262,7 +277,8 @@ export async function initVaultOnChain(args: {
     void connection;
 
     const { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } = await loadWeb3();
-    const { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } = await loadSpl();
+    const { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } =
+      await loadSpl();
     const anchorPkg = await loadAnchor();
     const BN = anchorPkg.BN ?? (anchorPkg as unknown as { default?: typeof anchorPkg }).default?.BN;
     if (!BN) throw new Error("anchor BN missing");
@@ -272,10 +288,10 @@ export async function initVaultOnChain(args: {
     const programId = await getProgramId();
     const [vaultPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("vault"), owner.publicKey.toBuffer(), vaultIdBytes],
-      programId
+      programId,
     );
     const vaultUsdcAta = getAssociatedTokenAddressSync(usdcMint, vaultPda, true);
-    const amountCents = new BN(Math.round((args.amountCadCents ?? 0)));
+    const amountCents = new BN(Math.round(args.amountCadCents ?? 0));
 
     const buildRpc = () =>
       program.methods
@@ -296,10 +312,15 @@ export async function initVaultOnChain(args: {
 
     return { vaultPda: vaultPda.toBase58(), usdcAta: vaultUsdcAta.toBase58(), signature };
   } catch (e) {
-    console.warn("[solana] init_vault on-chain failed, falling back to simulated:", e instanceof Error ? e.message : e);
+    console.warn(
+      "[solana] init_vault on-chain failed, falling back to simulated:",
+      e instanceof Error ? e.message : e,
+    );
     const vaultPda = await deriveVaultPda(args.ownerPubkey, args.vaultId);
     const ataData = new TextEncoder().encode(`ata|${vaultPda}|usdc`);
-    const usdcAta = bs58.encode(new Uint8Array(await subtle.digest("SHA-256", ataData as BufferSource)));
+    const usdcAta = bs58.encode(
+      new Uint8Array(await subtle.digest("SHA-256", ataData as BufferSource)),
+    );
     return { vaultPda, usdcAta, signature: await fakeSig("init_vault_sim", vaultPda) };
   }
 }
@@ -326,12 +347,17 @@ export async function checkInOnChain(args: { vaultPda: string }): Promise<{ sign
       .rpc();
     return { signature };
   } catch (e) {
-    console.warn("[solana] check_in on-chain failed, using simulated sig:", e instanceof Error ? e.message : e);
+    console.warn(
+      "[solana] check_in on-chain failed, using simulated sig:",
+      e instanceof Error ? e.message : e,
+    );
     return { signature: await fakeSig("checkin_sim", args.vaultPda) };
   }
 }
 
-export async function releaseVaultOnChain(args: { vaultPda: string }): Promise<{ signature: string }> {
+export async function releaseVaultOnChain(args: {
+  vaultPda: string;
+}): Promise<{ signature: string }> {
   if (isSimulatedMode()) return { signature: await fakeSig("release", args.vaultPda) };
 
   const userId = await ownerUserIdForVaultPda(args.vaultPda);
@@ -346,7 +372,10 @@ export async function releaseVaultOnChain(args: { vaultPda: string }): Promise<{
       .rpc();
     return { signature };
   } catch (e) {
-    console.warn("[solana] release_vault on-chain failed, using simulated sig:", e instanceof Error ? e.message : e);
+    console.warn(
+      "[solana] release_vault on-chain failed, using simulated sig:",
+      e instanceof Error ? e.message : e,
+    );
     return { signature: await fakeSig("release_sim", args.vaultPda) };
   }
 }
@@ -356,5 +385,7 @@ export async function claimOnChain(args: {
   beneficiaryEmail: string;
   amountCad: number;
 }): Promise<{ signature: string }> {
-  return { signature: await fakeSig("claim", args.vaultPda, args.beneficiaryEmail, String(args.amountCad)) };
+  return {
+    signature: await fakeSig("claim", args.vaultPda, args.beneficiaryEmail, String(args.amountCad)),
+  };
 }

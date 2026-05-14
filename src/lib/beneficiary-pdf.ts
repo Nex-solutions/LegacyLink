@@ -45,15 +45,25 @@ export async function generateBeneficiaryPdf({
 
   page.drawText("LegacyLink", { x: margin, y, size: 22, font: serifBold, color: FOREST });
   y -= 18;
-  page.drawText(`A message for ${beneficiary.name}`, { x: margin, y, size: 11, font: sans, color: GRAY });
+  page.drawText(`A message for ${beneficiary.name}`, {
+    x: margin,
+    y,
+    size: 11,
+    font: sans,
+    color: GRAY,
+  });
   y -= 36;
 
   // Vault summary
   page.drawText(vault.name, { x: margin, y, size: 24, font: serifBold, color: FOREST });
   y -= 22;
-  const share = vault.amount_cad * Number(beneficiary.pct) / 100;
+  const share = (vault.amount_cad * Number(beneficiary.pct)) / 100;
   page.drawText(`Your share: ${beneficiary.pct}% — ${formatCAD(share)}`, {
-    x: margin, y, size: 13, font: sansBold, color: HONEY,
+    x: margin,
+    y,
+    size: 13,
+    font: sansBold,
+    color: HONEY,
   });
   y -= 14;
   page.drawText(conditionSummary(vault), { x: margin, y, size: 10, font: sans, color: GRAY });
@@ -63,14 +73,25 @@ export async function generateBeneficiaryPdf({
   page.drawText(`From ${ownerName}`, { x: margin, y, size: 11, font: serifBold, color: FOREST });
   y -= 18;
   y = drawWrapped(page, letterMessage?.trim() || DEFAULT_LETTER, {
-    x: margin, y, maxWidth: 595 - margin * 2, font: serif, size: 12, color: FOREST, lineHeight: 18,
+    x: margin,
+    y,
+    maxWidth: 595 - margin * 2,
+    font: serif,
+    size: 12,
+    color: FOREST,
+    lineHeight: 18,
   });
   y -= 24;
 
   // Claim instructions
   page.drawText("How to claim", { x: margin, y, size: 13, font: serifBold, color: FOREST });
   y -= 8;
-  page.drawLine({ start: { x: margin, y }, end: { x: 595 - margin, y }, color: HONEY, thickness: 1 });
+  page.drawLine({
+    start: { x: margin, y },
+    end: { x: 595 - margin, y },
+    color: HONEY,
+    thickness: 1,
+  });
   y -= 18;
 
   const steps = [
@@ -80,7 +101,13 @@ export async function generateBeneficiaryPdf({
   ];
   for (const s of steps) {
     y = drawWrapped(page, s, {
-      x: margin, y, maxWidth: 595 - margin * 2, font: sans, size: 11, color: FOREST, lineHeight: 16,
+      x: margin,
+      y,
+      maxWidth: 595 - margin * 2,
+      font: sans,
+      size: 11,
+      color: FOREST,
+      lineHeight: 16,
     });
   }
   y -= 6;
@@ -88,12 +115,24 @@ export async function generateBeneficiaryPdf({
   page.drawText("Claim link:", { x: margin, y, size: 10, font: sansBold, color: FOREST });
   y -= 14;
   y = drawWrapped(page, claimUrl, {
-    x: margin, y, maxWidth: 595 - margin * 2, font: sans, size: 10, color: HONEY, lineHeight: 14,
+    x: margin,
+    y,
+    maxWidth: 595 - margin * 2,
+    font: sans,
+    size: 10,
+    color: HONEY,
+    lineHeight: 14,
   });
   y -= 8;
 
   if (beneficiary.claim_token) {
-    page.drawText("Claim token (if asked):", { x: margin, y, size: 10, font: sansBold, color: FOREST });
+    page.drawText("Claim token (if asked):", {
+      x: margin,
+      y,
+      size: 10,
+      font: sansBold,
+      color: FOREST,
+    });
     y -= 14;
     page.drawText(beneficiary.claim_token, { x: margin, y, size: 10, font: sans, color: GRAY });
     y -= 22;
@@ -101,20 +140,46 @@ export async function generateBeneficiaryPdf({
 
   // Footer
   y = Math.max(y, 80);
-  page.drawLine({ start: { x: margin, y }, end: { x: 595 - margin, y }, color: rgb(0.85, 0.83, 0.78), thickness: 0.5 });
+  page.drawLine({
+    start: { x: margin, y },
+    end: { x: 595 - margin, y },
+    color: rgb(0.85, 0.83, 0.78),
+    thickness: 0.5,
+  });
   y -= 16;
   page.drawText(`Vault ID: ${vault.id}`, { x: margin, y, size: 9, font: sans, color: GRAY });
-  page.drawText(`Issued ${format(new Date(), "MMMM d, yyyy")}`, { x: 595 - margin - 160, y, size: 9, font: sans, color: GRAY });
+  page.drawText(`Issued ${format(new Date(), "MMMM d, yyyy")}`, {
+    x: 595 - margin - 160,
+    y,
+    size: 9,
+    font: sans,
+    color: GRAY,
+  });
   y -= 12;
-  page.drawText("Certainty is a gift. — LegacyLink", { x: margin, y, size: 9, font: sans, color: GRAY });
+  page.drawText("Certainty is a gift. — LegacyLink", {
+    x: margin,
+    y,
+    size: 9,
+    font: sans,
+    color: GRAY,
+  });
 
   return await pdf.save();
 }
 
-function drawWrapped(page: PDFPage, text: string, opts: {
-  x: number; y: number; maxWidth: number;
-  font: PDFFont; size: number; color: ReturnType<typeof rgb>; lineHeight: number;
-}) {
+function drawWrapped(
+  page: PDFPage,
+  text: string,
+  opts: {
+    x: number;
+    y: number;
+    maxWidth: number;
+    font: PDFFont;
+    size: number;
+    color: ReturnType<typeof rgb>;
+    lineHeight: number;
+  },
+) {
   const { x, maxWidth, font, size, color, lineHeight } = opts;
   let { y } = opts;
   const paragraphs = text.split(/\n+/);

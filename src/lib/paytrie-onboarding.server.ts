@@ -61,7 +61,11 @@ export async function generateApiLink(input: GenerateApiLinkInput): Promise<Gene
   const body = await res.text();
   if (!res.ok) throw new Error(`Paytrie generateApiLink failed [${res.status}]: ${body}`);
   let parsed: { message?: string; status?: string; verificationLink?: string; userId?: string };
-  try { parsed = JSON.parse(body); } catch { throw new Error(`Paytrie returned invalid JSON: ${body}`); }
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    throw new Error(`Paytrie returned invalid JSON: ${body}`);
+  }
   if (!parsed.verificationLink) throw new Error(`Paytrie missing verificationLink: ${body}`);
   return {
     message: parsed.message ?? "API user created",

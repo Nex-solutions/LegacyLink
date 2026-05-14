@@ -71,10 +71,16 @@ function AdminLedgerPage() {
     return (
       <div className="container mx-auto p-8">
         <Card>
-          <CardHeader><CardTitle>Admin only</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Admin only</CardTitle>
+          </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">You need the admin role to view the accounting ledger.</p>
-            <Button className="mt-4" onClick={() => navigate({ to: "/dashboard" })}>Back</Button>
+            <p className="text-muted-foreground">
+              You need the admin role to view the accounting ledger.
+            </p>
+            <Button className="mt-4" onClick={() => navigate({ to: "/dashboard" })}>
+              Back
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -97,7 +103,9 @@ function AdminLedgerPage() {
 
       {/* Master Wallet */}
       <Card>
-        <CardHeader><CardTitle>Master Hot Wallet</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Master Hot Wallet</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-3">
           {walletQ.isLoading ? (
             <p className="text-muted-foreground">Loading…</p>
@@ -118,7 +126,9 @@ function AdminLedgerPage() {
             </>
           ) : (
             <>
-              <p className="text-muted-foreground">No master wallet yet. Generate one to start sweeping on-ramped USDC.</p>
+              <p className="text-muted-foreground">
+                No master wallet yet. Generate one to start sweeping on-ramped USDC.
+              </p>
               <Button onClick={() => initMut.mutate()} disabled={initMut.isPending}>
                 {initMut.isPending ? "Generating…" : "Generate master wallet"}
               </Button>
@@ -127,12 +137,18 @@ function AdminLedgerPage() {
 
           {revealed && (
             <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/5 p-4 space-y-2">
-              <p className="font-semibold text-destructive">Save this seed phrase offline. It will not be shown again in plain UI after refresh.</p>
-              <p className="text-xs text-muted-foreground">Address: <code>{revealed.pubkey}</code></p>
+              <p className="font-semibold text-destructive">
+                Save this seed phrase offline. It will not be shown again in plain UI after refresh.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Address: <code>{revealed.pubkey}</code>
+              </p>
               <code className="block text-sm bg-background p-3 rounded select-all break-words">
                 {revealed.mnemonic}
               </code>
-              <Button size="sm" variant="ghost" onClick={() => setRevealed(null)}>Hide</Button>
+              <Button size="sm" variant="ghost" onClick={() => setRevealed(null)}>
+                Hide
+              </Button>
             </div>
           )}
         </CardContent>
@@ -140,7 +156,9 @@ function AdminLedgerPage() {
 
       {/* Account Balances */}
       <Card>
-        <CardHeader><CardTitle>Account Balances</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Account Balances</CardTitle>
+        </CardHeader>
         <CardContent>
           {balancesQ.isLoading ? (
             <p className="text-muted-foreground">Loading…</p>
@@ -161,7 +179,9 @@ function AdminLedgerPage() {
                     <tr key={a.id} className="border-b">
                       <td className="py-2 pr-4 font-mono text-xs">{a.code}</td>
                       <td className="py-2 pr-4">{a.name}</td>
-                      <td className="py-2 pr-4"><Badge variant="outline">{a.type}</Badge></td>
+                      <td className="py-2 pr-4">
+                        <Badge variant="outline">{a.type}</Badge>
+                      </td>
                       <td className="py-2 pr-4 text-right font-mono">{a.balance.toFixed(6)}</td>
                       <td className="py-2 pr-4">{a.currency}</td>
                     </tr>
@@ -175,7 +195,9 @@ function AdminLedgerPage() {
 
       {/* Recent Transactions */}
       <Card>
-        <CardHeader><CardTitle>Recent Transactions</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Recent Transactions</CardTitle>
+        </CardHeader>
         <CardContent>
           {ledgerQ.isLoading ? (
             <p className="text-muted-foreground">Loading…</p>
@@ -225,10 +247,16 @@ function AdminLedgerPage() {
                         <tr>
                           <td className="py-1 pr-2 text-right">Totals</td>
                           <td className="py-1 pr-2 text-right font-mono">
-                            {txEntries.filter(e => e.side === "debit").reduce((s, e) => s + Number(e.amount), 0).toFixed(6)}
+                            {txEntries
+                              .filter((e) => e.side === "debit")
+                              .reduce((s, e) => s + Number(e.amount), 0)
+                              .toFixed(6)}
                           </td>
                           <td className="py-1 pr-2 text-right font-mono">
-                            {txEntries.filter(e => e.side === "credit").reduce((s, e) => s + Number(e.amount), 0).toFixed(6)}
+                            {txEntries
+                              .filter((e) => e.side === "credit")
+                              .reduce((s, e) => s + Number(e.amount), 0)
+                              .toFixed(6)}
                           </td>
                           <td />
                         </tr>

@@ -18,7 +18,13 @@ import {
   ensureClaimTokens,
   retryVault,
 } from "./vault.functions";
-import { setVaultsCache, getVaults, type Vault, type VaultCondition, type Beneficiary } from "./legacy-data";
+import {
+  setVaultsCache,
+  getVaults,
+  type Vault,
+  type VaultCondition,
+  type Beneficiary,
+} from "./legacy-data";
 
 function isAuthResponse(e: unknown): boolean {
   return typeof Response !== "undefined" && e instanceof Response;
@@ -58,7 +64,15 @@ export async function serverCreateVault(input: {
   condition: VaultCondition;
   beneficiaries: { name: string; email: string; pct: number }[];
   letter_message?: string | null;
-}): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; letter_tx_signature: string | null; claim_demo: { name: string; email: string; token: string } | null }> {
+}): Promise<{
+  id: string;
+  vault_pda: string;
+  tx_signature: string;
+  owner_pubkey: string;
+  hot_pubkey: string;
+  letter_tx_signature: string | null;
+  claim_demo: { name: string; email: string; token: string } | null;
+}> {
   const res = await createVault({ data: input });
   await hydrateVaults();
   return {
@@ -86,7 +100,11 @@ export async function serverReplaceBeneficiaries(vaultId: string, beneficiaries:
   await replaceBeneficiaries({
     data: {
       vault_id: vaultId,
-      beneficiaries: beneficiaries.map((b) => ({ name: b.name, email: b.email, pct: Number(b.pct) })),
+      beneficiaries: beneficiaries.map((b) => ({
+        name: b.name,
+        email: b.email,
+        pct: Number(b.pct),
+      })),
     },
   });
   await hydrateVaults();

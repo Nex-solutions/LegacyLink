@@ -7,7 +7,9 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 function getRpcUrls(): string[] {
-  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(Boolean) as string[];
+  const urls = [process.env.SOLANA_RPC, "https://api.devnet.solana.com"].filter(
+    Boolean,
+  ) as string[];
   return [...new Set(urls)];
 }
 

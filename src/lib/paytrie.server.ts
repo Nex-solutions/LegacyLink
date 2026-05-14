@@ -4,12 +4,7 @@
 
 const DEFAULT_BASE = "https://api.paytrie.com";
 
-export type TokenLabel =
-  | "USDC-SOL"
-  | "USDC-ETH"
-  | "USDC-POLY"
-  | "USDC-BASE"
-  | "CADC-ETH";
+export type TokenLabel = "USDC-SOL" | "USDC-ETH" | "USDC-POLY" | "USDC-BASE" | "CADC-ETH";
 
 export type PriceQuote = {
   quoteId: number;
@@ -123,7 +118,11 @@ export async function createTransaction(args: {
     const isBuy = args.rightSideLabel.startsWith("USDC");
     return isBuy
       ? { tx: id, rmt: `MOCK${Math.random().toString(36).slice(2, 10).toUpperCase()}` }
-      : { tx: id, depositAddress: process.env.PAYTRIE_MOCK_DEPOSIT ?? "PaytrieM0ckDeposit1111111111111111111111111" };
+      : {
+          tx: id,
+          depositAddress:
+            process.env.PAYTRIE_MOCK_DEPOSIT ?? "PaytrieM0ckDeposit1111111111111111111111111",
+        };
   }
 
   const res = await fetch(`${baseUrl()}/transaction`, {
@@ -158,7 +157,10 @@ export async function getTransaction(args: {
 }
 
 // ──────────────── Webhook signature verification ────────────────
-export async function verifyPaytrieSignature(rawBody: string, signature: string | null): Promise<boolean> {
+export async function verifyPaytrieSignature(
+  rawBody: string,
+  signature: string | null,
+): Promise<boolean> {
   const secret = process.env.PAYTRIE_WEBHOOK_SECRET;
   if (!secret || !signature) return false;
   const { createHmac, timingSafeEqual } = await import("node:crypto");

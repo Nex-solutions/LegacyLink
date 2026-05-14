@@ -26,13 +26,25 @@ function read<T>(key: string): T | null {
   return raw ? (JSON.parse(raw) as T) : null;
 }
 
-export function getUser(): User | null { return read<User>(KEY); }
-export function setUser(u: User) { localStorage.setItem(KEY, JSON.stringify(u)); }
-export function clearUser() { localStorage.removeItem(KEY); }
+export function getUser(): User | null {
+  return read<User>(KEY);
+}
+export function setUser(u: User) {
+  localStorage.setItem(KEY, JSON.stringify(u));
+}
+export function clearUser() {
+  localStorage.removeItem(KEY);
+}
 
-export function getAdvisor(): Advisor | null { return read<Advisor>(ADVISOR_KEY); }
-export function setAdvisor(a: Advisor) { localStorage.setItem(ADVISOR_KEY, JSON.stringify(a)); }
-export function clearAdvisor() { localStorage.removeItem(ADVISOR_KEY); }
+export function getAdvisor(): Advisor | null {
+  return read<Advisor>(ADVISOR_KEY);
+}
+export function setAdvisor(a: Advisor) {
+  localStorage.setItem(ADVISOR_KEY, JSON.stringify(a));
+}
+export function clearAdvisor() {
+  localStorage.removeItem(ADVISOR_KEY);
+}
 
 export function advisorDisplayName(a: Advisor) {
   return `${a.firstName} ${a.lastName}`.trim() || a.email.split("@")[0];
@@ -63,8 +75,8 @@ export async function signUp(name: string, email: string, password: string) {
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
-  const name = (data.user?.user_metadata?.display_name as string | undefined)
-    ?? email.split("@")[0];
+  const name =
+    (data.user?.user_metadata?.display_name as string | undefined) ?? email.split("@")[0];
   setUser({ name, email });
   return data;
 }
@@ -85,8 +97,8 @@ export async function hydrateUserFromSession(): Promise<User | null> {
     return null;
   }
   const email = session.user.email ?? "";
-  const name = (session.user.user_metadata?.display_name as string | undefined)
-    ?? email.split("@")[0];
+  const name =
+    (session.user.user_metadata?.display_name as string | undefined) ?? email.split("@")[0];
   const u = { name, email };
   setUser(u);
   return u;

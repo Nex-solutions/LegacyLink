@@ -13,7 +13,11 @@ import {
   isSimulatedMode,
 } from "./solana.server";
 import { ensureCustodialWallet, getUserPubkey } from "./wallet.server";
-import { sendHotToUserSystemWallet, sendUserToHotProof, anchorLetterMessage } from "./proof-tx.server";
+import {
+  sendHotToUserSystemWallet,
+  sendUserToHotProof,
+  anchorLetterMessage,
+} from "./proof-tx.server";
 import { getRampProvider } from "./ramps.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -95,13 +99,15 @@ export const listVaults = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await supabase
       .from("vaults")
-      .select(`
+      .select(
+        `
         id, name, amount_cad, status, condition_kind,
         unlock_date, inactivity_days, last_checkin,
         created_at, vault_pda, tx_signature, letter_message, letter_tx_signature,
         failure_count, last_step,
         beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
-      `)
+      `,
+      )
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -124,7 +130,8 @@ export const listVaults = createServerFn({ method: "GET" })
       vault_pda: row.vault_pda,
       tx_signature: row.tx_signature,
       letter_message: row.letter_message,
-      letter_tx_signature: (row as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
+      letter_tx_signature:
+        (row as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
       failure_count: (row as { failure_count?: number }).failure_count ?? 0,
       last_step: (row as { last_step?: string | null }).last_step ?? null,
     }));
@@ -139,12 +146,14 @@ export const getVaultById = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: row, error } = await supabase
       .from("vaults")
-      .select(`
+      .select(
+        `
         id, name, amount_cad, status, condition_kind,
         unlock_date, inactivity_days, last_checkin,
         created_at, vault_pda, tx_signature, letter_message, letter_tx_signature,
         beneficiaries ( id, name, email, pct, claimed_at, claim_token, payout_tx_signature )
-      `)
+      `,
+      )
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw error;
@@ -156,14 +165,20 @@ export const getVaultById = createServerFn({ method: "GET" })
       status: statusToUi(row.status as string),
       condition: rowToCondition(row as never),
       beneficiaries: (row.beneficiaries ?? []).map((b) => ({
-        id: b.id, name: b.name, email: b.email, pct: Number(b.pct),
-        claimed_at: b.claimed_at, claim_token: b.claim_token, payout_tx_signature: b.payout_tx_signature,
+        id: b.id,
+        name: b.name,
+        email: b.email,
+        pct: Number(b.pct),
+        claimed_at: b.claimed_at,
+        claim_token: b.claim_token,
+        payout_tx_signature: b.payout_tx_signature,
       })),
       created_at: (row.created_at as string).slice(0, 10),
       vault_pda: row.vault_pda,
       tx_signature: row.tx_signature,
       letter_message: row.letter_message,
-      letter_tx_signature: (row as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
+      letter_tx_signature:
+        (row as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
     };
   });
 
@@ -171,7 +186,11 @@ export const getVaultById = createServerFn({ method: "GET" })
 
 const conditionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("time"), unlock_date: z.string() }),
-  z.object({ kind: z.literal("inactivity"), inactivity_days: z.number().int().min(1).max(3650), last_checkin: z.string() }),
+  z.object({
+    kind: z.literal("inactivity"),
+    inactivity_days: z.number().int().min(1).max(3650),
+    last_checkin: z.string(),
+  }),
   z.object({ kind: z.literal("manual") }),
 ]);
 
@@ -192,135 +211,166 @@ const createInputSchema = z.object({
 export const createVault = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createInputSchema.parse(d))
-  .handler(async ({ data, context }): Promise<{ id: string; vault_pda: string; tx_signature: string; owner_pubkey: string; hot_pubkey: string; letter_tx_signature: string | null; claim_demo: { name: string; email: string; token: string } | null }> => {
-    const { supabase, userId } = context;
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      id: string;
+      vault_pda: string;
+      tx_signature: string;
+      owner_pubkey: string;
+      hot_pubkey: string;
+      letter_tx_signature: string | null;
+      claim_demo: { name: string; email: string; token: string } | null;
+    }> => {
+      const { supabase, userId } = context;
 
-    // Reuse the user's signup system wallet — never generate a new one here.
-    const ownerPubkey = await getUserPubkey(userId);
-    if (!ownerPubkey) {
-      throw new Error("Your system wallet hasn't been provisioned yet. Please complete signup before creating a vault.");
-    }
-
-    // Insert the vault row first to get an id, then write on-chain metadata.
-    const { data: inserted, error: insertErr } = await supabase
-      .from("vaults")
-      .insert({
-        owner_id: userId,
-        name: data.name,
-        amount_cad: data.amount_cad,
-        status: "active",
-        condition_kind: data.condition.kind,
-        unlock_date: data.condition.kind === "time" ? data.condition.unlock_date : null,
-        inactivity_days: data.condition.kind === "inactivity" ? data.condition.inactivity_days : null,
-        last_checkin: data.condition.kind === "inactivity" ? data.condition.last_checkin : null,
-        letter_message: data.letter_message?.trim() || null,
-      })
-      .select("id")
-      .single();
-    if (insertErr) throw insertErr;
-    const vaultId = inserted.id as string;
-
-    try {
-      // On-chain init (simulated unless SOLANA_PROGRAM_ID is set)
-      await supabase.from("vaults").update({ last_step: "init_chain" }).eq("id", vaultId);
-      const init = await initVaultOnChain({ ownerPubkey, vaultId, amountCadCents: Math.round(data.amount_cad * 100) });
-
-      // Real on-chain proof: user's system wallet sends 0.001 devnet SOL to
-      // the platform hot wallet. This proves the user wallet works end-to-end.
-      const proof = await sendUserToHotProof(userId, 0.001);
-      const fund = { signature: proof.signature };
-
-      // Run on-ramp to bring fiat into custodial USDC
-      await supabase.from("vaults").update({ last_step: "onramp" }).eq("id", vaultId);
-      const ramp = getRampProvider();
-      const onramp = await ramp.onramp({
-        userPubkey: ownerPubkey,
-        amountCad: data.amount_cad,
-        reference: vaultId,
-      });
-
-      // Persist on-chain metadata
-      await supabase
-        .from("vaults")
-        .update({
-          vault_pda: init.vaultPda,
-          usdc_ata: init.usdcAta,
-          init_tx: init.signature,
-          tx_signature: fund.signature,
-          solana_pubkey: ownerPubkey,
-          status: "released",
-          last_step: "beneficiaries",
-        })
-        .eq("id", vaultId);
-
-      // Beneficiaries
-      const beneficiaryRows = data.beneficiaries.map((b) => ({
-        vault_id: vaultId,
-        name: b.name,
-        email: b.email,
-        pct: b.pct,
-        claim_token: crypto.randomUUID(),
-      }));
-      if (data.beneficiaries.length) {
-        const { error: benErr } = await supabase
-          .from("beneficiaries")
-          .insert(beneficiaryRows);
-        if (benErr) throw benErr;
+      // Reuse the user's signup system wallet — never generate a new one here.
+      const ownerPubkey = await getUserPubkey(userId);
+      if (!ownerPubkey) {
+        throw new Error(
+          "Your system wallet hasn't been provisioned yet. Please complete signup before creating a vault.",
+        );
       }
 
-      // Anchor the optional letter on-chain via SPL Memo (non-critical).
-      let letterTx: string | null = null;
-      const letterText = data.letter_message?.trim();
-      if (letterText) {
-        const anchored = await anchorLetterMessage(userId, vaultId, letterText);
-        if (anchored?.signature) {
-          letterTx = anchored.signature;
-          await supabase.from("vaults").update({ letter_tx_signature: letterTx }).eq("id", vaultId);
-          await supabase.from("vault_events").insert({
+      // Insert the vault row first to get an id, then write on-chain metadata.
+      const { data: inserted, error: insertErr } = await supabase
+        .from("vaults")
+        .insert({
+          owner_id: userId,
+          name: data.name,
+          amount_cad: data.amount_cad,
+          status: "active",
+          condition_kind: data.condition.kind,
+          unlock_date: data.condition.kind === "time" ? data.condition.unlock_date : null,
+          inactivity_days:
+            data.condition.kind === "inactivity" ? data.condition.inactivity_days : null,
+          last_checkin: data.condition.kind === "inactivity" ? data.condition.last_checkin : null,
+          letter_message: data.letter_message?.trim() || null,
+        })
+        .select("id")
+        .single();
+      if (insertErr) throw insertErr;
+      const vaultId = inserted.id as string;
+
+      try {
+        // On-chain init (simulated unless SOLANA_PROGRAM_ID is set)
+        await supabase.from("vaults").update({ last_step: "init_chain" }).eq("id", vaultId);
+        const init = await initVaultOnChain({
+          ownerPubkey,
+          vaultId,
+          amountCadCents: Math.round(data.amount_cad * 100),
+        });
+
+        // Real on-chain proof: user's system wallet sends 0.001 devnet SOL to
+        // the platform hot wallet. This proves the user wallet works end-to-end.
+        const proof = await sendUserToHotProof(userId, 0.001);
+        const fund = { signature: proof.signature };
+
+        // Run on-ramp to bring fiat into custodial USDC
+        await supabase.from("vaults").update({ last_step: "onramp" }).eq("id", vaultId);
+        const ramp = getRampProvider();
+        const onramp = await ramp.onramp({
+          userPubkey: ownerPubkey,
+          amountCad: data.amount_cad,
+          reference: vaultId,
+        });
+
+        // Persist on-chain metadata
+        await supabase
+          .from("vaults")
+          .update({
+            vault_pda: init.vaultPda,
+            usdc_ata: init.usdcAta,
+            init_tx: init.signature,
+            tx_signature: fund.signature,
+            solana_pubkey: ownerPubkey,
+            status: "released",
+            last_step: "beneficiaries",
+          })
+          .eq("id", vaultId);
+
+        // Beneficiaries
+        const beneficiaryRows = data.beneficiaries.map((b) => ({
+          vault_id: vaultId,
+          name: b.name,
+          email: b.email,
+          pct: b.pct,
+          claim_token: crypto.randomUUID(),
+        }));
+        if (data.beneficiaries.length) {
+          const { error: benErr } = await supabase.from("beneficiaries").insert(beneficiaryRows);
+          if (benErr) throw benErr;
+        }
+
+        // Anchor the optional letter on-chain via SPL Memo (non-critical).
+        let letterTx: string | null = null;
+        const letterText = data.letter_message?.trim();
+        if (letterText) {
+          const anchored = await anchorLetterMessage(userId, vaultId, letterText);
+          if (anchored?.signature) {
+            letterTx = anchored.signature;
+            await supabase
+              .from("vaults")
+              .update({ letter_tx_signature: letterTx })
+              .eq("id", vaultId);
+            await supabase.from("vault_events").insert({
+              vault_id: vaultId,
+              actor_id: userId,
+              kind: "fund",
+              detail: "Letter to beneficiary anchored on-chain (SPL Memo)",
+              tx_signature: letterTx,
+            });
+          }
+        }
+
+        // Audit trail + mark complete
+        await supabase.from("vault_events").insert([
+          {
             vault_id: vaultId,
             actor_id: userId,
             kind: "fund",
-            detail: "Letter to beneficiary anchored on-chain (SPL Memo)",
-            tx_signature: letterTx,
-          });
-        }
+            detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`,
+            tx_signature: fund.signature,
+          },
+        ]);
+        await supabase.from("vaults").update({ last_step: null }).eq("id", vaultId);
+
+        return {
+          id: vaultId,
+          vault_pda: init.vaultPda,
+          tx_signature: fund.signature,
+          owner_pubkey: proof.fromPubkey,
+          hot_pubkey: proof.toPubkey,
+          letter_tx_signature: letterTx,
+          claim_demo: beneficiaryRows[0]
+            ? {
+                name: beneficiaryRows[0].name,
+                email: beneficiaryRows[0].email,
+                token: beneficiaryRows[0].claim_token,
+              }
+            : null,
+        };
+      } catch (err) {
+        console.error("createVault failed", err);
+        // Mark vault as failed and bump retry counter so the dashboard can
+        // surface a "Continue where you left off" / "Contact support" CTA.
+
+        const { data: cur } = await supabase
+          .from("vaults")
+          .select("failure_count")
+          .eq("id", vaultId)
+          .maybeSingle();
+        const next = ((cur as { failure_count?: number } | null)?.failure_count ?? 0) + 1;
+        await supabase
+          .from("vaults")
+          .update({ status: "failed", failure_count: next })
+          .eq("id", vaultId);
+        throw err;
       }
-
-      // Audit trail + mark complete
-      await supabase.from("vault_events").insert([
-        { vault_id: vaultId, actor_id: userId, kind: "fund", detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`, tx_signature: fund.signature },
-      ]);
-      await supabase.from("vaults").update({ last_step: null }).eq("id", vaultId);
-
-      return {
-        id: vaultId,
-        vault_pda: init.vaultPda,
-        tx_signature: fund.signature,
-        owner_pubkey: proof.fromPubkey,
-        hot_pubkey: proof.toPubkey,
-        letter_tx_signature: letterTx,
-        claim_demo: beneficiaryRows[0]
-          ? { name: beneficiaryRows[0].name, email: beneficiaryRows[0].email, token: beneficiaryRows[0].claim_token }
-          : null,
-      };
-    } catch (err) {
-      console.error("createVault failed", err);
-      // Mark vault as failed and bump retry counter so the dashboard can
-      // surface a "Continue where you left off" / "Contact support" CTA.
-      
-      const { data: cur } = await supabase
-        .from("vaults")
-        .select("failure_count")
-        .eq("id", vaultId)
-        .maybeSingle();
-      const next = ((cur as { failure_count?: number } | null)?.failure_count ?? 0) + 1;
-      await supabase
-        .from("vaults")
-        .update({ status: "failed", failure_count: next })
-        .eq("id", vaultId);
-      throw err;
-    }
-  });
+    },
+  );
 
 // ─── Retry a failed vault ─────────────────────────────────────────────
 
@@ -359,7 +409,13 @@ export const retryVault = createServerFn({ method: "POST" })
         })
         .eq("id", row.id);
       await supabase.from("vault_events").insert([
-        { vault_id: row.id, actor_id: userId, kind: "fund", detail: `Vault retry succeeded · CA$${row.amount_cad}`, tx_signature: fund.signature },
+        {
+          vault_id: row.id,
+          actor_id: userId,
+          kind: "fund",
+          detail: `Vault retry succeeded · CA$${row.amount_cad}`,
+          tx_signature: fund.signature,
+        },
       ]);
       return { id: row.id as string, ok: true as const };
     } catch (err) {
@@ -378,17 +434,17 @@ export const retryVault = createServerFn({ method: "POST" })
     }
   });
 
-
-
 // ─── Update beneficiaries ─────────────────────────────────────────────
 
 export const replaceBeneficiaries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      vault_id: z.string().uuid(),
-      beneficiaries: z.array(beneficiaryInputSchema).min(1),
-    }).parse(d)
+    z
+      .object({
+        vault_id: z.string().uuid(),
+        beneficiaries: z.array(beneficiaryInputSchema).min(1),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -396,8 +452,11 @@ export const replaceBeneficiaries = createServerFn({ method: "POST" })
     await supabase.from("beneficiaries").delete().eq("vault_id", data.vault_id);
     const { error } = await supabase.from("beneficiaries").insert(
       data.beneficiaries.map((b) => ({
-        vault_id: data.vault_id, name: b.name, email: b.email, pct: b.pct,
-      }))
+        vault_id: data.vault_id,
+        name: b.name,
+        email: b.email,
+        pct: b.pct,
+      })),
     );
     if (error) throw error;
     return { ok: true };
@@ -408,7 +467,7 @@ export const replaceBeneficiaries = createServerFn({ method: "POST" })
 export const updateVaultLetter = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ vault_id: z.string().uuid(), message: z.string().max(8000) }).parse(d)
+    z.object({ vault_id: z.string().uuid(), message: z.string().max(8000) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -434,9 +493,7 @@ export const checkInVault = createServerFn({ method: "POST" })
       .single();
     if (getErr) throw getErr;
 
-    const sig = v.vault_pda
-      ? (await checkInOnChain({ vaultPda: v.vault_pda })).signature
-      : null;
+    const sig = v.vault_pda ? (await checkInOnChain({ vaultPda: v.vault_pda })).signature : null;
     const today = new Date().toISOString();
     const { error } = await supabase
       .from("vaults")
@@ -445,8 +502,11 @@ export const checkInVault = createServerFn({ method: "POST" })
     if (error) throw error;
 
     await supabase.from("vault_events").insert({
-      vault_id: data.vault_id, actor_id: userId, kind: "checkin",
-      detail: "Owner checked in", tx_signature: sig,
+      vault_id: data.vault_id,
+      actor_id: userId,
+      kind: "checkin",
+      detail: "Owner checked in",
+      tx_signature: sig,
     });
     return { ok: true, tx_signature: sig };
   });
@@ -473,10 +533,7 @@ export const releaseVault = createServerFn({ method: "POST" })
     const updates = (v.beneficiaries ?? [])
       .filter((b) => !b.claim_token)
       .map((b) =>
-        supabase
-          .from("beneficiaries")
-          .update({ claim_token: crypto.randomUUID() })
-          .eq("id", b.id)
+        supabase.from("beneficiaries").update({ claim_token: crypto.randomUUID() }).eq("id", b.id),
       );
     await Promise.all(updates);
 
@@ -486,7 +543,9 @@ export const releaseVault = createServerFn({ method: "POST" })
       .eq("id", data.vault_id);
 
     await supabase.from("vault_events").insert({
-      vault_id: data.vault_id, actor_id: userId, kind: "release",
+      vault_id: data.vault_id,
+      actor_id: userId,
+      kind: "release",
       detail: `Vault released to ${v.beneficiaries?.length ?? 0} beneficiaries`,
       tx_signature: sig,
     });
@@ -525,7 +584,8 @@ export const evaluateReleasesServer = createServerFn({ method: "POST" })
         .update({ status: "released", tx_signature: sig })
         .eq("id", v.id);
       await supabase.from("vault_events").insert({
-        vault_id: v.id, kind: "release",
+        vault_id: v.id,
+        kind: "release",
         detail: `Auto-released by condition (${v.condition_kind})`,
         tx_signature: sig,
       });
@@ -539,7 +599,7 @@ export const evaluateReleasesServer = createServerFn({ method: "POST" })
 export const updateVaultCondition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ vault_id: z.string().uuid(), condition: conditionSchema }).parse(d)
+    z.object({ vault_id: z.string().uuid(), condition: conditionSchema }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -562,12 +622,15 @@ export const updateVaultCondition = createServerFn({ method: "POST" })
 export const addVaultFunds = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ vault_id: z.string().uuid(), amount_cad: z.number().positive() }).parse(d)
+    z.object({ vault_id: z.string().uuid(), amount_cad: z.number().positive() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: v, error: getErr } = await supabase
-      .from("vaults").select("amount_cad, vault_pda").eq("id", data.vault_id).single();
+      .from("vaults")
+      .select("amount_cad, vault_pda")
+      .eq("id", data.vault_id)
+      .single();
     if (getErr) throw getErr;
 
     const fund = v.vault_pda
@@ -576,12 +639,17 @@ export const addVaultFunds = createServerFn({ method: "POST" })
 
     const newAmount = Number(v.amount_cad) + data.amount_cad;
     const { error } = await supabase
-      .from("vaults").update({ amount_cad: newAmount }).eq("id", data.vault_id);
+      .from("vaults")
+      .update({ amount_cad: newAmount })
+      .eq("id", data.vault_id);
     if (error) throw error;
 
     await supabase.from("vault_events").insert({
-      vault_id: data.vault_id, actor_id: userId, kind: "fund",
-      detail: `Added CA$${data.amount_cad}`, tx_signature: fund.signature,
+      vault_id: data.vault_id,
+      actor_id: userId,
+      kind: "fund",
+      detail: `Added CA$${data.amount_cad}`,
+      tx_signature: fund.signature,
     });
     return { ok: true, amount_cad: newAmount, tx_signature: fund.signature };
   });
@@ -591,14 +659,17 @@ export const addVaultFunds = createServerFn({ method: "POST" })
 export const beneficiaryClaimByEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ vault_id: z.string().uuid(), email: z.string().email() }).parse(d)
+    z.object({ vault_id: z.string().uuid(), email: z.string().email() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     // Verify the user is signed in (auth middleware), then use admin to
     // bypass column revoke on beneficiaries.claim_token. The owner check
     // still happens via RLS on the vault read.
     const { data: vaultRow } = await context.supabase
-      .from("vaults").select("id").eq("id", data.vault_id).maybeSingle();
+      .from("vaults")
+      .select("id")
+      .eq("id", data.vault_id)
+      .maybeSingle();
     if (!vaultRow) throw new Error("Vault not found or not visible");
 
     const { data: ben, error } = await supabaseAdmin
@@ -617,7 +688,7 @@ export const beneficiaryClaimByEmail = createServerFn({ method: "POST" })
 export const beneficiaryClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ vault_id: z.string().uuid(), claim_token: z.string().min(1) }).parse(d)
+    z.object({ vault_id: z.string().uuid(), claim_token: z.string().min(1) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -651,7 +722,15 @@ export const beneficiaryClaim = createServerFn({ method: "POST" })
     });
     if (error) throw error;
 
-    const row = (result as Array<{ beneficiary_id: string; vault_name: string; pct: number; amount_cad: number; email: string }> | null)?.[0];
+    const row = (
+      result as Array<{
+        beneficiary_id: string;
+        vault_name: string;
+        pct: number;
+        amount_cad: number;
+        email: string;
+      }> | null
+    )?.[0];
     if (!row) throw new Error("Claim failed");
 
     // Off-ramp payout
@@ -688,8 +767,12 @@ export const resetDemoServer = createServerFn({ method: "POST" })
     if (vErr) throw vErr;
     await Promise.all(
       (seededVaults ?? []).flatMap((vault) =>
-        (vault.beneficiaries ?? [])
-          .map((b) => supabaseAdmin.from("beneficiaries").update({ claim_token: crypto.randomUUID() }).eq("id", b.id)),
+        (vault.beneficiaries ?? []).map((b) =>
+          supabaseAdmin
+            .from("beneficiaries")
+            .update({ claim_token: crypto.randomUUID() })
+            .eq("id", b.id),
+        ),
       ),
     );
     return { ok: true };
@@ -700,47 +783,69 @@ export const resetDemoServer = createServerFn({ method: "POST" })
 export const ensureClaimTokens = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ vault_id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }): Promise<{ beneficiaries: Array<{ id: string; name: string; email: string; pct: number; claim_token: string }> }> => {
-    const { supabase, userId } = context;
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      beneficiaries: Array<{
+        id: string;
+        name: string;
+        email: string;
+        pct: number;
+        claim_token: string;
+      }>;
+    }> => {
+      const { supabase, userId } = context;
 
-    // Owner check via RLS
-    const { data: vaultRow, error: vErr } = await supabase
-      .from("vaults").select("id, owner_id").eq("id", data.vault_id).maybeSingle();
-    if (vErr) throw vErr;
-    if (!vaultRow || vaultRow.owner_id !== userId) throw new Error("Vault not found");
+      // Owner check via RLS
+      const { data: vaultRow, error: vErr } = await supabase
+        .from("vaults")
+        .select("id, owner_id")
+        .eq("id", data.vault_id)
+        .maybeSingle();
+      if (vErr) throw vErr;
+      if (!vaultRow || vaultRow.owner_id !== userId) throw new Error("Vault not found");
 
-    const { data: bens, error: bErr } = await supabaseAdmin
-      .from("beneficiaries")
-      .select("id, name, email, pct, claim_token")
-      .eq("vault_id", data.vault_id);
-    if (bErr) throw bErr;
+      const { data: bens, error: bErr } = await supabaseAdmin
+        .from("beneficiaries")
+        .select("id, name, email, pct, claim_token")
+        .eq("vault_id", data.vault_id);
+      if (bErr) throw bErr;
 
-    const updates = (bens ?? [])
-      .filter((b) => !b.claim_token)
-      .map(async (b) => {
-        const token = crypto.randomUUID();
-        await supabaseAdmin.from("beneficiaries").update({ claim_token: token }).eq("id", b.id);
-        b.claim_token = token;
-      });
-    await Promise.all(updates);
+      const updates = (bens ?? [])
+        .filter((b) => !b.claim_token)
+        .map(async (b) => {
+          const token = crypto.randomUUID();
+          await supabaseAdmin.from("beneficiaries").update({ claim_token: token }).eq("id", b.id);
+          b.claim_token = token;
+        });
+      await Promise.all(updates);
 
-    return {
-      beneficiaries: (bens ?? []).map((b) => ({
-        id: b.id, name: b.name, email: b.email, pct: Number(b.pct), claim_token: b.claim_token!,
-      })),
-    };
-  });
+      return {
+        beneficiaries: (bens ?? []).map((b) => ({
+          id: b.id,
+          name: b.name,
+          email: b.email,
+          pct: Number(b.pct),
+          claim_token: b.claim_token!,
+        })),
+      };
+    },
+  );
 
 // ─── PUBLIC: Look up a claim by token (no auth — token IS the auth) ──
 
 export const publicLookupClaim = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
-    z.object({ vault_id: z.string().uuid(), token: z.string().min(1) }).parse(d)
+    z.object({ vault_id: z.string().uuid(), token: z.string().min(1) }).parse(d),
   )
   .handler(async ({ data }) => {
     const { data: vault, error: vErr } = await supabaseAdmin
       .from("vaults")
-      .select("id, name, amount_cad, status, condition_kind, unlock_date, inactivity_days, last_checkin, letter_message, letter_tx_signature, owner_id")
+      .select(
+        "id, name, amount_cad, status, condition_kind, unlock_date, inactivity_days, last_checkin, letter_message, letter_tx_signature, owner_id",
+      )
       .eq("id", data.vault_id)
       .maybeSingle();
     if (vErr) throw vErr;
@@ -776,7 +881,8 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
         status: statusToUi(vault.status as string),
         condition: rowToCondition(vault as never),
         letter_message: (vault as { letter_message?: string | null }).letter_message ?? null,
-        letter_tx_signature: (vault as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
+        letter_tx_signature:
+          (vault as { letter_tx_signature?: string | null }).letter_tx_signature ?? null,
         owner_name: ownerName,
       },
       beneficiary: {
@@ -784,7 +890,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
         name: ben.name,
         email: ben.email,
         pct: Number(ben.pct),
-        payout_cad: Number(vault.amount_cad) * Number(ben.pct) / 100,
+        payout_cad: (Number(vault.amount_cad) * Number(ben.pct)) / 100,
         claimed_at: ben.claimed_at,
         payout_tx_signature: ben.payout_tx_signature,
       },
@@ -795,7 +901,7 @@ export const publicLookupClaim = createServerFn({ method: "POST" })
 
 export const publicClaimByToken = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
-    z.object({ vault_id: z.string().uuid(), token: z.string().min(1) }).parse(d)
+    z.object({ vault_id: z.string().uuid(), token: z.string().min(1) }).parse(d),
   )
   .handler(async ({ data }) => {
     const { data: vault, error: vErr } = await supabaseAdmin
@@ -817,7 +923,7 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
     if (!ben) throw new Error("Invalid claim link");
     if (ben.claimed_at) throw new Error("This share has already been claimed");
 
-    const amount_cad = Number(vault.amount_cad) * Number(ben.pct) / 100;
+    const amount_cad = (Number(vault.amount_cad) * Number(ben.pct)) / 100;
 
     // Demo on-chain payout: platform hot wallet → owner's existing system wallet.
     // Vault creation is the opposite direction (user system wallet → hot wallet).
@@ -854,4 +960,3 @@ export const publicClaimByToken = createServerFn({ method: "POST" })
       offramp_ref: off.providerRef,
     };
   });
-

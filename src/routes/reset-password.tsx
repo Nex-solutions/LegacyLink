@@ -22,7 +22,9 @@ function ResetPassword() {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
     // Also accept existing session (e.g. clicked link, then refreshed)
-    supabase.auth.getSession().then(({ data }) => { if (data.session) setReady(true); });
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setReady(true);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -38,12 +40,21 @@ function ResetPassword() {
       navigate({ to: "/dashboard" });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Couldn't update password.");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <AuthSplit quote="A fresh start, secured.">
-      <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 36, fontWeight: 600, color: "var(--forest)" }}>
+      <h1
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 36,
+          fontWeight: 600,
+          color: "var(--forest)",
+        }}
+      >
         Set a new password
       </h1>
       <p className="mt-2" style={{ color: "var(--warm-gray)" }}>
@@ -53,13 +64,28 @@ function ResetPassword() {
         <form onSubmit={submit} className="mt-8 space-y-4">
           <div>
             <label className="ll-label">New password</label>
-            <input type="password" className="ll-input" value={pw} onChange={(e) => setPw(e.target.value)} />
+            <input
+              type="password"
+              className="ll-input"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+            />
           </div>
           <div>
             <label className="ll-label">Confirm password</label>
-            <input type="password" className="ll-input" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+            <input
+              type="password"
+              className="ll-input"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
           </div>
-          <button disabled={loading} type="submit" className="ll-pill ll-pill-primary w-full mt-2" style={{ opacity: loading ? 0.7 : 1 }}>
+          <button
+            disabled={loading}
+            type="submit"
+            className="ll-pill ll-pill-primary w-full mt-2"
+            style={{ opacity: loading ? 0.7 : 1 }}
+          >
             {loading ? "Updating…" : "Update password"}
           </button>
         </form>

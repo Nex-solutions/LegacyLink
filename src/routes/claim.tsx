@@ -23,8 +23,23 @@ export const Route = createFileRoute("/claim")({
 
 type Step = "lookup" | "found" | "claimed" | "notyet" | "notlisted" | "missing";
 type TokenView = {
-  vault: { id: string; name: string; amount_cad: number; status: string; letter_message?: string | null; letter_tx_signature?: string | null; owner_name?: string | null };
-  beneficiary: { name: string; email: string; pct: number; payout_cad: number; claimed_at: string | null; payout_tx_signature?: string | null };
+  vault: {
+    id: string;
+    name: string;
+    amount_cad: number;
+    status: string;
+    letter_message?: string | null;
+    letter_tx_signature?: string | null;
+    owner_name?: string | null;
+  };
+  beneficiary: {
+    name: string;
+    email: string;
+    pct: number;
+    payout_cad: number;
+    claimed_at: string | null;
+    payout_tx_signature?: string | null;
+  };
 } | null;
 
 function Claim() {
@@ -34,7 +49,11 @@ function Claim() {
   const [tokenView, setTokenView] = useState<TokenView>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [tokenClaiming, setTokenClaiming] = useState(false);
-  const [tokenClaimed, setTokenClaimed] = useState<{ amount_cad: number; tx_signature: string; email: string } | null>(null);
+  const [tokenClaimed, setTokenClaimed] = useState<{
+    amount_cad: number;
+    tx_signature: string;
+    email: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!prefill || !token) return;
@@ -48,7 +67,11 @@ function Claim() {
     setTokenClaiming(true);
     try {
       const res = await publicClaimByToken({ data: { vault_id: prefill, token } });
-      setTokenClaimed({ amount_cad: res.amount_cad, tx_signature: res.tx_signature, email: res.email });
+      setTokenClaimed({
+        amount_cad: res.amount_cad,
+        tx_signature: res.tx_signature,
+        email: res.email,
+      });
       toast.success(`${formatCAD(res.amount_cad)} on its way to ${res.email}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Claim failed");
@@ -68,7 +91,7 @@ function Claim() {
     if (!vault) return null;
     const me = vault.beneficiaries.find((b) => b.email.toLowerCase() === email.toLowerCase());
     if (!me) return null;
-    return { ...me, payout: vault.amount_cad * me.pct / 100 };
+    return { ...me, payout: (vault.amount_cad * me.pct) / 100 };
   }, [vault, email]);
 
   async function lookup(e: React.FormEvent) {
@@ -76,13 +99,26 @@ function Claim() {
     const id = vaultId.trim();
     const em = email.trim().toLowerCase();
     if (!id || !em) return toast.error("Vault ID and your email are both required.");
-    try { await evaluateAndHydrate(); } catch (err) { console.error(err); }
+    try {
+      await evaluateAndHydrate();
+    } catch (err) {
+      console.error(err);
+    }
     const v = getVault(id);
-    if (!v) { setStep("missing"); return; }
+    if (!v) {
+      setStep("missing");
+      return;
+    }
     setVaultState(v);
     const onList = v.beneficiaries.some((b) => b.email.toLowerCase() === em);
-    if (!onList) { setStep("notlisted"); return; }
-    if (v.status !== "Released") { setStep("notyet"); return; }
+    if (!onList) {
+      setStep("notlisted");
+      return;
+    }
+    if (v.status !== "Released") {
+      setStep("notyet");
+      return;
+    }
     setStep("found");
   }
 
@@ -112,57 +148,144 @@ function Claim() {
     <PageShell>
       <AppHeader />
       <div className="relative px-6 py-16 max-w-2xl mx-auto">
-        <Blob className="w-[420px] h-[420px] -top-20 -right-20" color="var(--honey)" opacity={0.08} />
+        <Blob
+          className="w-[420px] h-[420px] -top-20 -right-20"
+          color="var(--honey)"
+          opacity={0.08}
+        />
         <div className="relative z-10">
-          <p className="text-xs uppercase tracking-[0.2em]" style={{ color: "var(--honey)" }}>For beneficiaries</p>
-          <h1 className="mt-3" style={{ fontFamily: "var(--font-serif)", fontSize: 44, fontWeight: 600, lineHeight: 1.05 }}>
+          <p className="text-xs uppercase tracking-[0.2em]" style={{ color: "var(--honey)" }}>
+            For beneficiaries
+          </p>
+          <h1
+            className="mt-3"
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: 44,
+              fontWeight: 600,
+              lineHeight: 1.05,
+            }}
+          >
             Claim what's yours.
           </h1>
           <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
-            If a loved one set aside funds for you, claim them here. Your share is paid out instantly via Interac e-Transfer.
+            If a loved one set aside funds for you, claim them here. Your share is paid out
+            instantly via Interac e-Transfer.
           </p>
 
           {/* Token flow */}
           {prefill && token && !tokenError && tokenView && !tokenClaimed && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="ll-card p-8 mt-10">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="ll-card p-8 mt-10"
+            >
               <p className="text-xs uppercase tracking-wider" style={{ color: "var(--honey)" }}>
-                {tokenView.beneficiary.claimed_at ? "Already claimed" : tokenView.vault.status === "Released" ? "Released · ready to claim" : "Awaiting release"}
+                {tokenView.beneficiary.claimed_at
+                  ? "Already claimed"
+                  : tokenView.vault.status === "Released"
+                    ? "Released · ready to claim"
+                    : "Awaiting release"}
               </p>
-              <h2 className="mt-2" style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>{tokenView.vault.name}</h2>
-              <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>For {tokenView.beneficiary.name} · {tokenView.beneficiary.email}</p>
+              <h2
+                className="mt-2"
+                style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}
+              >
+                {tokenView.vault.name}
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>
+                For {tokenView.beneficiary.name} · {tokenView.beneficiary.email}
+              </p>
 
-              <div className="mt-6 p-5 rounded-xl" style={{ background: "rgba(218,165,32,0.08)", border: "1px solid rgba(218,165,32,0.25)" }}>
-                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Your share</p>
-                <p style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 44, fontWeight: 600, lineHeight: 1.1 }}>{formatCAD(tokenView.beneficiary.payout_cad)}</p>
-                <p className="text-sm mt-1" style={{ color: "var(--forest)" }}>{tokenView.beneficiary.pct}% of {formatCAD(tokenView.vault.amount_cad)}</p>
+              <div
+                className="mt-6 p-5 rounded-xl"
+                style={{
+                  background: "rgba(218,165,32,0.08)",
+                  border: "1px solid rgba(218,165,32,0.25)",
+                }}
+              >
+                <p
+                  className="text-xs uppercase tracking-wider"
+                  style={{ color: "var(--warm-gray)" }}
+                >
+                  Your share
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    color: "var(--honey)",
+                    fontSize: 44,
+                    fontWeight: 600,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {formatCAD(tokenView.beneficiary.payout_cad)}
+                </p>
+                <p className="text-sm mt-1" style={{ color: "var(--forest)" }}>
+                  {tokenView.beneficiary.pct}% of {formatCAD(tokenView.vault.amount_cad)}
+                </p>
               </div>
 
               {tokenView.beneficiary.claimed_at ? (
                 <>
-                  <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This share was already claimed on {new Date(tokenView.beneficiary.claimed_at).toLocaleDateString()}.</p>
+                  <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>
+                    This share was already claimed on{" "}
+                    {new Date(tokenView.beneficiary.claimed_at).toLocaleDateString()}.
+                  </p>
                   {tokenView.beneficiary.payout_tx_signature && (
-                    <a href={solscanUrl("tx", tokenView.beneficiary.payout_tx_signature)} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs font-mono break-all underline" style={{ color: "var(--honey)" }}>
+                    <a
+                      href={solscanUrl("tx", tokenView.beneficiary.payout_tx_signature)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-block text-xs font-mono break-all underline"
+                      style={{ color: "var(--honey)" }}
+                    >
                       View payout on Solscan ↗ {tokenView.beneficiary.payout_tx_signature}
                     </a>
                   )}
                 </>
               ) : tokenView.vault.status !== "Released" ? (
-                <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>This vault hasn't released yet. We'll email you the moment it does.</p>
+                <p className="mt-5 text-sm" style={{ color: "var(--warm-gray)" }}>
+                  This vault hasn't released yet. We'll email you the moment it does.
+                </p>
               ) : (
                 <>
-                  <p className="mt-5 text-xs" style={{ color: "var(--warm-gray)" }}>Funds are paid via Interac e-Transfer to {tokenView.beneficiary.email}.</p>
+                  <p className="mt-5 text-xs" style={{ color: "var(--warm-gray)" }}>
+                    Funds are paid via Interac e-Transfer to {tokenView.beneficiary.email}.
+                  </p>
                   {tokenView.vault.letter_message && (
-                    <div className="mt-4 p-3 rounded-lg flex items-center gap-2 text-xs" style={{ background: "rgba(127,168,130,0.12)", border: "1px dashed rgba(127,168,130,0.45)", color: "var(--forest)" }}>
+                    <div
+                      className="mt-4 p-3 rounded-lg flex items-center gap-2 text-xs"
+                      style={{
+                        background: "rgba(127,168,130,0.12)",
+                        border: "1px dashed rgba(127,168,130,0.45)",
+                        color: "var(--forest)",
+                      }}
+                    >
                       <span>✉️</span>
-                      <span>A sealed letter from {tokenView.vault.owner_name ?? "the vault owner"} unlocks after you confirm.</span>
+                      <span>
+                        A sealed letter from {tokenView.vault.owner_name ?? "the vault owner"}{" "}
+                        unlocks after you confirm.
+                      </span>
                       {tokenView.vault.letter_tx_signature && (
-                        <a href={solscanUrl("tx", tokenView.vault.letter_tx_signature)} target="_blank" rel="noreferrer" className="ml-auto underline" style={{ color: "var(--honey)" }}>
+                        <a
+                          href={solscanUrl("tx", tokenView.vault.letter_tx_signature)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="ml-auto underline"
+                          style={{ color: "var(--honey)" }}
+                        >
                           On-chain ↗
                         </a>
                       )}
                     </div>
                   )}
-                  <button onClick={tokenClaim} disabled={tokenClaiming} className="ll-pill ll-pill-primary w-full mt-5" style={{ opacity: tokenClaiming ? 0.6 : 1 }}>
+                  <button
+                    onClick={tokenClaim}
+                    disabled={tokenClaiming}
+                    className="ll-pill ll-pill-primary w-full mt-5"
+                    style={{ opacity: tokenClaiming ? 0.6 : 1 }}
+                  >
                     {tokenClaiming ? "Processing claim…" : "Confirm & receive funds"}
                   </button>
                 </>
@@ -171,11 +294,26 @@ function Claim() {
           )}
 
           {prefill && token && tokenClaimed && (
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="ll-card p-10 mt-10 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl" style={{ background: "var(--sage)", color: "var(--forest)" }}>✓</div>
-              <h2 className="mt-5" style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600 }}>Claim complete.</h2>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="ll-card p-10 mt-10 text-center"
+            >
+              <div
+                className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl"
+                style={{ background: "var(--sage)", color: "var(--forest)" }}
+              >
+                ✓
+              </div>
+              <h2
+                className="mt-5"
+                style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600 }}
+              >
+                Claim complete.
+              </h2>
               <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
-                {formatCAD(tokenClaimed.amount_cad)} is moving from the platform hot wallet back to the user's system wallet for offramp to {tokenClaimed.email}.
+                {formatCAD(tokenClaimed.amount_cad)} is moving from the platform hot wallet back to
+                the user's system wallet for offramp to {tokenClaimed.email}.
               </p>
               <a
                 href={solscanUrl("tx", tokenClaimed.tx_signature)}
@@ -193,14 +331,25 @@ function Claim() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                   className="mt-8 p-6 rounded-2xl text-left"
-                  style={{ background: "rgba(127,168,130,0.10)", border: "1px solid rgba(127,168,130,0.35)" }}
+                  style={{
+                    background: "rgba(127,168,130,0.10)",
+                    border: "1px solid rgba(127,168,130,0.35)",
+                  }}
                 >
-                  <p className="text-xs uppercase tracking-[0.2em]" style={{ color: "var(--honey)" }}>
+                  <p
+                    className="text-xs uppercase tracking-[0.2em]"
+                    style={{ color: "var(--honey)" }}
+                  >
                     A message from {tokenView.vault.owner_name ?? "the vault owner"}
                   </p>
                   <p
                     className="mt-3 whitespace-pre-wrap"
-                    style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", fontSize: 20, lineHeight: 1.55 }}
+                    style={{
+                      fontFamily: "var(--font-serif)",
+                      color: "var(--forest)",
+                      fontSize: 20,
+                      lineHeight: 1.55,
+                    }}
                   >
                     {tokenView.vault.letter_message}
                   </p>
@@ -218,20 +367,30 @@ function Claim() {
                 </motion.div>
               )}
 
-              <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
+              <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">
+                Back home
+              </Link>
             </motion.div>
           )}
 
           {prefill && token && tokenError && (
             <div className="ll-card p-8 mt-10">
-              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>This claim link isn't valid.</h2>
-              <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>{tokenError}</p>
-              <Link to="/" className="ll-pill ll-pill-ghost mt-5 inline-block">Back home</Link>
+              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>
+                This claim link isn't valid.
+              </h2>
+              <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>
+                {tokenError}
+              </p>
+              <Link to="/" className="ll-pill ll-pill-ghost mt-5 inline-block">
+                Back home
+              </Link>
             </div>
           )}
 
           {prefill && token && !tokenView && !tokenError && (
-            <div className="ll-card p-8 mt-10 text-center" style={{ color: "var(--warm-gray)" }}>Loading your claim…</div>
+            <div className="ll-card p-8 mt-10 text-center" style={{ color: "var(--warm-gray)" }}>
+              Loading your claim…
+            </div>
           )}
 
           {/* Email-lookup flow when no token */}
@@ -239,37 +398,109 @@ function Claim() {
             <form onSubmit={lookup} className="ll-card p-8 mt-10 space-y-5">
               <div>
                 <label className="ll-label">Vault ID</label>
-                <input className="ll-input" value={vaultId} onChange={(e) => setVaultId(e.target.value)} placeholder="vault-XXXXXX" />
-                <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>Sent to you by the vault owner or their advisor.</p>
+                <input
+                  className="ll-input"
+                  value={vaultId}
+                  onChange={(e) => setVaultId(e.target.value)}
+                  placeholder="vault-XXXXXX"
+                />
+                <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>
+                  Sent to you by the vault owner or their advisor.
+                </p>
               </div>
               <div>
                 <label className="ll-label">Your email</label>
-                <input className="ll-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
-                <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>Must match the email on the beneficiary list.</p>
+                <input
+                  className="ll-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@email.com"
+                />
+                <p className="text-xs mt-1" style={{ color: "var(--warm-gray)" }}>
+                  Must match the email on the beneficiary list.
+                </p>
               </div>
-              <button type="submit" className="ll-pill ll-pill-primary w-full">Look up vault</button>
+              <button type="submit" className="ll-pill ll-pill-primary w-full">
+                Look up vault
+              </button>
             </form>
           )}
 
           {(!prefill || !token) && step === "found" && vault && myShare && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="ll-card p-8 mt-10">
-              <p className="text-xs uppercase tracking-wider" style={{ color: "var(--honey)" }}>Released · ready to claim</p>
-              <h2 className="mt-2" style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}>{vault.name}</h2>
-              <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>{conditionSummary(vault)}</p>
-              <div className="mt-6 p-5 rounded-xl" style={{ background: "rgba(218,165,32,0.08)", border: "1px solid rgba(218,165,32,0.25)" }}>
-                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--warm-gray)" }}>Your share</p>
-                <p style={{ fontFamily: "var(--font-serif)", color: "var(--honey)", fontSize: 44, fontWeight: 600, lineHeight: 1.1 }}>{formatCAD(myShare.payout)}</p>
-                <p className="text-sm mt-1" style={{ color: "var(--forest)" }}>{myShare.pct}% allocated to {myShare.name}</p>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="ll-card p-8 mt-10"
+            >
+              <p className="text-xs uppercase tracking-wider" style={{ color: "var(--honey)" }}>
+                Released · ready to claim
+              </p>
+              <h2
+                className="mt-2"
+                style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600 }}
+              >
+                {vault.name}
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: "var(--warm-gray)" }}>
+                {conditionSummary(vault)}
+              </p>
+              <div
+                className="mt-6 p-5 rounded-xl"
+                style={{
+                  background: "rgba(218,165,32,0.08)",
+                  border: "1px solid rgba(218,165,32,0.25)",
+                }}
+              >
+                <p
+                  className="text-xs uppercase tracking-wider"
+                  style={{ color: "var(--warm-gray)" }}
+                >
+                  Your share
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    color: "var(--honey)",
+                    fontSize: 44,
+                    fontWeight: 600,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {formatCAD(myShare.payout)}
+                </p>
+                <p className="text-sm mt-1" style={{ color: "var(--forest)" }}>
+                  {myShare.pct}% allocated to {myShare.name}
+                </p>
               </div>
-              <button onClick={confirmClaim} className="ll-pill ll-pill-secondary w-full mt-5">Confirm & receive funds</button>
+              <button onClick={confirmClaim} className="ll-pill ll-pill-secondary w-full mt-5">
+                Confirm & receive funds
+              </button>
             </motion.div>
           )}
 
           {(!prefill || !token) && step === "claimed" && vault && myShare && (
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="ll-card p-10 mt-10 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl" style={{ background: "var(--sage)", color: "var(--forest)" }}>✓</div>
-              <h2 className="mt-5" style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600 }}>Claim complete.</h2>
-              <p className="mt-3" style={{ color: "var(--warm-gray)" }}>{formatCAD(myShare.payout)} from <strong>{vault.name}</strong> is on its way to {email}.</p>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="ll-card p-10 mt-10 text-center"
+            >
+              <div
+                className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl"
+                style={{ background: "var(--sage)", color: "var(--forest)" }}
+              >
+                ✓
+              </div>
+              <h2
+                className="mt-5"
+                style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600 }}
+              >
+                Claim complete.
+              </h2>
+              <p className="mt-3" style={{ color: "var(--warm-gray)" }}>
+                {formatCAD(myShare.payout)} from <strong>{vault.name}</strong> is on its way to{" "}
+                {email}.
+              </p>
               {legacyClaimTx && (
                 <a
                   href={solscanUrl("tx", legacyClaimTx)}
@@ -281,32 +512,54 @@ function Claim() {
                   View hot wallet → user system wallet payout on Solscan ↗ {legacyClaimTx}
                 </a>
               )}
-              <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">Back home</Link>
+              <Link to="/" className="ll-pill ll-pill-ghost mt-7 inline-block">
+                Back home
+              </Link>
             </motion.div>
           )}
 
           {(!prefill || !token) && step === "notyet" && vault && (
             <div className="ll-card p-8 mt-10">
-              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600 }}>{vault.name}</h2>
-              <p className="mt-2" style={{ color: "var(--warm-gray)" }}>{conditionSummary(vault)}</p>
-              <p className="mt-4 text-sm" style={{ color: "var(--forest)" }}>You're listed as a beneficiary. We'll email you the moment this vault releases.</p>
-              <button onClick={reset} className="ll-pill ll-pill-ghost mt-5">Look up another vault</button>
+              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600 }}>
+                {vault.name}
+              </h2>
+              <p className="mt-2" style={{ color: "var(--warm-gray)" }}>
+                {conditionSummary(vault)}
+              </p>
+              <p className="mt-4 text-sm" style={{ color: "var(--forest)" }}>
+                You're listed as a beneficiary. We'll email you the moment this vault releases.
+              </p>
+              <button onClick={reset} className="ll-pill ll-pill-ghost mt-5">
+                Look up another vault
+              </button>
             </div>
           )}
 
           {(!prefill || !token) && step === "notlisted" && (
             <div className="ll-card p-8 mt-10">
-              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>That email isn't on this vault.</h2>
-              <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>Double-check with the vault owner — it must match exactly.</p>
-              <button onClick={reset} className="ll-pill ll-pill-ghost mt-5">Try again</button>
+              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>
+                That email isn't on this vault.
+              </h2>
+              <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>
+                Double-check with the vault owner — it must match exactly.
+              </p>
+              <button onClick={reset} className="ll-pill ll-pill-ghost mt-5">
+                Try again
+              </button>
             </div>
           )}
 
           {(!prefill || !token) && step === "missing" && (
             <div className="ll-card p-8 mt-10">
-              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>We couldn't find that vault.</h2>
-              <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>Check the vault ID with whoever sent it to you.</p>
-              <button onClick={reset} className="ll-pill ll-pill-ghost mt-5">Try again</button>
+              <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600 }}>
+                We couldn't find that vault.
+              </h2>
+              <p className="mt-3 text-sm" style={{ color: "var(--warm-gray)" }}>
+                Check the vault ID with whoever sent it to you.
+              </p>
+              <button onClick={reset} className="ll-pill ll-pill-ghost mt-5">
+                Try again
+              </button>
             </div>
           )}
         </div>
