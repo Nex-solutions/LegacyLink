@@ -326,17 +326,15 @@ export const createVault = createServerFn({ method: "POST" })
         }
 
         // Audit trail + mark complete
-        await supabase
-          .from("vault_events")
-          .insert([
-            {
-              vault_id: vaultId,
-              actor_id: userId,
-              kind: "fund",
-              detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`,
-              tx_signature: fund.signature,
-            },
-          ]);
+        await supabase.from("vault_events").insert([
+          {
+            vault_id: vaultId,
+            actor_id: userId,
+            kind: "fund",
+            detail: `Vault funded · CA$${data.amount_cad}${isSimulatedMode() ? " (simulated)" : ""} · ramp ${onramp.providerRef}`,
+            tx_signature: fund.signature,
+          },
+        ]);
         await supabase.from("vaults").update({ last_step: null }).eq("id", vaultId);
 
         return {
@@ -410,17 +408,15 @@ export const retryVault = createServerFn({ method: "POST" })
           last_step: null,
         })
         .eq("id", row.id);
-      await supabase
-        .from("vault_events")
-        .insert([
-          {
-            vault_id: row.id,
-            actor_id: userId,
-            kind: "fund",
-            detail: `Vault retry succeeded · CA$${row.amount_cad}`,
-            tx_signature: fund.signature,
-          },
-        ]);
+      await supabase.from("vault_events").insert([
+        {
+          vault_id: row.id,
+          actor_id: userId,
+          kind: "fund",
+          detail: `Vault retry succeeded · CA$${row.amount_cad}`,
+          tx_signature: fund.signature,
+        },
+      ]);
       return { id: row.id as string, ok: true as const };
     } catch (err) {
       console.error("retryVault failed", err);
